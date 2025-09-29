@@ -22,6 +22,18 @@ function mwai_enqueue_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'mwai_enqueue_assets' );
 
+// Enqueue admin scripts only on the settings page
+function mwai_admin_enqueue_scripts( $hook_suffix ) {
+    if ( 'toplevel_page_mwai-settings' === $hook_suffix ) {
+        wp_enqueue_script( 'mwai-admin-js', plugin_dir_url( __FILE__ ) . 'assets/js/admin-settings.js', array( 'jquery' ), '1.0', true );
+        wp_localize_script( 'mwai-admin-js', 'MWAI_Admin_Ajax', array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'mwai_test_connection_nonce' ),
+        ) );
+    }
+}
+add_action( 'admin_enqueue_scripts', 'mwai_admin_enqueue_scripts' );
+
 // Include AJAX handler
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-ajax-handler.php';
 
@@ -81,27 +93,35 @@ function mwai_register_settings() {
 }
 add_action( 'admin_init', 'mwai_register_settings' );
 
+// Add AJAX action for connection test
+add_action( 'wp_ajax_mwai_test_connection', 'mwai_test_connection_callback' );
+
 // Admin settings page
 function mwai_settings_page() {
-    $api_key = esc_attr( get_option( 'mwai_gemini_api_key', '' ) );
-    $model   = esc_attr( get_option( 'mwai_gemini_model', 'gemini-2.5-flash' ) );
+    // Retrieve settings
+    $api_key     = esc_attr( get_option( 'mwai_gemini_api_key', '' ) );
+    $model       = esc_attr( get_option( 'mwai_gemini_model', 'gemini-2.5-flash' ) );
     $temperature = esc_attr( get_option( 'mwai_gemini_temperature', '0.7' ) );
     $max_tokens  = esc_attr( get_option( 'mwai_gemini_max_tokens', '1024' ) );
     $top_p       = esc_attr( get_option( 'mwai_gemini_top_p', '0.9' ) );
     ?>
     <div class="wrap">
         <h1>MarketWhale AI Chat Settings</h1>
+        <?php if ( empty( $api_key ) || $api_key === 'AIzaSyA2vmScQRlnniWTaWLNwkpr-9PdhPyKsTk' ) : ?>
+            <div class="notice notice-error">
+                <p><strong>Important:</strong> Please enter your actual Gemini API Key below. The placeholder key will not work.</p>
+            </div>
+        <?php endif; ?>
         <form method="post" action="options.php">
             <?php settings_fields( 'mwai_settings_group' ); ?>
             <?php do_settings_sections( 'mwai_settings_group' ); ?>
 
             <table class="form-table">
-
                 <tr valign="top">
                     <th scope="row">Gemini API Key</th>
                     <td>
                         <input type="text" name="mwai_gemini_api_key" value="<?php echo $api_key; ?>" size="50" />
-                        <p class="description">Enter your Gemini API Key.</p>
+                        <p class="description">Enter your Gemini API Key. Get one from <a href="https://ai.google.dev/" target="_blank">Google AI Studio</a>.</p>
                     </td>
                 </tr>
 
@@ -109,11 +129,10 @@ function mwai_settings_page() {
                     <th scope="row">Model</th>
                     <td>
                         <select name="mwai_gemini_model">
-                            <option value="gemini-2.5-flash" <?php selected( $model, 'gemini-2.5-flash' ); ?>>Gemini 2.5 Flash</option>
-                            <option value="gemini-2.5" <?php selected( $model, 'gemini-2.5' ); ?>>Gemini 2.5</option>
-                            <option value="gemini-1" <?php selected( $model, 'gemini-1' ); ?>>Gemini 1</option>
+                            <option value="gemini-2.5-flash" <?php selected( $model, 'gemini-2.5-flash' ); ?>>Gemini 2.5 Flash (Recommended)</option>
+                            <!-- Removed gemini-2.5 and gemini-1 as they may not support generateContent or be available in v1beta -->
                         </select>
-                        <p class="description">Choose the model for responses.</p>
+                        <p class="description">Choose the model for responses. Only 'gemini-2.5-flash' is currently supported for `generateContent` in v1beta.</p>
                     </td>
                 </tr>
 
@@ -140,13 +159,97 @@ function mwai_settings_page() {
                         <p class="description">Controls nucleus sampling (0–1).</p>
                     </td>
                 </tr>
-
             </table>
 
             <?php submit_button(); ?>
         </form>
+
+        <h2>Test Gemini Connection</h2>
+        <p>Click the button below to test if your Gemini API Key is working correctly.</p>
+        <button id="mwai-test-connection-btn" class="button button-secondary">Test Connection</button>
+        <p id="mwai-test-connection-result"></p>
     </div>
+
+    <script type="text/javascript">
+        jQuery(document).ready(function($){
+            $('#mwai-test-connection-btn').on('click', function(e){
+                e.preventDefault();
+                const $button = $(this);
+                const $result = $('#mwai-test-connection-result');
+                $result.text('Testing connection...');
+                $button.prop('disabled', true);
+
+                $.post(ajaxurl, {
+                    action: 'mwai_test_connection',
+                    _wpnonce: '<?php echo wp_create_nonce( 'mwai_test_connection_nonce' ); ?>'
+                }, function(response){
+                    if (response.success) {
+                        $result.css('color', 'green').text('Connection successful! ' + response.data.message);
+                    } else {
+                        $result.css('color', 'red').text('Connection failed: ' + response.data.message);
+                    }
+                }).fail(function(){
+                    $result.css('color', 'red').text('Network error during connection test.');
+                }).always(function(){
+                    $button.prop('disabled', false);
+                });
+            });
+        });
+    </script>
     <?php
+}
+
+// Handle connection test AJAX request
+function mwai_test_connection_callback() {
+    check_ajax_referer( 'mwai_test_connection_nonce', '_wpnonce' );
+
+    $api_key = get_option( 'mwai_gemini_api_key', '' );
+    $model   = get_option( 'mwai_gemini_model', 'gemini-2.5-flash' );
+
+    if ( empty( $api_key ) || $api_key === 'AIzaSyA2vmScQRlnniWTaWLNwkpr-9PdhPyKsTk' ) {
+        wp_send_json_error( array( 'message' => 'Gemini API Key is not configured or is still the placeholder key.' ) );
+    }
+
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=" . rawurlencode( $api_key );
+
+    $body = wp_json_encode( array(
+        'contents' => array(
+            array(
+                'role'  => 'user',
+                'parts' => array(
+                    array( 'text' => 'Hello, what is your name?' ),
+                ),
+            ),
+        ),
+    ) );
+
+    $response = wp_remote_post( $url, array(
+        'headers' => array( 'Content-Type' => 'application/json' ),
+        'body'    => $body,
+        'timeout' => 15, // Shorter timeout for test
+    ) );
+
+    if ( is_wp_error( $response ) ) {
+        wp_send_json_error( array( 'message' => 'WordPress HTTP Error: ' . $response->get_error_message() ) );
+    }
+
+    $code = wp_remote_retrieve_response_code( $response );
+    $raw  = wp_remote_retrieve_body( $response );
+    $data = json_decode( $raw, true );
+
+    if ( $code >= 200 && $code < 300 ) {
+        if ( ! empty( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
+            wp_send_json_success( array( 'message' => 'Received a response from Gemini.' ) );
+        } else {
+            wp_send_json_error( array( 'message' => 'Gemini API returned an empty or unexpected response.' ) );
+        }
+    } else {
+        $error_message = 'Unknown API Error.';
+        if ( ! empty( $data['error']['message'] ) ) {
+            $error_message = sanitize_text_field( $data['error']['message'] );
+        }
+        wp_send_json_error( array( 'message' => 'Gemini API Error (' . $code . '): ' . $error_message ) );
+    }
 }
 
 // Define GEMINI_API_KEY, model, and attributes
