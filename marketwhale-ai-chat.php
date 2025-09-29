@@ -2,7 +2,7 @@
 /**
  * Plugin Name: MarketWhale AI Chat
  * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API).
- * Version: 1.4
+ * Version: 1.5
  * Author: Your Name
  */
 
@@ -13,8 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Assets (CSS/JS)
 function mwai_enqueue_assets() {
     $plugin_url = plugin_dir_url( __FILE__ );
-    wp_enqueue_style( 'mwai-style', $plugin_url . 'assets/css/style.css', array(), '1.4' );
-    wp_enqueue_script( 'mwai-js', $plugin_url . 'assets/js/chat-widget.js', array( 'jquery' ), '1.4', true );
+    wp_enqueue_style( 'mwai-style', $plugin_url . 'assets/css/style.css', array(), '1.5' );
+    wp_enqueue_script( 'mwai-js', $plugin_url . 'assets/js/chat-widget.js', array( 'jquery' ), '1.5', true );
 
     wp_localize_script( 'mwai-js', 'MWAI_Ajax', array(
         'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -100,7 +100,7 @@ add_action( 'wp_ajax_mwai_test_connection', 'mwai_test_connection_callback' );
 function mwai_settings_page() {
     // Retrieve settings
     $api_key     = esc_attr( get_option( 'mwai_gemini_api_key', '' ) );
-    $model       = esc_attr( get_option( 'mwai_gemini_model', 'gemini-2.5-flash' ) );
+    $model       = esc_attr( get_option( 'mwai_gemini_model', 'gemini-1.5-flash-latest' ) );
     $temperature = esc_attr( get_option( 'mwai_gemini_temperature', '0.7' ) );
     $max_tokens  = esc_attr( get_option( 'mwai_gemini_max_tokens', '1024' ) );
     $top_p       = esc_attr( get_option( 'mwai_gemini_top_p', '0.9' ) );
@@ -129,10 +129,9 @@ function mwai_settings_page() {
                     <th scope="row">Model</th>
                     <td>
                         <select name="mwai_gemini_model">
-                            <option value="gemini-2.5-flash" <?php selected( $model, 'gemini-2.5-flash' ); ?>>Gemini 2.5 Flash (Recommended)</option>
-                            <!-- Removed gemini-2.5 and gemini-1 as they may not support generateContent or be available in v1beta -->
+                            <option value="gemini-1.5-flash-latest" <?php selected( $model, 'gemini-1.5-flash-latest' ); ?>>Gemini 1.5 Flash Latest (Recommended)</option>
                         </select>
-                        <p class="description">Choose the model for responses. Only 'gemini-2.5-flash' is currently supported for `generateContent` in v1beta.</p>
+                        <p class="description">Choose the model for responses. 'gemini-1.5-flash-latest' is supported for `generateContent` in v1beta.</p>
                     </td>
                 </tr>
 
@@ -204,7 +203,7 @@ function mwai_test_connection_callback() {
     check_ajax_referer( 'mwai_test_connection_nonce', '_wpnonce' );
 
     $api_key = get_option( 'mwai_gemini_api_key', '' );
-    $model   = get_option( 'mwai_gemini_model', 'gemini-2.5-flash' );
+    $model   = get_option( 'mwai_gemini_model', 'gemini-1.5-flash-latest' );
 
     if ( empty( $api_key ) || $api_key === 'AIzaSyA2vmScQRlnniWTaWLNwkpr-9PdhPyKsTk' ) {
         wp_send_json_error( array( 'message' => 'Gemini API Key is not configured or is still the placeholder key.' ) );
@@ -257,7 +256,7 @@ if ( ! defined( 'GEMINI_API_KEY' ) ) {
     define( 'GEMINI_API_KEY', get_option( 'mwai_gemini_api_key', '' ) );
 }
 if ( ! defined( 'GEMINI_MODEL' ) ) {
-    define( 'GEMINI_MODEL', get_option( 'mwai_gemini_model', 'gemini-2.5-flash' ) );
+    define( 'GEMINI_MODEL', get_option( 'mwai_gemini_model', 'gemini-1.5-flash-latest' ) );
 }
 if ( ! defined( 'GEMINI_TEMPERATURE' ) ) {
     define( 'GEMINI_TEMPERATURE', get_option( 'mwai_gemini_temperature', '0.7' ) );

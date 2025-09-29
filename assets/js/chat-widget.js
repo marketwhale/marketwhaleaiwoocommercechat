@@ -6,6 +6,7 @@ jQuery(document).ready(function($){
     const $send = $('#mwai-send-btn');
     const $close = $('#mwai-close-btn');
     let firstOpen = true;
+    let history = []; // For multi-turn conversation
 
     // Accessibility: focus input when chat opens
     function openChat() {
@@ -58,7 +59,40 @@ jQuery(document).ready(function($){
 
         let delay = 500;
         greetings.forEach((g, i) => {
-            setTimeout(() => appendMessage('ai', g), delay * (i + 1));
+            setTimeout(() => {
+                appendMessage('ai', g);
+                if (i === greetings.length - 1) {
+                    addQuickButtons();
+                }
+            }, delay * (i + 1));
+        });
+
+        // Add greetings to history as model responses
+        greetings.forEach(g => {
+            history.push({role: 'model', parts: [{text: g}]});
+        });
+    }
+
+    // Add quick action buttons
+    function addQuickButtons() {
+        if ($('.mwai-quick-buttons').length > 0) {
+            $('.mwai-quick-buttons').remove(); // Remove existing to avoid duplicates
+        }
+        const buttonsHTML = $(`
+            <div class="mwai-quick-buttons">
+                <button data-message="Show catalog">Catalog</button>
+                <button data-message="List categories">Categories</button>
+                <button data-message="Search for a product">Search</button>
+            </div>
+        `);
+        $body.append(buttonsHTML);
+        $body.scrollTop($body[0].scrollHeight);
+
+        // Handle button clicks
+        $('.mwai-quick-buttons button').on('click', function(){
+            const message = $(this).data('message');
+            $input.val(message);
+            sendMessage();
         });
     }
 
@@ -71,23 +105,28 @@ jQuery(document).ready(function($){
         $input.val('');
         $body.scrollTop($body[0].scrollHeight);
 
+        // Add to history
+        history.push({role: 'user', parts: [{text: message}]});
+
         // Add typing indicator
         const $typing = createTyping();
         $body.append($typing);
         $body.scrollTop($body[0].scrollHeight);
 
-        // AJAX
+        // AJAX with history
         $.post(MWAI_Ajax.ajax_url, {
             action: 'mwai_get_response',
-            message: message
+            history: JSON.stringify(history)
         }, function(response){
             $typing.remove();
 
             if (response && response.success && response.data) {
-                // AI text (format with line breaks)
+                // AI text
                 if (response.data.message) {
-                    const formattedMessage = response.data.message.replace(/\n/g, '<br>');
-                    appendMessage('ai', $('<div>').html(formattedMessage).html() );
+                    const formattedMessage = response.data.message; // Already HTML
+                    appendMessage('ai', formattedMessage );
+                    // Add to history
+                    history.push({role: 'model', parts: [{text: response.data.message}]});
                 }
 
                 // Products (clickable cards)
@@ -110,6 +149,9 @@ jQuery(document).ready(function($){
                     });
                     $body.append(productsHTML);
                 }
+
+                // Add quick buttons after response
+                addQuickButtons();
 
                 $body.scrollTop($body[0].scrollHeight);
             } else {

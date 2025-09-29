@@ -177,6 +177,29 @@
     animation-delay: .3s; 
 }
 
+/* Quick buttons */
+.mwai-quick-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+    margin-bottom: 16px;
+}
+.mwai-quick-buttons button {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #eef2ff;
+    color: var(--accent-2);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+.mwai-quick-buttons button:hover {
+    background: #e0e7ff;
+}
+
 /* Product grid */
 .mwai-products { 
     display: grid; 
