@@ -67,10 +67,10 @@ class MWAI_Ajax_Handler {
             if ( empty( $api_key ) ) {
                 $ai_text = 'API key not configured.';
             } else {
-                $model_option = defined( 'GEMINI_MODEL' ) ? GEMINI_MODEL : 'gemini-1.5-flash-latest';
+                $model_option = defined( 'GEMINI_MODEL' ) ? GEMINI_MODEL : 'gemini-2.5-flash';
                 // Ensure only supported models are used
-                $supported_models = array('gemini-1.5-flash-latest');
-                $model = in_array($model_option, $supported_models) ? $model_option : 'gemini-1.5-flash-latest';
+                $supported_models = array('gemini-2.5-flash');
+                $model = in_array($model_option, $supported_models) ? $model_option : 'gemini-2.5-flash';
 
                 $temperature = defined( 'GEMINI_TEMPERATURE' ) ? floatval(GEMINI_TEMPERATURE) : 0.7;
                 $max_tokens  = defined( 'GEMINI_MAX_TOKENS' ) ? intval(GEMINI_MAX_TOKENS) : 1024;

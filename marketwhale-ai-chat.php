@@ -100,7 +100,7 @@ add_action( 'wp_ajax_mwai_test_connection', 'mwai_test_connection_callback' );
 function mwai_settings_page() {
     // Retrieve settings
     $api_key     = esc_attr( get_option( 'mwai_gemini_api_key', '' ) );
-    $model       = esc_attr( get_option( 'mwai_gemini_model', 'gemini-1.5-flash-latest' ) );
+    $model       = esc_attr( get_option( 'mwai_gemini_model', 'gemini-2.5-flash' ) );
     $temperature = esc_attr( get_option( 'mwai_gemini_temperature', '0.7' ) );
     $max_tokens  = esc_attr( get_option( 'mwai_gemini_max_tokens', '1024' ) );
     $top_p       = esc_attr( get_option( 'mwai_gemini_top_p', '0.9' ) );
@@ -129,9 +129,9 @@ function mwai_settings_page() {
                     <th scope="row">Model</th>
                     <td>
                         <select name="mwai_gemini_model">
-                            <option value="gemini-1.5-flash-latest" <?php selected( $model, 'gemini-1.5-flash-latest' ); ?>>Gemini 1.5 Flash Latest (Recommended)</option>
+                            <option value="gemini-2.5-flash" <?php selected( $model, 'gemini-2.5-flash' ); ?>>Gemini 2.5 Flash (Recommended)</option>
                         </select>
-                        <p class="description">Choose the model for responses. 'gemini-1.5-flash-latest' is supported for `generateContent` in v1beta.</p>
+                        <p class="description">Choose the model for responses. 'gemini-1.0-pro' is generally supported for `generateContent` in v1beta.</p>
                     </td>
                 </tr>
 
@@ -203,7 +203,7 @@ function mwai_test_connection_callback() {
     check_ajax_referer( 'mwai_test_connection_nonce', '_wpnonce' );
 
     $api_key = get_option( 'mwai_gemini_api_key', '' );
-    $model   = get_option( 'mwai_gemini_model', 'gemini-1.5-flash-latest' );
+    $model   = get_option( 'mwai_gemini_model', 'gemini-1.0-pro' ); // Changed default model
 
     if ( empty( $api_key ) || $api_key === 'AIzaSyA2vmScQRlnniWTaWLNwkpr-9PdhPyKsTk' ) {
         wp_send_json_error( array( 'message' => 'Gemini API Key is not configured or is still the placeholder key.' ) );
@@ -256,7 +256,7 @@ if ( ! defined( 'GEMINI_API_KEY' ) ) {
     define( 'GEMINI_API_KEY', get_option( 'mwai_gemini_api_key', '' ) );
 }
 if ( ! defined( 'GEMINI_MODEL' ) ) {
-    define( 'GEMINI_MODEL', get_option( 'mwai_gemini_model', 'gemini-1.5-flash-latest' ) );
+    define( 'GEMINI_MODEL', get_option( 'mwai_gemini_model', 'gemini-2.5-flash' ) );
 }
 if ( ! defined( 'GEMINI_TEMPERATURE' ) ) {
     define( 'GEMINI_TEMPERATURE', get_option( 'mwai_gemini_temperature', '0.7' ) );
