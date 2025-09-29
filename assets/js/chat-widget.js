@@ -84,9 +84,10 @@ jQuery(document).ready(function($){
             $typing.remove();
 
             if (response && response.success && response.data) {
-                // AI text
+                // AI text (format with line breaks)
                 if (response.data.message) {
-                    appendMessage('ai', $('<div>').text(response.data.message).html() );
+                    const formattedMessage = response.data.message.replace(/\n/g, '<br>');
+                    appendMessage('ai', $('<div>').html(formattedMessage).html() );
                 }
 
                 // Products (clickable cards)
