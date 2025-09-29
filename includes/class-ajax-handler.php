@@ -78,7 +78,22 @@ class MWAI_Ajax_Handler {
 
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=" . rawurlencode( $api_key );
 
-                $system_instruction = 'You are MarketWhale AI, a friendly and engaging shopping assistant for an online store. Provide helpful, concise responses. Use HTML tags for formatting like <b>bold</b>, <ul><li>lists</li></ul>, <br> for breaks to make it modern and readable. Be conversational, end responses with a follow-up question to encourage interaction. Suggest relevant products when appropriate. Always output in strict JSON format only: {"text": "your formatted response here", "suggested_keywords": ["keyword1", "keyword2"]} where suggested_keywords are search terms for product recommendations (empty array if none). Do not add any extra text outside the JSON.';
+                $system_instruction = 'You are MarketWhale AI, 
+                a friendly and engaging shopping assistant for an online store. 
+                Your primary goal is to answer customer questions and engage them in conversation. 
+                Provide helpful, concise, and customer-centric responses. 
+                Use HTML tags for formatting like <b>bold</b>, <ul><li>lists</li></ul>, 
+                <br> for breaks to make it modern and readable. Be conversational, 
+                and always end responses with a follow-up question to encourage further interaction. 
+                ONLY provide `suggested_keywords` for product search if the user\'s intent is clearly to browse or 
+                search for products. For general questions, provide an empty `suggested_keywords` array. 
+                When providing `suggested_keywords`, ensure they are highly precise, 
+                comma-separated terms suitable for a WooCommerce product search 
+                (e.g., "blue jacket", "men\'s shoes", "summer dress"). Optionally, 
+                you may also include a `suggested_product_count` (integer, max 6) 
+                if a specific number of products is relevant. Always output in strict JSON format only: 
+                    {"text": "your formatted response here", "suggested_keywords": ["keyword1", "keyword2"], 
+                    "suggested_product_count": 4}. Do not add any extra text outside the JSON.';
 
                 $body = wp_json_encode( array(
                     'systemInstruction' => array(
@@ -115,6 +130,8 @@ class MWAI_Ajax_Handler {
                             if ( $parsed && isset( $parsed['text'] ) ) {
                                 $ai_text = wp_kses_post( $parsed['text'] );
                                 $suggested_keywords = isset( $parsed['suggested_keywords'] ) ? (array) $parsed['suggested_keywords'] : array();
+                                $suggested_product_count = isset( $parsed['suggested_product_count'] ) ? intval( $parsed['suggested_product_count'] ) : 4; // Default to 4
+                                $suggested_product_count = min( $suggested_product_count, 6 ); // Max 6 products
                             }
                         }
                     } else {
@@ -127,58 +144,78 @@ class MWAI_Ajax_Handler {
             }
         }
 
-        // WooCommerce product suggestions based on suggested_keywords or fallback to message
-        $products = array();
-        if ( class_exists( 'WooCommerce' ) ) {
-            $search_query = ! empty( $suggested_keywords ) ? implode( ' ', $suggested_keywords ) : $message;
-            $query_args = array(
-                'post_type' => 'product',
-                'posts_per_page' => 4,
-                'orderby' => 'relevance',
-            );
-            if ( ! empty( $search_query ) && $message !== 'List categories' && $message !== 'Search for a product' ) {
-                $query_args['s'] = $search_query;
-            } else {
-                $query_args['orderby'] = 'rand';
-            }
-            $query = new WP_Query( $query_args );
+        // WooCommerce product suggestions based on suggested_keywords or specific user actions
+$products = array();
+if ( class_exists( 'WooCommerce' ) ) {
+    $should_fetch_products = false;
+    $search_query = '';
+    $posts_per_page = isset( $suggested_product_count ) ? $suggested_product_count : 4;
 
-            if ( $query->have_posts() ) {
-                while ( $query->have_posts() ) {
-                    $query->the_post();
-                    $id      = get_the_ID();
-                    $product = wc_get_product( $id );
-                    $img     = get_the_post_thumbnail_url( $id, 'medium' ) ?: wc_placeholder_img_src();
+    // Determine if products should be fetched
+    if ( ! empty( $suggested_keywords ) ) {
+        $should_fetch_products = true;
+        $search_query = implode( ' ', $suggested_keywords );
+    } elseif ( $message === 'Show catalog' ) {
+        $should_fetch_products = true;
+        $search_query = ''; // No specific search query, fetch random products
+    }
+
+    if ( $should_fetch_products ) {
+        $query_args = array(
+            'post_type'      => 'product',
+            'posts_per_page' => $posts_per_page,
+            'orderby'        => 'relevance',
+            'order'          => 'DESC',
+        );
+
+        // If AI provided keywords, search by them
+        if ( ! empty( $search_query ) ) {
+            $query_args['s'] = $search_query;
+        }
+
+        $query = new WP_Query( $query_args );
+
+        if ( $query->have_posts() ) {
+            foreach ( $query->posts as $post ) {
+                $product = wc_get_product( $post->ID );
+                if ( $product ) {
                     $products[] = array(
-                        'title' => get_the_title(),
-                        'price' => $product ? $product->get_price_html() : '',
-                        'image' => $img,
-                        'link'  => get_permalink( $id ),
+                        'id'    => $product->get_id(),
+                        'title' => $product->get_name(),
+                        'price' => $product->get_price_html(),
+                        'link'  => get_permalink( $product->get_id() ),
+                        'image' => wp_get_attachment_image_url( $product->get_image_id(), 'medium' ),
                     );
-                }
-                wp_reset_postdata();
-            } else {
-                // Fallback to random if no matches
-                $query_args['s'] = '';
-                $query_args['orderby'] = 'rand';
-                $query = new WP_Query( $query_args );
-                if ( $query->have_posts() ) {
-                    while ( $query->have_posts() ) {
-                        $query->the_post();
-                        $id      = get_the_ID();
-                        $product = wc_get_product( $id );
-                        $img     = get_the_post_thumbnail_url( $id, 'medium' ) ?: wc_placeholder_img_src();
-                        $products[] = array(
-                            'title' => get_the_title(),
-                            'price' => $product ? $product->get_price_html() : '',
-                            'image' => $img,
-                            'link'  => get_permalink( $id ),
-                        );
-                    }
-                    wp_reset_postdata();
                 }
             }
         }
+
+        // If no products found, fallback to random products
+        if ( empty( $products ) ) {
+            $fallback_args = array(
+                'post_type'      => 'product',
+                'posts_per_page' => $posts_per_page,
+                'orderby'        => 'rand',
+            );
+            $fallback_query = new WP_Query( $fallback_args );
+
+            if ( $fallback_query->have_posts() ) {
+                foreach ( $fallback_query->posts as $post ) {
+                    $product = wc_get_product( $post->ID );
+                    if ( $product ) {
+                        $products[] = array(
+                            'id'    => $product->get_id(),
+                            'title' => $product->get_name(),
+                            'price' => $product->get_price_html(),
+                            'link'  => get_permalink( $product->get_id() ),
+                            'image' => wp_get_attachment_image_url( $product->get_image_id(), 'medium' ),
+                        );
+                    }
+                }
+            }
+        }
+    }
+} // Added missing closing brace for if ( class_exists( 'WooCommerce' ) )
 
         wp_send_json_success( array(
             'message'  => $ai_text,
