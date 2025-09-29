@@ -1,15 +1,5 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
-
-/**
- * NOTE: Replace the GEMINI_API_KEY value with your real key.
- * Keep keys secure. Consider moving to WP admin settings or environment variables.
- */
-if ( ! defined( 'GEMINI_API_KEY' ) ) {
-    define( 'GEMINI_API_KEY', 'AIzaSyA2vmScQRlnniWTaWLNwkpr-9PdhPyKsTk' );
-}
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 class MWAI_Ajax_Handler {
 
@@ -18,11 +8,7 @@ class MWAI_Ajax_Handler {
         add_action( 'wp_ajax_nopriv_mwai_get_response', array( $this, 'get_response' ) );
     }
 
-    /**
-     * Handle AJAX request: send user message to Gemini and return response + products.
-     */
     public function get_response() {
-        // Accept POST input
         $message = isset( $_POST['message'] ) ? sanitize_text_field( wp_unslash( $_POST['message'] ) ) : '';
 
         if ( empty( $message ) ) {
@@ -32,10 +18,18 @@ class MWAI_Ajax_Handler {
             ) );
         }
 
-        // Build Gemini request using 'contents' format
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . rawurlencode( GEMINI_API_KEY );
+        $api_key = defined( 'GEMINI_API_KEY' ) ? GEMINI_API_KEY : '';
+        $model   = defined( 'GEMINI_MODEL' ) ? GEMINI_MODEL : 'gemini-2.5-flash';
+        $temperature = defined( 'GEMINI_TEMPERATURE' ) ? floatval(GEMINI_TEMPERATURE) : 0.7;
+        $max_tokens  = defined( 'GEMINI_MAX_TOKENS' ) ? intval(GEMINI_MAX_TOKENS) : 1024;
+        $top_p       = defined( 'GEMINI_TOP_P' ) ? floatval(GEMINI_TOP_P) : 0.9;
+
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=" . rawurlencode( $api_key );
 
         $body = wp_json_encode( array(
+            'temperature' => $temperature,
+            'maxOutputTokens' => $max_tokens,
+            'topP' => $top_p,
             'contents' => array(
                 array(
                     'role'  => 'user',
@@ -62,13 +56,11 @@ class MWAI_Ajax_Handler {
                 $data = json_decode( $raw, true );
                 if ( ! empty( $data['candidates'][0]['content']['parts'][0]['text'] ) ) {
                     $ai_text = wp_kses_post( $data['candidates'][0]['content']['parts'][0]['text'] );
-                } else if ( ! empty( $data['candidates'][0]['content']['parts'] ) && is_array( $data['candidates'][0]['content']['parts'] ) ) {
-                    // Join parts if multiple
+                } else if ( ! empty( $data['candidates'][0]['content']['parts'] ) ) {
                     $parts = wp_list_pluck( $data['candidates'][0]['content']['parts'], 'text' );
                     $ai_text = wp_kses_post( implode( "\n\n", $parts ) );
                 }
             } else {
-                // Attempt to provide any helpful error from API
                 $decoded = json_decode( $raw, true );
                 if ( ! empty( $decoded['error']['message'] ) ) {
                     $ai_text = 'API Error: ' . sanitize_text_field( $decoded['error']['message'] );
@@ -76,13 +68,13 @@ class MWAI_Ajax_Handler {
             }
         }
 
-        // Get WooCommerce product suggestions (safe check)
+        // WooCommerce product suggestions
         $products = array();
         if ( class_exists( 'WooCommerce' ) ) {
             $query = new WP_Query( array(
-                'post_type'      => 'product',
+                'post_type' => 'product',
                 'posts_per_page' => 4,
-                'orderby'        => 'rand',
+                'orderby' => 'rand',
             ) );
 
             if ( $query->have_posts() ) {
@@ -90,7 +82,7 @@ class MWAI_Ajax_Handler {
                     $query->the_post();
                     $id      = get_the_ID();
                     $product = wc_get_product( $id );
-                    $img     = get_the_post_thumbnail_url( $id, 'medium' ) ? get_the_post_thumbnail_url( $id, 'medium' ) : wc_placeholder_img_src();
+                    $img     = get_the_post_thumbnail_url( $id, 'medium' ) ?: wc_placeholder_img_src();
                     $products[] = array(
                         'title' => get_the_title(),
                         'price' => $product ? $product->get_price_html() : '',
@@ -111,4 +103,3 @@ class MWAI_Ajax_Handler {
 
 // Initialize
 new MWAI_Ajax_Handler();
-?>
