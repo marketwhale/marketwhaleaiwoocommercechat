@@ -10,10 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// SerpAPI key (server-side). Replace or keep as provided.
-if ( ! defined( 'MWAI_SERPAPI_KEY' ) ) {
-    define( 'MWAI_SERPAPI_KEY', '74ba583069375422c791649e49971f851fcc1ba85e9c30cc86e0a49ac8f75ea2' );
-}
 
 // Assets (CSS/JS)
 function mwai_enqueue_assets() {

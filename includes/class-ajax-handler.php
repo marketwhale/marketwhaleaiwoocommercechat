@@ -197,51 +197,9 @@ class MWAI_Ajax_Handler {
                     wp_reset_postdata();
                 }
             }
-
-            // 2) SerpAPI / Google Shopping global products
-            $serp_key = defined( 'MWAI_SERPAPI_KEY' ) ? MWAI_SERPAPI_KEY : '';
-            if ( ! empty( $serp_key ) ) {
-                $serp_query = ! empty( $search_query ) ? rawurlencode( $search_query ) : rawurlencode( $message );
-                // parameters: engine=google_shopping, hl=en, gl=US (you can change gl to match your store)
-                $serp_url = "https://serpapi.com/search.json?engine=google_shopping&q={$serp_query}&hl=en&gl=us&num={$posts_per_page}&api_key={$serp_key}";
-
-                $serp_resp = wp_remote_get( $serp_url, array( 'timeout' => 20 ) );
-                if ( ! is_wp_error( $serp_resp ) ) {
-                    $serp_body = wp_remote_retrieve_body( $serp_resp );
-                    $serp_data = json_decode( $serp_body, true );
-                    if ( ! empty( $serp_data['shopping_results'] ) && is_array( $serp_data['shopping_results'] ) ) {
-                        $slice = array_slice( $serp_data['shopping_results'], 0, $posts_per_page );
-                        foreach ( $slice as $item ) {
-                            $title = isset( $item['title'] ) ? wp_kses_post( $item['title'] ) : '';
-                            $link  = isset( $item['link'] ) ? esc_url_raw( $item['link'] ) : '';
-                            $image = isset( $item['thumbnail'] ) ? esc_url_raw( $item['thumbnail'] ) : '';
-                            // price fields vary; prefer extracted_price or price
-                            $price = '';
-                            if ( isset( $item['extracted_price'] ) && $item['extracted_price'] !== '' ) {
-                                $price = $item['extracted_price'];
-                            } elseif ( isset( $item['price'] ) ) {
-                                $price = is_array($item['price']) && isset($item['price']['raw']) ? $item['price']['raw'] : $item['price'];
-                            }
-
-                            // fallback formatting
-                            $price_str = $price !== '' ? (string)$price : '';
-
-                            $store = isset( $item['source'] ) ? sanitize_text_field( $item['source'] ) : '';
-                            $products[] = array(
-                                'source' => 'Global',
-                                'store'  => $store,
-                                'title'  => $title,
-                                'price'  => $price_str,
-                                'image'  => $image,
-                                'link'   => $link,
-                            );
-                        }
-                    }
-                }
-            }
         } // end should_fetch_products
 
-        // Deduplicate products by link / title (global + local)
+        // Deduplicate products by link / title (only local now)
         $seen = array();
         $final_products = array();
         foreach ( $products as $p ) {

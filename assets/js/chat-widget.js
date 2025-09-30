@@ -101,13 +101,13 @@ jQuery(document).ready(function($){
             const title = p.title || '';
             const price = p.price || '';
             const link  = p.link || '#';
-            const source = p.source || 'Global';
+            const source = p.source || 'WooCommerce'; // Default to WooCommerce
             const store = p.store ? p.store : '';
 
-            const sourceBadge = source === 'WooCommerce' ? '<span class="mwai-badge local">Local</span>' : '<span class="mwai-badge global">' + (store ? store : 'Global') + '</span>';
+            const sourceBadge = source === 'WooCommerce' ? '<span class="mwai-badge local">Local</span>' : ''; // Only show local badge
 
             const card = $(`
-                <a class="mwai-product-card" href="${link}" target="_blank" rel="noopener noreferrer">
+                <a class="mwai-product-card" href="${link}">
                     <div class="mwai-product-media">
                         <img src="${image}" alt="${$('<div>').text(title).html()}">
                     </div>
