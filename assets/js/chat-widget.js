@@ -5,24 +5,59 @@ jQuery(document).ready(function($){
     const $input = $('#mwai-user-input');
     const $send = $('#mwai-send-btn');
     const $close = $('#mwai-close-btn');
-    let firstOpen = true;
+    const CHAT_HISTORY_KEY = 'mwai_chat_history';
     let history = []; // For multi-turn conversation
 
     // Accessibility: focus input when chat opens
     function openChat() {
         $chat.removeClass('hidden');
         setTimeout(() => { $input.focus(); }, 300);
+        // Scroll to bottom when opening
+        $body.scrollTop($body[0].scrollHeight);
     }
     function closeChat() {
         $chat.addClass('hidden');
+    }
+
+    // Load history from localStorage
+    function loadHistory() {
+        const storedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
+        if (storedHistory) {
+            try {
+                history = JSON.parse(storedHistory);
+                // Clear current chat body before rendering loaded history
+                $body.empty();
+                history.forEach(entry => {
+                    if (entry.role === 'user') {
+                        appendMessage('user', $('<div>').text(entry.parts[0].text).html(), [], false); // Don't save again
+                    } else if (entry.role === 'model') {
+                        const products = entry.products || [];
+                        appendMessage('ai', entry.parts[0].text, products, false); // Don't save again, pass products
+                    }
+                });
+                $body.scrollTop($body[0].scrollHeight);
+                addQuickButtons(); // Add quick buttons after loading history
+                return true; // History loaded
+            } catch (e) {
+                console.error("Failed to parse chat history from localStorage", e);
+                history = [];
+                return false;
+            }
+        }
+        return false; // No history found
+    }
+
+    // Save history to localStorage
+    function saveHistory() {
+        localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
     }
 
     // Toggle chat
     $fab.on('click', function(){
         if ($chat.hasClass('hidden')) {
             openChat();
-            if (firstOpen) {
-                firstOpen = false;
+            // Only show greeting if no history was loaded
+            if (!loadHistory()) {
                 showGreeting();
             }
         } else {
@@ -32,12 +67,19 @@ jQuery(document).ready(function($){
 
     $close.on('click', function(){ closeChat(); });
 
-    // Append message (role: 'ai' | 'user')
-    function appendMessage(role, contentHtml) {
+    // Append message (role: 'ai' | 'user', contentHtml: string, productsData: array, save: boolean)
+    function appendMessage(role, contentHtml, productsData = [], save = true) {
         const wrapper = $('<div>').addClass('mwai-msg ' + role);
         wrapper.append($('<p>').html(contentHtml));
         $body.append(wrapper);
+        // If productsData is provided, render them immediately
+        if (productsData.length > 0) {
+            renderProducts(productsData);
+        }
         $body.scrollTop($body[0].scrollHeight);
+        if (save) {
+            saveHistory(); // Save history after appending message
+        }
     }
 
     // Typing indicator element
@@ -67,6 +109,7 @@ jQuery(document).ready(function($){
         greetings.forEach(g => {
             history.push({role: 'model', parts: [{text: g}]});
         });
+        saveHistory(); // Save history after greeting
     }
 
     // Add quick action buttons
@@ -135,37 +178,42 @@ jQuery(document).ready(function($){
 
         // Add to history
         history.push({role: 'user', parts: [{text: message}]});
+        saveHistory(); // Save history after user message
 
         // Add typing indicator
         const $typing = createTyping();
         $body.append($typing);
         $body.scrollTop($body[0].scrollHeight);
 
+        // Prepare history for API (remove products field)
+        const historyForApi = history.map(entry => {
+            const apiEntry = { role: entry.role, parts: entry.parts };
+            return apiEntry;
+        });
+
         // AJAX with history
         $.post(MWAI_Ajax.ajax_url, {
             action: 'mwai_get_response',
-            history: JSON.stringify(history),
+            history: JSON.stringify(historyForApi), // Send history without products
             _wpnonce: MWAI_Ajax.nonce
         }, function(response){
             $typing.remove();
 
             if (response && response.success && response.data) {
-                // AI text
-                if (response.data.message) {
-                    appendMessage('ai', response.data.message );
-                    // Add to history
-                    history.push({role: 'model', parts: [{text: response.data.message}]});
-                }
+                const aiMessage = response.data.message || '';
+                const productsData = response.data.products || [];
 
-                // Products (unified)
-                if (response.data.products && response.data.products.length > 0) {
-                    renderProducts(response.data.products);
-                }
+                // Append AI text and products
+                appendMessage('ai', aiMessage, productsData);
+
+                // Add to history with products
+                history.push({role: 'model', parts: [{text: aiMessage}], products: productsData});
 
                 // Add quick buttons after response
                 addQuickButtons();
 
                 $body.scrollTop($body[0].scrollHeight);
+                saveHistory(); // Save history after AI response
             } else {
                 appendMessage('ai', '⚠️ Sorry — unable to get a response. Please try again.');
             }
@@ -187,5 +235,13 @@ jQuery(document).ready(function($){
     // Ensure chat responsive on orientation change
     $(window).on('orientationchange resize', function(){
         $body.scrollTop($body[0].scrollHeight);
+    });
+
+    // Initial load of history when the page loads
+    $(window).on('load', function() {
+        // If chat is already open (e.g., user refreshed page with chat open), load history
+        if (!$chat.hasClass('hidden')) {
+            loadHistory();
+        }
     });
 });
