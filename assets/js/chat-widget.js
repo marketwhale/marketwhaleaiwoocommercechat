@@ -35,11 +35,7 @@ jQuery(document).ready(function($){
     // Append message (role: 'ai' | 'user')
     function appendMessage(role, contentHtml) {
         const wrapper = $('<div>').addClass('mwai-msg ' + role);
-        if (role === 'ai') {
-            wrapper.append($('<p>').html(contentHtml));
-        } else {
-            wrapper.append($('<p>').html(contentHtml));
-        }
+        wrapper.append($('<p>').html(contentHtml));
         $body.append(wrapper);
         $body.scrollTop($body[0].scrollHeight);
     }
@@ -96,6 +92,38 @@ jQuery(document).ready(function($){
         });
     }
 
+    // Render unified product cards
+    function renderProducts(products) {
+        if (!products || products.length === 0) return;
+        const container = $('<div class="mwai-products"></div>');
+        products.forEach(function(p){
+            const image = p.image || '';
+            const title = p.title || '';
+            const price = p.price || '';
+            const link  = p.link || '#';
+            const source = p.source || 'Global';
+            const store = p.store ? p.store : '';
+
+            const sourceBadge = source === 'WooCommerce' ? '<span class="mwai-badge local">Local</span>' : '<span class="mwai-badge global">' + (store ? store : 'Global') + '</span>';
+
+            const card = $(`
+                <a class="mwai-product-card" href="${link}" target="_blank" rel="noopener noreferrer">
+                    <div class="mwai-product-media">
+                        <img src="${image}" alt="${$('<div>').text(title).html()}">
+                    </div>
+                    <div class="mwai-product-meta">
+                        <h4>${$('<div>').text(title).html()}</h4>
+                        <div class="mwai-product-price">${price}</div>
+                        ${sourceBadge}
+                    </div>
+                </a>
+            `);
+            container.append(card);
+        });
+        $body.append(container);
+        $body.scrollTop($body[0].scrollHeight);
+    }
+
     // Send user query
     function sendMessage() {
         const message = $input.val().trim();
@@ -116,38 +144,22 @@ jQuery(document).ready(function($){
         // AJAX with history
         $.post(MWAI_Ajax.ajax_url, {
             action: 'mwai_get_response',
-            history: JSON.stringify(history)
+            history: JSON.stringify(history),
+            _wpnonce: MWAI_Ajax.nonce
         }, function(response){
             $typing.remove();
 
             if (response && response.success && response.data) {
                 // AI text
                 if (response.data.message) {
-                    const formattedMessage = response.data.message; // Already HTML
-                    appendMessage('ai', formattedMessage );
+                    appendMessage('ai', response.data.message );
                     // Add to history
                     history.push({role: 'model', parts: [{text: response.data.message}]});
                 }
 
-                // Products (clickable cards)
+                // Products (unified)
                 if (response.data.products && response.data.products.length > 0) {
-                    let productsHTML = $('<div class="mwai-products"></div>');
-                    response.data.products.forEach(function(p){
-                        const image = p.image || '';
-                        const title = p.title || '';
-                        const price = p.price || '';
-                        const link  = p.link || '#';
-
-                        const card = $(`
-                            <a class="mwai-product-card" href="${link}" target="_blank" rel="noopener noreferrer">
-                                <img src="${image}" alt="${$('<div>').text(title).html()}">
-                                <h4>${$('<div>').text(title).html()}</h4>
-                                <span>${price}</span>
-                            </a>
-                        `);
-                        productsHTML.append(card);
-                    });
-                    $body.append(productsHTML);
+                    renderProducts(response.data.products);
                 }
 
                 // Add quick buttons after response

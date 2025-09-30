@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: MarketWhale AI Chat
- * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API).
- * Version: 1.5
+ * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API + SerpAPI).
+ * Version: 1.6
  * Author: Your Name
  */
 
@@ -10,14 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// SerpAPI key (server-side). Replace or keep as provided.
+if ( ! defined( 'MWAI_SERPAPI_KEY' ) ) {
+    define( 'MWAI_SERPAPI_KEY', '74ba583069375422c791649e49971f851fcc1ba85e9c30cc86e0a49ac8f75ea2' );
+}
+
 // Assets (CSS/JS)
 function mwai_enqueue_assets() {
     $plugin_url = plugin_dir_url( __FILE__ );
-    wp_enqueue_style( 'mwai-style', $plugin_url . 'assets/css/style.css', array(), '1.5' );
-    wp_enqueue_script( 'mwai-js', $plugin_url . 'assets/js/chat-widget.js', array( 'jquery' ), '1.5', true );
+    wp_enqueue_style( 'mwai-style', $plugin_url . 'assets/css/style.css', array(), '1.6' );
+    wp_enqueue_script( 'mwai-js', $plugin_url . 'assets/js/chat-widget.js', array( 'jquery' ), '1.6', true );
 
     wp_localize_script( 'mwai-js', 'MWAI_Ajax', array(
         'ajax_url' => admin_url( 'admin-ajax.php' ),
+        'nonce'    => wp_create_nonce( 'mwai_ajax_nonce' )
     ) );
 }
 add_action( 'wp_enqueue_scripts', 'mwai_enqueue_assets' );
@@ -251,7 +257,7 @@ function mwai_test_connection_callback() {
     }
 }
 
-// Define GEMINI_API_KEY, model, and attributes
+// Define GEMINI constants (from options)
 if ( ! defined( 'GEMINI_API_KEY' ) ) {
     define( 'GEMINI_API_KEY', get_option( 'mwai_gemini_api_key', '' ) );
 }
