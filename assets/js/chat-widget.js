@@ -10,13 +10,15 @@ jQuery(document).ready(function($){
 
     // Accessibility: focus input when chat opens
     function openChat() {
-        $chat.removeClass('hidden');
+        $chat.addClass('open').removeClass('hidden');
+        $fab.addClass('hidden-fab');
         setTimeout(() => { $input.focus(); }, 300);
         // Scroll to bottom when opening
         $body.scrollTop($body[0].scrollHeight);
     }
     function closeChat() {
-        $chat.addClass('hidden');
+        $chat.removeClass('open').addClass('hidden');
+        $fab.removeClass('hidden-fab');
     }
 
     // Load history from localStorage
@@ -54,7 +56,7 @@ jQuery(document).ready(function($){
 
     // Toggle chat
     $fab.on('click', function(){
-        if ($chat.hasClass('hidden')) {
+        if ($chat.hasClass('hidden')) { // Check for 'hidden' class to determine current state
             openChat();
             // Only show greeting if no history was loaded
             if (!loadHistory()) {
