@@ -72,16 +72,47 @@ jQuery(document).ready(function($){
     // Append message (role: 'ai' | 'user', contentHtml: string, productsData: array, save: boolean)
     function appendMessage(role, contentHtml, productsData = [], save = true) {
         const wrapper = $('<div>').addClass('mwai-msg ' + role);
-        wrapper.append($('<p>').html(contentHtml));
+        const $p = $('<p>');
+        wrapper.append($p);
         $body.append(wrapper);
-        // If productsData is provided, render them immediately
-        if (productsData.length > 0) {
-            renderProducts(productsData);
+
+        if (role === 'ai') {
+            typeMessage($p, contentHtml, () => {
+                // After typing, render products and save history
+                if (productsData.length > 0) {
+                    renderProducts(productsData);
+                }
+                $body.scrollTop($body[0].scrollHeight);
+                if (save) {
+                    saveHistory();
+                }
+            });
+        } else {
+            $p.html(contentHtml);
+            if (productsData.length > 0) {
+                renderProducts(productsData);
+            }
+            $body.scrollTop($body[0].scrollHeight);
+            if (save) {
+                saveHistory();
+            }
         }
-        $body.scrollTop($body[0].scrollHeight);
-        if (save) {
-            saveHistory(); // Save history after appending message
-        }
+    }
+
+    // Typing animation for AI messages
+    function typeMessage($element, text, callback) {
+        let i = 0;
+        const speed = 20; // Typing speed in milliseconds
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                $element.html(text.substring(0, i + 1));
+                $body.scrollTop($body[0].scrollHeight); // Keep scrolling to bottom
+                i++;
+            } else {
+                clearInterval(interval);
+                if (callback) callback();
+            }
+        }, speed);
     }
 
     // Typing indicator element
@@ -100,7 +131,15 @@ jQuery(document).ready(function($){
         let delay = 500;
         greetings.forEach((g, i) => {
             setTimeout(() => {
-                appendMessage('ai', g);
+                // For greeting messages, we don't want a typing animation for each one,
+                // but rather append them directly. The typing animation is for actual AI responses.
+                // However, to maintain consistency with the new appendMessage, we'll pass a dummy callback.
+                const wrapper = $('<div>').addClass('mwai-msg ai');
+                const $p = $('<p>').html(g);
+                wrapper.append($p);
+                $body.append(wrapper);
+                $body.scrollTop($body[0].scrollHeight);
+
                 if (i === greetings.length - 1) {
                     addQuickButtons();
                 }
@@ -205,23 +244,26 @@ jQuery(document).ready(function($){
                 const aiMessage = response.data.message || '';
                 const productsData = response.data.products || [];
 
-                // Append AI text and products
-                appendMessage('ai', aiMessage, productsData);
+                // Append AI text and products. The appendMessage function now handles saving history after typing.
+                appendMessage('ai', aiMessage, productsData, true); // Pass true to save history after typing
 
-                // Add to history with products
+                // Add to history with products (this will be saved by appendMessage's callback)
                 history.push({role: 'model', parts: [{text: aiMessage}], products: productsData});
 
                 // Add quick buttons after response
                 addQuickButtons();
 
                 $body.scrollTop($body[0].scrollHeight);
-                saveHistory(); // Save history after AI response
             } else {
                 appendMessage('ai', '⚠️ Sorry — unable to get a response. Please try again.');
+                history.push({role: 'model', parts: [{text: '⚠️ Sorry — unable to get a response. Please try again.'}]});
+                saveHistory(); // Save history for error message
             }
         }, 'json').fail(function(){
             $typing.remove();
             appendMessage('ai', '⚠️ Network error — please try again.');
+            history.push({role: 'model', parts: [{text: '⚠️ Network error — please try again.'}]});
+            saveHistory(); // Save history for network error
         });
     }
 
