@@ -47,8 +47,8 @@
     position: fixed;
     bottom: 88px;
     right: 16px;
-    width: 92%;
-    max-width: 420px;
+    width: 92%; /* Keep 92% for smaller screens */
+    max-width: 100%; /* Allow full width on larger screens */
     max-height: 76vh;
     background: var(--bg);
     border-radius: 14px;
@@ -220,12 +220,13 @@
 .mwai-products { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* fluid two-column layout */
-    gap: 12px; 
+    gap: 6px; 
     margin-top: 24px; 
     margin-bottom: 16px; 
-    padding: 8px; 
+    padding: 6px; 
     background: #f8fafc; 
-    border-radius: 12px; 
+    border-radius: 12px;
+    width: 100%; /* Ensure it takes full width of its parent */
 }
 
 .mwai-product-card {
@@ -236,7 +237,7 @@
     color: inherit;
     border-radius: 12px;
     border: 1px solid var(--border);
-    padding: 10px;
+    padding: 6px;
     background: #fff;
     transition: transform .18s ease, box-shadow .18s ease;
     text-align: center;
@@ -251,7 +252,7 @@
 /* Product image - square, responsive */
 .mwai-product-card img { 
     width: 100%;       
-    max-width: 120px;  
+    max-width: 100%;  
     height: auto; 
     aspect-ratio: 1/1; 
     border-radius: 6px; 
@@ -326,7 +327,7 @@
 /* Tablet (768px–1023px) adjustments */
 @media (max-width: 1023px) and (min-width: 768px) {
     .mwai-product-card img {
-        max-width: 100px;
+        max-width: 100%; /* Images take full width of card */
     }
     .mwai-product-meta h4,
     .mwai-product-price,
@@ -346,7 +347,7 @@
         gap: 8px;
     }
     .mwai-product-card img {
-        max-width: 90px;
+        max-width: 100%; /* Images take full width of card */
     }
     .mwai-product-meta h4,
     .mwai-product-price,
@@ -374,7 +375,8 @@
 /* Desktop tweaks */
 @media(min-width: 768px) {
     #mwai-chat-window { 
-        width: 360px; 
+        width: 90%; /* Allow chat window to take more width on desktop */
+        max-width: 600px; /* Example: increased max-width for desktop */
         max-height: 520px; 
         right: 24px; 
         bottom: 96px; 
