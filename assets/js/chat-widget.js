@@ -34,7 +34,7 @@ jQuery(document).ready(function($){
                         appendMessage('user', $('<div>').text(entry.parts[0].text).html(), [], false); // Don't save again
                     } else if (entry.role === 'model') {
                         const products = entry.products || [];
-                        appendMessage('ai', entry.parts[0].text, products, false); // Don't save again, pass products
+                        appendMessage('ai', entry.parts[0].text, products, false, false); // Don't save again, pass products, and don't animate
                     }
                 });
                 $body.scrollTop($body[0].scrollHeight);
@@ -69,16 +69,27 @@ jQuery(document).ready(function($){
 
     $close.on('click', function(){ closeChat(); });
 
-    // Append message (role: 'ai' | 'user', contentHtml: string, productsData: array, save: boolean)
-    function appendMessage(role, contentHtml, productsData = [], save = true) {
+    // Append message (role: 'ai' | 'user', contentHtml: string, productsData: array, save: boolean, animate: boolean)
+    function appendMessage(role, contentHtml, productsData = [], save = true, animate = true) {
         const wrapper = $('<div>').addClass('mwai-msg ' + role);
         const $p = $('<p>');
         wrapper.append($p);
         $body.append(wrapper);
 
         if (role === 'ai') {
-            typeMessage($p, contentHtml, () => {
-                // After typing, render products and save history
+            if (animate) {
+                typeMessage($p, contentHtml, () => {
+                    // After typing, render products and save history
+                    if (productsData.length > 0) {
+                        renderProducts(productsData);
+                    }
+                    $body.scrollTop($body[0].scrollHeight);
+                    if (save) {
+                        saveHistory();
+                    }
+                });
+            } else {
+                $p.html(contentHtml);
                 if (productsData.length > 0) {
                     renderProducts(productsData);
                 }
@@ -86,7 +97,7 @@ jQuery(document).ready(function($){
                 if (save) {
                     saveHistory();
                 }
-            });
+            }
         } else {
             $p.html(contentHtml);
             if (productsData.length > 0) {
@@ -245,7 +256,7 @@ jQuery(document).ready(function($){
                 const productsData = response.data.products || [];
 
                 // Append AI text and products. The appendMessage function now handles saving history after typing.
-                appendMessage('ai', aiMessage, productsData, true); // Pass true to save history after typing
+                appendMessage('ai', aiMessage, productsData, true, true); // Pass true to save history after typing and animate
 
                 // Add to history with products (this will be saved by appendMessage's callback)
                 history.push({role: 'model', parts: [{text: aiMessage}], products: productsData});
@@ -255,13 +266,13 @@ jQuery(document).ready(function($){
 
                 $body.scrollTop($body[0].scrollHeight);
             } else {
-                appendMessage('ai', '⚠️ Sorry — unable to get a response. Please try again.');
+                appendMessage('ai', '⚠️ Sorry — unable to get a response. Please try again.', [], true, false); // Don't animate error messages
                 history.push({role: 'model', parts: [{text: '⚠️ Sorry — unable to get a response. Please try again.'}]});
                 saveHistory(); // Save history for error message
             }
         }, 'json').fail(function(){
             $typing.remove();
-            appendMessage('ai', '⚠️ Network error — please try again.');
+            appendMessage('ai', '⚠️ Network error — please try again.', [], true, false); // Don't animate network error messages
             history.push({role: 'model', parts: [{text: '⚠️ Network error — please try again.'}]});
             saveHistory(); // Save history for network error
         });
