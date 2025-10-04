@@ -226,44 +226,20 @@ class MWAI_Ajax_Handler {
         if ( $should_fetch_products ) {
             // 1) WooCommerce local products
             if ( class_exists( 'WooCommerce' ) ) {
-                $wc_args = array(
-                    'post_type'      => 'product',
-                    'posts_per_page' => $posts_per_page,
-                );
-
-                if ( ! empty( $search_query ) ) {
-                    $wc_args['s'] = $search_query;
-                } elseif ( $message === 'Show catalog' ) {
-                    // popular products by total_sales
-                    $wc_args['meta_key'] = 'total_sales';
-                    $wc_args['orderby']  = 'meta_value_num';
-                } else {
-                    $wc_args['orderby'] = 'rand';
-                }
-
-                $wc_query = new WP_Query( $wc_args );
-                if ( $wc_query->have_posts() ) {
-                    while ( $wc_query->have_posts() ) {
-                        $wc_query->the_post();
-                        $pid = get_the_ID();
-                        $product = wc_get_product( $pid );
-                        if ( $product ) {
-                            $products[] = $this->format_product_data($product);
-                        }
-                    }
-                    wp_reset_postdata();
-                }
+                $products = $this->search_woocommerce_products( $search_query, $posts_per_page, $message );
             }
         } // end should_fetch_products
 
         // Deduplicate products by link / title (only local now)
         $seen = array();
         $final_products = array();
-        foreach ( $products as $p ) {
-            $uniq = ! empty( $p['link'] ) ? $p['link'] : md5( strtolower( trim( $p['title'] ) ) );
-            if ( isset( $seen[ $uniq ] ) ) continue;
-            $seen[ $uniq ] = true;
-            $final_products[] = $p;
+        if ( isset( $products ) && is_array( $products ) ) {
+            foreach ( $products as $p ) {
+                $uniq = ! empty( $p['link'] ) ? $p['link'] : md5( strtolower( trim( $p['title'] ) ) );
+                if ( isset( $seen[ $uniq ] ) ) continue;
+                $seen[ $uniq ] = true;
+                $final_products[] = $p;
+            }
         }
 
         // If nothing found and Show catalog was requested, do a fallback to random local products (if WC exists)
@@ -287,6 +263,116 @@ class MWAI_Ajax_Handler {
             'message'  => $ai_text,
             'products' => $final_products,
         ) );
+    }
+
+    /**
+     * Custom function to search WooCommerce products comprehensively across multiple fields.
+     *
+     * @param string $search_query The search query string.
+     * @param int $limit Number of products to return.
+     * @param string $message Original user message (for catalog handling).
+     * @return array Array of formatted product data.
+     */
+    private function search_woocommerce_products( $search_query, $limit = 4, $message = '' ) {
+        if ( empty( $search_query ) ) {
+            // For catalog, fetch popular products
+            if ( $message === 'Show catalog' ) {
+                $args = array(
+                    'post_type'      => 'product',
+                    'posts_per_page' => $limit,
+                    'meta_key'       => 'total_sales',
+                    'orderby'        => 'meta_value_num',
+                    'order'          => 'DESC',
+                    'post_status'    => 'publish',
+                );
+            } else {
+                // Random for other cases
+                $args = array(
+                    'post_type'      => 'product',
+                    'posts_per_page' => $limit,
+                    'orderby'        => 'rand',
+                    'post_status'    => 'publish',
+                );
+            }
+        } else {
+            $args = array(
+                'post_type'      => 'product',
+                'posts_per_page' => $limit,
+                'post_status'    => 'publish',
+                's'              => $search_query, // General search in title and content
+                'tax_query'      => array( 'relation' => 'OR' ),
+                'meta_query'     => array( 'relation' => 'OR' ),
+            );
+
+            // Search in product categories and tags
+            $search_terms = explode( ' ', $search_query );
+            $search_terms = array_map( 'sanitize_title', $search_terms ); // Sanitize for slug/term matching
+
+            $tax_query_terms = array();
+            foreach ( $search_terms as $term ) {
+                if ( ! empty( $term ) ) {
+                    $tax_query_terms[] = array(
+                        'taxonomy' => 'product_cat',
+                        'field'    => 'slug',
+                        'terms'    => $term,
+                        'operator' => 'LIKE',
+                    );
+                    $tax_query_terms[] = array(
+                        'taxonomy' => 'product_tag',
+                        'field'    => 'slug',
+                        'terms'    => $term,
+                        'operator' => 'LIKE',
+                    );
+                }
+            }
+            if ( ! empty( $tax_query_terms ) ) {
+                $args['tax_query'][] = array_merge( array( 'relation' => 'OR' ), $tax_query_terms );
+            }
+
+            // Search in SKU
+            $args['meta_query'][] = array(
+                'key'     => '_sku',
+                'value'   => $search_query,
+                'compare' => 'LIKE',
+            );
+
+            // Search in product attributes (pa_*)
+            $attribute_taxonomies = wc_get_attribute_taxonomies();
+            foreach ( $attribute_taxonomies as $attr ) {
+                $taxonomy = wc_attribute_taxonomy_name( $attr->attribute_name );
+                $attr_query_terms = array();
+                foreach ( $search_terms as $term ) {
+                    if ( ! empty( $term ) ) {
+                        $attr_query_terms[] = array(
+                            'taxonomy' => $taxonomy,
+                            'field'    => 'slug',
+                            'terms'    => $term,
+                            'operator' => 'LIKE',
+                        );
+                    }
+                }
+                if ( ! empty( $attr_query_terms ) ) {
+                    $args['tax_query'][] = array_merge( array( 'relation' => 'OR' ), $attr_query_terms );
+                }
+            }
+        }
+
+        $wc_query = new WP_Query( $args );
+        $products = array();
+
+        if ( $wc_query->have_posts() ) {
+            while ( $wc_query->have_posts() ) {
+                $wc_query->the_post();
+                $pid = get_the_ID();
+                $product = wc_get_product( $pid );
+                if ( $product ) {
+                    $products[] = $this->format_product_data( $product );
+                }
+            }
+            wp_reset_postdata();
+        }
+
+        return $products;
     }
 
     /**
@@ -318,3 +404,4 @@ if ( ! function_exists( 'wc_get_product_id_by_name' ) ) {
 
 // Initialize
 new MWAI_Ajax_Handler();
+?>
