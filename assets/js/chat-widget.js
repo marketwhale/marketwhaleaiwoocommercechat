@@ -41,7 +41,13 @@ jQuery(document).ready(function($){
                     }
                 });
                 $body.scrollTop($body[0].scrollHeight);
-                // Do not add default quick buttons here; handled by the load event or after AI response
+                // Add appropriate quick buttons based on the last message
+                const lastMessage = history[history.length - 1];
+                if (lastMessage && lastMessage.role === 'model' && lastMessage.products && lastMessage.products.length > 0) {
+                    updateProductActionButtons();
+                } else {
+                    addDefaultQuickButtons();
+                }
                 return true; // History loaded
             } catch (e) {
                 console.error("Failed to parse chat history from localStorage", e);
@@ -64,16 +70,6 @@ jQuery(document).ready(function($){
             const historyLoaded = loadHistory();
             if (!historyLoaded) {
                 showGreeting();
-            } else {
-                // After loading history, check the last message to determine which buttons to show
-                const lastMessage = history[history.length - 1];
-                if (lastMessage && lastMessage.role === 'model' && lastMessage.products && lastMessage.products.length > 0) {
-                    // If the last AI message had products, ensure product action buttons are updated
-                    updateProductActionButtons();
-                } else {
-                    // Otherwise, show default quick buttons
-                    addDefaultQuickButtons();
-                }
             }
         } else {
             closeChat();
@@ -92,34 +88,61 @@ jQuery(document).ready(function($){
         if (role === 'ai') {
             if (animate) {
                 typeMessage($p, contentHtml, () => {
-                    // After typing, render products and save history
+                    // After typing, render products (if any) and add quick buttons
                     if (productsData.length > 0) {
-                        renderProducts(productsData);
+                        renderProducts(productsData, () => {
+                            // Add product-specific buttons after products
+                            updateProductActionButtons();
+                            if (save) {
+                                saveHistory();
+                            }
+                        });
+                    } else {
+                        // Add default quick buttons for non-product responses
+                        addDefaultQuickButtons();
+                        if (save) {
+                            saveHistory();
+                        }
                     }
                     $body.scrollTop($body[0].scrollHeight);
+                });
+            } else {
+                $p.html(contentHtml);
+                if (productsData.length > 0) {
+                    renderProducts(productsData, () => {
+                        // Add product-specific buttons after products
+                        updateProductActionButtons();
+                        if (save) {
+                            saveHistory();
+                        }
+                    });
+                } else {
+                    // Add default quick buttons for non-product responses
+                    addDefaultQuickButtons();
+                    if (save) {
+                        saveHistory();
+                    }
+                }
+                $body.scrollTop($body[0].scrollHeight);
+            }
+        } else {
+            $p.html(contentHtml);
+            if (productsData.length > 0) {
+                renderProducts(productsData, () => {
+                    // Add product-specific buttons after products
+                    updateProductActionButtons();
                     if (save) {
                         saveHistory();
                     }
                 });
             } else {
-                $p.html(contentHtml);
-                if (productsData.length > 0) {
-                    renderProducts(productsData);
-                }
-                $body.scrollTop($body[0].scrollHeight);
+                // Add default quick buttons for non-product responses
+                addDefaultQuickButtons();
                 if (save) {
                     saveHistory();
                 }
             }
-        } else {
-            $p.html(contentHtml);
-            if (productsData.length > 0) {
-                renderProducts(productsData);
-            }
             $body.scrollTop($body[0].scrollHeight);
-            if (save) {
-                saveHistory();
-            }
         }
     }
 
@@ -155,9 +178,6 @@ jQuery(document).ready(function($){
         let delay = 500;
         greetings.forEach((g, i) => {
             setTimeout(() => {
-                // For greeting messages, we don't want a typing animation for each one,
-                // but rather append them directly. The typing animation is for actual AI responses.
-                // However, to maintain consistency with the new appendMessage, we'll pass a dummy callback.
                 const wrapper = $('<div>').addClass('mwai-msg ai');
                 const $p = $('<p>').html(g);
                 wrapper.append($p);
@@ -165,7 +185,7 @@ jQuery(document).ready(function($){
                 $body.scrollTop($body[0].scrollHeight);
 
                 if (i === greetings.length - 1) {
-                    addDefaultQuickButtons(); // Use default buttons after greeting
+                    addDefaultQuickButtons(); // Add default buttons after greeting
                 }
             }, delay * (i + 1));
         });
@@ -179,15 +199,15 @@ jQuery(document).ready(function($){
 
     // Add default quick action buttons
     function addDefaultQuickButtons() {
-        const $defaultButtonsContainer = $('#mwai-default-quick-buttons');
-        if ($defaultButtonsContainer.length === 0) {
-            $body.append('<div id="mwai-default-quick-buttons" class="mwai-quick-buttons"></div>');
-        }
-        $('#mwai-default-quick-buttons').html(`
+        // Remove existing quick buttons to prevent duplication
+        $('#mwai-default-quick-buttons, #mwai-product-action-buttons').remove();
+        const $defaultButtonsContainer = $('<div id="mwai-default-quick-buttons" class="mwai-quick-buttons"></div>');
+        $defaultButtonsContainer.html(`
             <button data-message="Show catalog">Catalog</button>
             <button data-message="List categories">Categories</button>
             <button data-message="Search for a product">Search</button>
         `);
+        $body.append($defaultButtonsContainer);
         // Handle button clicks for default buttons
         $('#mwai-default-quick-buttons button').off('click').on('click', function(){
             const message = $(this).data('message');
@@ -199,12 +219,10 @@ jQuery(document).ready(function($){
 
     // Add product-specific quick action buttons
     function addProductActionButtons() {
-        let $productActionButtonsContainer = $('#mwai-product-action-buttons');
-        if ($productActionButtonsContainer.length === 0) {
-            $body.append('<div id="mwai-product-action-buttons" class="mwai-quick-buttons"></div>');
-            $productActionButtonsContainer = $('#mwai-product-action-buttons');
-        }
-        $productActionButtonsContainer.empty(); // Clear existing buttons
+        // Remove existing quick buttons to prevent duplication
+        $('#mwai-default-quick-buttons, #mwai-product-action-buttons').remove();
+        let $productActionButtonsContainer = $('<div id="mwai-product-action-buttons" class="mwai-quick-buttons"></div>');
+        $body.append($productActionButtonsContainer);
 
         const numSelected = selectedProducts.size;
 
@@ -240,8 +258,11 @@ jQuery(document).ready(function($){
     }
 
     // Render unified product cards
-    function renderProducts(products) {
-        if (!products || products.length === 0) return;
+    function renderProducts(products, callback) {
+        if (!products || products.length === 0) {
+            if (callback) callback();
+            return;
+        }
         const container = $('<div class="mwai-products"></div>');
         products.forEach(function(p){
             const image = p.image || '';
@@ -251,7 +272,7 @@ jQuery(document).ready(function($){
             const source = p.source || 'WooCommerce'; // Default to WooCommerce
             const store = p.store ? p.store : '';
 
-            const sourceBadge = source === 'WooCommerce' ? '<span class="mwai-badge local">Local</span>' : ''; // Only show local badge
+            const sourceBadge = source === 'WooCommerce' ? '<span class="mwai-badge local">Local</span>' : '';
 
             const card = $(`
                 <div class="mwai-product-card" data-product-id="${p.id}" data-product-link="${link}" data-product-title="${$('<div>').text(title).html()}">
@@ -282,7 +303,8 @@ jQuery(document).ready(function($){
                 window.location.href = link; // Open in the same tab
             }
         });
-        updateProductActionButtons(); // Update buttons immediately after rendering products
+
+        if (callback) callback();
     }
 
     let selectedProducts = new Set(); // Store product IDs of selected products
@@ -331,20 +353,11 @@ jQuery(document).ready(function($){
                 const aiMessage = response.data.message || '';
                 const productsData = response.data.products || [];
 
-                // Append AI text and products. The appendMessage function now handles saving history after typing.
+                // Append AI text and products. The appendMessage function now handles adding quick buttons.
                 appendMessage('ai', aiMessage, productsData, true, true); // Pass true to save history after typing and animate
 
                 // Add to history with products (this will be saved by appendMessage's callback)
                 history.push({role: 'model', parts: [{text: aiMessage}], products: productsData});
-
-                // Conditionally add quick buttons based on product data
-                if (productsData.length > 0) {
-                    updateProductActionButtons(); // Show product-specific buttons
-                } else {
-                    addDefaultQuickButtons(); // Show default buttons
-                }
-
-                $body.scrollTop($body[0].scrollHeight);
             } else {
                 appendMessage('ai', '⚠️ Sorry — unable to get a response. Please try again.', [], true, false); // Don't animate error messages
                 history.push({role: 'model', parts: [{text: '⚠️ Sorry — unable to get a response. Please try again.'}]});
@@ -380,16 +393,6 @@ jQuery(document).ready(function($){
             const historyLoaded = loadHistory();
             if (!historyLoaded) {
                 showGreeting();
-            } else {
-                // After loading history, check the last message to determine which buttons to show
-                const lastMessage = history[history.length - 1];
-                if (lastMessage && lastMessage.role === 'model' && lastMessage.products && lastMessage.products.length > 0) {
-                    // If the last AI message had products, ensure product action buttons are updated
-                    updateProductActionButtons();
-                } else {
-                    // Otherwise, show default quick buttons
-                    addDefaultQuickButtons();
-                }
             }
         }
     });
