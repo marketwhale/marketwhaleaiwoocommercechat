@@ -135,7 +135,7 @@ class MWAI_Ajax_Handler {
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=" . rawurlencode( $api_key );
 
                 
-                $system_instruction = 'You are MarketWhale AI, a friendly, engaging, and globally product-aware AI with access to a vast products database..
+                $system_instruction = 'You are MarketWhale AI, a friendly, engaging, and globally product-aware AI with access to a vast products database.
 
                 Your core responsibilities:
                 - Provide helpful, concise, and customer-centric answers.
@@ -144,7 +144,7 @@ class MWAI_Ajax_Handler {
                 - Always conclude with a follow-up question to encourage continued interaction.
 
                 Product Interaction Guidelines:
-                - If the user\'s intent is to browse or search for products, generate `suggested_keywords` (comma-separated, precise terms for WooCommerce search, e.g., "blue jacket", "men\'s shoes").
+                - If the user\'s intent is to browse or search for products, generate `suggested_keywords` (comma-separated, precise terms for WooCommerce search. These keywords should be comprehensive and cover potential matches in product titles, descriptions, short descriptions, SKUs, variable product SKUs, attributes, categories, and tags. Examples: "blue jacket", "men\'s shoes", "SKU: ABC123", "size large", "electronics").
                 - For general inquiries, `suggested_keywords` should be an empty array.
                 - You may optionally include `suggested_product_count` (integer, max 6) for product display.
                 - When responding to "Show details" or "Compare" requests, provide engaging, structured information about the selected products, without including direct links in your text response, as the product cards themselves are clickable.
@@ -274,102 +274,156 @@ class MWAI_Ajax_Handler {
      * @return array Array of formatted product data.
      */
     private function search_woocommerce_products( $search_query, $limit = 4, $message = '' ) {
+        global $wpdb;
+
+        $products = array();
+        $product_ids = array();
+
+        // If no search query, handle catalog or random products
         if ( empty( $search_query ) ) {
-            // For catalog, fetch popular products
-            if ( $message === 'Show catalog' ) {
-                $args = array(
-                    'post_type'      => 'product',
-                    'posts_per_page' => $limit,
-                    'meta_key'       => 'total_sales',
-                    'orderby'        => 'meta_value_num',
-                    'order'          => 'DESC',
-                    'post_status'    => 'publish',
-                );
-            } else {
-                // Random for other cases
-                $args = array(
-                    'post_type'      => 'product',
-                    'posts_per_page' => $limit,
-                    'orderby'        => 'rand',
-                    'post_status'    => 'publish',
-                );
-            }
-        } else {
             $args = array(
                 'post_type'      => 'product',
                 'posts_per_page' => $limit,
                 'post_status'    => 'publish',
-                's'              => $search_query, // General search in title and content
-                'tax_query'      => array( 'relation' => 'OR' ),
-                'meta_query'     => array( 'relation' => 'OR' ),
             );
-
-            // Search in product categories and tags
-            $search_terms = explode( ' ', $search_query );
-            $search_terms = array_map( 'sanitize_title', $search_terms ); // Sanitize for slug/term matching
-
-            $tax_query_terms = array();
-            foreach ( $search_terms as $term ) {
-                if ( ! empty( $term ) ) {
-                    $tax_query_terms[] = array(
-                        'taxonomy' => 'product_cat',
-                        'field'    => 'slug',
-                        'terms'    => $term,
-                        'operator' => 'LIKE',
-                    );
-                    $tax_query_terms[] = array(
-                        'taxonomy' => 'product_tag',
-                        'field'    => 'slug',
-                        'terms'    => $term,
-                        'operator' => 'LIKE',
-                    );
+            if ( $message === 'Show catalog' ) {
+                $args['meta_key'] = 'total_sales';
+                $args['orderby']  = 'meta_value_num';
+                $args['order']    = 'DESC';
+            } else {
+                $args['orderby'] = 'rand';
+            }
+            $wc_query = new WP_Query( $args );
+            if ( $wc_query->have_posts() ) {
+                while ( $wc_query->have_posts() ) {
+                    $wc_query->the_post();
+                    $product_ids[] = get_the_ID();
                 }
+                wp_reset_postdata();
             }
-            if ( ! empty( $tax_query_terms ) ) {
-                $args['tax_query'][] = array_merge( array( 'relation' => 'OR' ), $tax_query_terms );
+        } else {
+            // Prepare search terms for SQL LIKE queries
+            $search_terms_raw = explode( ' ', $search_query );
+            $search_terms_sql = array_map( function( $term ) use ( $wpdb ) {
+                return '%' . $wpdb->esc_like( sanitize_text_field( $term ) ) . '%';
+            }, $search_terms_raw );
+            $search_terms_for_tax = array_map( 'sanitize_title', $search_terms_raw ); // For taxonomy slugs
+
+            // 1. Search in product title, description, and short description
+            $post_search_sql = $wpdb->prepare( "
+                SELECT ID FROM {$wpdb->posts}
+                WHERE post_type = 'product' AND post_status = 'publish'
+                AND (
+                    post_title LIKE %s
+                    OR post_content LIKE %s
+                    OR post_excerpt LIKE %s
+                )
+            ", $search_terms_sql[0], $search_terms_sql[0], $search_terms_sql[0] ); // Using first term for simplicity, can be expanded
+
+            // Add more LIKE clauses for multiple terms
+            for ( $i = 1; $i < count( $search_terms_sql ); $i++ ) {
+                $post_search_sql .= $wpdb->prepare( "
+                    OR post_title LIKE %s
+                    OR post_content LIKE %s
+                    OR post_excerpt LIKE %s
+                ", $search_terms_sql[$i], $search_terms_sql[$i], $search_terms_sql[$i] );
+            }
+            $product_ids = array_merge( $product_ids, $wpdb->get_col( $post_search_sql ) );
+
+            // 2. Search in SKU (main product and variations)
+            $sku_search_sql = $wpdb->prepare( "
+                SELECT post_id FROM {$wpdb->postmeta}
+                WHERE meta_key = '_sku' AND meta_value LIKE %s
+            ", $search_terms_sql[0] );
+            for ( $i = 1; $i < count( $search_terms_sql ); $i++ ) {
+                $sku_search_sql .= $wpdb->prepare( " OR meta_value LIKE %s", $search_terms_sql[$i] );
+            }
+            $sku_product_ids = $wpdb->get_col( $sku_search_sql );
+
+            // Get parent IDs for variations found by SKU
+            if ( ! empty( $sku_product_ids ) ) {
+                $parent_ids_sql = "
+                    SELECT post_parent FROM {$wpdb->posts}
+                    WHERE ID IN (" . implode( ',', array_map( 'absint', $sku_product_ids ) ) . ")
+                    AND post_type = 'product_variation'
+                ";
+                $parent_ids = $wpdb->get_col( $parent_ids_sql );
+                $product_ids = array_merge( $product_ids, $sku_product_ids, $parent_ids );
             }
 
-            // Search in SKU
-            $args['meta_query'][] = array(
-                'key'     => '_sku',
-                'value'   => $search_query,
-                'compare' => 'LIKE',
-            );
+            // 3. Search in categories and tags
+            $taxonomy_search_ids = array();
+            if ( ! empty( $search_terms_for_tax ) ) {
+                $taxonomy_search_sql = "
+                    SELECT object_id FROM {$wpdb->term_relationships} tr
+                    INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                    INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+                    WHERE tt.taxonomy IN ('product_cat', 'product_tag')
+                    AND (";
+                $conditions = array();
+                foreach ( $search_terms_for_tax as $term ) {
+                    $conditions[] = $wpdb->prepare( "t.slug LIKE %s OR t.name LIKE %s", '%' . $term . '%', '%' . $term . '%' );
+                }
+                $taxonomy_search_sql .= implode( ' OR ', $conditions ) . ")";
+                $taxonomy_search_ids = $wpdb->get_col( $taxonomy_search_sql );
+            }
+            $product_ids = array_merge( $product_ids, $taxonomy_search_ids );
 
-            // Search in product attributes (pa_*)
+            // 4. Search in product attributes (pa_*)
             $attribute_taxonomies = wc_get_attribute_taxonomies();
-            foreach ( $attribute_taxonomies as $attr ) {
-                $taxonomy = wc_attribute_taxonomy_name( $attr->attribute_name );
-                $attr_query_terms = array();
-                foreach ( $search_terms as $term ) {
-                    if ( ! empty( $term ) ) {
-                        $attr_query_terms[] = array(
-                            'taxonomy' => $taxonomy,
-                            'field'    => 'slug',
-                            'terms'    => $term,
-                            'operator' => 'LIKE',
-                        );
-                    }
+            $attribute_search_ids = array();
+            if ( ! empty( $attribute_taxonomies ) && ! empty( $search_terms_for_tax ) ) {
+                $attribute_taxonomies_names = array_map( function( $attr ) {
+                    return wc_attribute_taxonomy_name( $attr->attribute_name );
+                }, $attribute_taxonomies );
+
+                $attribute_search_sql = "
+                    SELECT object_id FROM {$wpdb->term_relationships} tr
+                    INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                    INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+                    WHERE tt.taxonomy IN ('" . implode( "','", array_map( 'esc_sql', $attribute_taxonomies_names ) ) . "')
+                    AND (";
+                $conditions = array();
+                foreach ( $search_terms_for_tax as $term ) {
+                    $conditions[] = $wpdb->prepare( "t.slug LIKE %s OR t.name LIKE %s", '%' . $term . '%', '%' . $term . '%' );
                 }
-                if ( ! empty( $attr_query_terms ) ) {
-                    $args['tax_query'][] = array_merge( array( 'relation' => 'OR' ), $attr_query_terms );
+                $attribute_search_sql .= implode( ' OR ', $conditions ) . ")";
+                $attribute_search_ids = $wpdb->get_col( $attribute_search_sql );
+            }
+            $product_ids = array_merge( $product_ids, $attribute_search_ids );
+
+            // Filter unique and valid product IDs
+            $product_ids = array_unique( array_filter( array_map( 'absint', $product_ids ) ) );
+
+            // If no products found by direct SQL, fallback to WP_Query 's' parameter
+            if ( empty( $product_ids ) ) {
+                $args = array(
+                    'post_type'      => 'product',
+                    'posts_per_page' => $limit,
+                    'post_status'    => 'publish',
+                    's'              => $search_query,
+                );
+                $wc_query = new WP_Query( $args );
+                if ( $wc_query->have_posts() ) {
+                    while ( $wc_query->have_posts() ) {
+                        $wc_query->the_post();
+                        $product_ids[] = get_the_ID();
+                    }
+                    wp_reset_postdata();
                 }
             }
         }
 
-        $wc_query = new WP_Query( $args );
-        $products = array();
-
-        if ( $wc_query->have_posts() ) {
-            while ( $wc_query->have_posts() ) {
-                $wc_query->the_post();
-                $pid = get_the_ID();
+        // Fetch product data for the found IDs
+        if ( ! empty( $product_ids ) ) {
+            // Ensure we only get published products and limit the results
+            $product_ids = array_slice( $product_ids, 0, $limit );
+            foreach ( $product_ids as $pid ) {
                 $product = wc_get_product( $pid );
-                if ( $product ) {
+                if ( $product && $product->is_visible() ) { // Check visibility
                     $products[] = $this->format_product_data( $product );
                 }
             }
-            wp_reset_postdata();
         }
 
         return $products;
