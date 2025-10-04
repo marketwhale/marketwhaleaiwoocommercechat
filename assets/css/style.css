@@ -315,6 +315,42 @@
     font-weight: 600;
     text-transform: none; /* normal case */
     line-height: 1.2;
+    z-index: 1; /* Ensure badge is above other elements if needed */
+}
+
+/* Product checkbox */
+.mwai-product-checkbox {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2; /* Ensure checkbox is above badge */
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    appearance: none; /* Hide default checkbox */
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mwai-product-checkbox:checked {
+    background-color: var(--accent-1);
+    border-color: var(--accent-1);
+}
+
+.mwai-product-checkbox:checked::after {
+    content: '✔';
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.mwai-product-checkbox:hover {
+    border-color: var(--accent-1);
 }
 
 .mwai-badge.local {

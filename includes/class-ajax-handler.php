@@ -59,6 +59,63 @@ class MWAI_Ajax_Handler {
         } elseif ( $message === 'Search for a product' ) {
             $ai_text = 'What product are you looking for? Please type your search term.';
             $skip_api = true;
+        } elseif ( strpos( $message, 'Tell me more about "' ) === 0 ) {
+            // Extract product title from message
+            preg_match('/Tell me more about "([^"]+)"/', $message, $matches);
+            if (isset($matches[1])) {
+                $product_title = $matches[1];
+                $product_id = wc_get_product_id_by_name($product_title); // Helper to get ID by name
+                if ($product_id) {
+                    $product = wc_get_product($product_id);
+                    if ($product) {
+                        $ai_text = "Fantastic choice! Let's explore <b>" . esc_html($product->get_name()) . "</b> in more detail:<br><br>";
+                        $ai_text .= "<ul>";
+                        $ai_text .= "<li><b>Price:</b> " . $product->get_price_html() . "</li>";
+                        $ai_text .= "<li><b>Description:</b> " . wp_kses_post($product->get_description()) . "</li>";
+                        $ai_text .= "</ul>";
+                        $ai_text .= "This product is truly special! Is there anything specific you'd like to know, or would you like me to suggest some complementary items?";
+                        $products[] = $this->format_product_data($product); // Add product to display
+                    } else {
+                        $ai_text = "Sorry, I couldn't find details for " . esc_html($product_title) . ". Can I help you find something else?";
+                    }
+                } else {
+                    $ai_text = "Sorry, I couldn't find details for " . esc_html($product_title) . ". Can I help you find something else?";
+                }
+            } else {
+                $ai_text = "I'm not sure which product you're asking about. Could you please specify?";
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Compare these products: ' ) === 0 ) {
+            // Extract product titles from message
+            $product_titles_str = str_replace('Compare these products: ', '', $message);
+            $product_titles = array_map('trim', explode(',', $product_titles_str));
+            
+            $compared_products = [];
+            foreach ($product_titles as $title) {
+                $product_id = wc_get_product_id_by_name($title);
+                if ($product_id) {
+                    $product = wc_get_product($product_id);
+                    if ($product) {
+                        $compared_products[] = $product;
+                    }
+                }
+            }
+
+            if (count($compared_products) >= 2) {
+                $ai_text = "Fantastic! Let's compare these amazing products to help you make an informed decision:<br><br>";
+                foreach ($compared_products as $product) {
+                    $ai_text .= "<h3>✨ <b>" . esc_html($product->get_name()) . "</b> ✨</h3>";
+                    $ai_text .= "<ul>";
+                    $ai_text .= "<li><b>Price:</b> " . $product->get_price_html() . "</li>";
+                    $ai_text .= "<li><b>Quick Look:</b> " . wp_kses_post($product->get_short_description()) . "</li>";
+                    $ai_text .= "</ul><br>";
+                    $products[] = $this->format_product_data($product); // Add product to display
+                }
+                $ai_text .= "I hope this detailed comparison sheds some light on your choices! Which one is catching your eye, or would you like to compare other features?";
+            } else {
+                $ai_text = "To provide a meaningful comparison, please select at least two products. I'm here to help you find the perfect match!";
+            }
+            $skip_api = true;
         }
 
         // If not a quick action, call Gemini to get structured JSON (text + suggested_keywords)
@@ -77,24 +134,31 @@ class MWAI_Ajax_Handler {
 
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=" . rawurlencode( $api_key );
 
-                $system_instruction = 'You are MarketWhale AI, 
-                a friendly and engaging shopping assistant for an online store. 
-                Your primary goal is to answer customer questions and engage them in conversation. 
-                Provide helpful, concise, and customer-centric responses. 
-                Use HTML tags for formatting like <b>bold</b>, <ul><li>lists</li></ul>, 
-                <br> for breaks to make it modern and readable. Be conversational, 
-                and always end responses with a follow-up question to encourage further interaction. 
-                ONLY provide `suggested_keywords` for product search if the user\'s intent is clearly to browse or 
-                search for products. For general questions, provide an empty `suggested_keywords` array. 
-                When providing `suggested_keywords`, ensure they are highly precise, 
-                comma-separated terms suitable for a WooCommerce product search 
-                (e.g., "blue jacket", "men\'s shoes", "summer dress"). Optionally, 
-                you may also include a `suggested_product_count` (integer, max 6). 
-                Always output in strict JSON format only: 
-                    {\"text\": \"your formatted response here\", \"suggested_keywords\": [\"keyword1\", \"keyword2\"], \"suggested_product_count\": 4}. Do not add any extra text outside the JSON.';
+                
+                $system_instruction = 'You are MarketWhale AI, a friendly, engaging, and globally product-aware AI with access to a vast products database..
+
+                Your core responsibilities:
+                - Provide helpful, concise, and customer-centric answers.
+                - Maintain a natural, friendly, and conversational tone.
+                - Format responses using HTML (<b>, <ul><li>, <br>) for readability.
+                - Always conclude with a follow-up question to encourage continued interaction.
+
+                Product Interaction Guidelines:
+                - If the user\'s intent is to browse or search for products, generate `suggested_keywords` (comma-separated, precise terms for WooCommerce search, e.g., "blue jacket", "men\'s shoes").
+                - For general inquiries, `suggested_keywords` should be an empty array.
+                - You may optionally include `suggested_product_count` (integer, max 6) for product display.
+                - When responding to "Show details" or "Compare" requests, provide engaging, structured information about the selected products, without including direct links in your text response, as the product cards themselves are clickable.
+
+                Output Format (Strict JSON):
+                {"text": "your formatted response here", "suggested_keywords": ["keyword1", "keyword2"], "suggested_product_count": 4}
+                Ensure no additional text outside this JSON structure.';
 
                 $body = wp_json_encode( array(
-                    'systemInstruction' => array( 'parts' => array( array( 'text' => $system_instruction ) ) ),
+                    'systemInstruction' => array(
+                        'parts' => array(
+                            array( 'text' => $system_instruction )
+                        )
+                    ),
                     'generationConfig' => array(
                         'temperature' => $temperature,
                         'maxOutputTokens' => $max_tokens,
@@ -109,6 +173,8 @@ class MWAI_Ajax_Handler {
                     'body'    => $body,
                     'timeout' => 30,
                 ) );
+
+
 
                 $ai_text = 'Sorry — I could not fetch an answer right now. Please try again later.';
 
@@ -144,7 +210,6 @@ class MWAI_Ajax_Handler {
         } // end if not skip_api
 
         // Decide whether to fetch products:
-        $products = array();
         $should_fetch_products = false;
         $search_query = '';
         $posts_per_page = isset( $suggested_product_count ) ? $suggested_product_count : 4;
@@ -183,15 +248,7 @@ class MWAI_Ajax_Handler {
                         $pid = get_the_ID();
                         $product = wc_get_product( $pid );
                         if ( $product ) {
-                            $img = get_the_post_thumbnail_url( $pid, 'medium' ) ?: wc_placeholder_img_src();
-                            $products[] = array(
-                                'source' => 'WooCommerce',
-                                'store' => 'WooCommerce',
-                                'title'  => get_the_title(),
-                                'price'  => $product->get_price_html(),
-                                'image'  => $img,
-                                'link'   => get_permalink( $pid ),
-                            );
+                            $products[] = $this->format_product_data($product);
                         }
                     }
                     wp_reset_postdata();
@@ -218,13 +275,7 @@ class MWAI_Ajax_Handler {
                     $pid = get_the_ID();
                     $product = wc_get_product( $pid );
                     if ( $product ) {
-                        $final_products[] = array(
-                            'source' => 'WooCommerce',
-                            'title'  => get_the_title(),
-                            'price'  => $product->get_price_html(),
-                            'image'  => get_the_post_thumbnail_url( $pid, 'medium' ) ?: wc_placeholder_img_src(),
-                            'link'   => get_permalink( $pid ),
-                        );
+                        $final_products[] = $this->format_product_data($product);
                     }
                 }
                 wp_reset_postdata();
@@ -236,6 +287,32 @@ class MWAI_Ajax_Handler {
             'message'  => $ai_text,
             'products' => $final_products,
         ) );
+    }
+
+    /**
+     * Helper function to format product data for the frontend.
+     */
+    private function format_product_data($product) {
+        $pid = $product->get_id();
+        $img = get_the_post_thumbnail_url( $pid, 'medium' ) ?: wc_placeholder_img_src();
+        return array(
+            'id'     => $pid, // Add product ID
+            'source' => 'WooCommerce',
+            'store'  => 'WooCommerce',
+            'title'  => $product->get_name(),
+            'price'  => $product->get_price_html(),
+            'image'  => $img,
+            'link'   => get_permalink( $pid ),
+        );
+    }
+}
+
+// Helper function to get product ID by name (WooCommerce doesn't have this natively)
+if ( ! function_exists( 'wc_get_product_id_by_name' ) ) {
+    function wc_get_product_id_by_name( $product_name ) {
+        global $wpdb;
+        $product_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type = 'product' AND post_status = 'publish'", $product_name ) );
+        return $product_id;
     }
 }
 
