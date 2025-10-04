@@ -363,11 +363,19 @@ jQuery(document).ready(function($){
                 history.push({role: 'model', parts: [{text: '⚠️ Sorry — unable to get a response. Please try again.'}]});
                 saveHistory(); // Save history for error message
             }
+            // Unselect all product checkboxes after AI response
+            $('.mwai-product-checkbox').prop('checked', false);
+            selectedProducts.clear();
+            addProductActionButtons(); // Update buttons after clearing selection
         }, 'json').fail(function(){
             $typing.remove();
             appendMessage('ai', '⚠️ Network error — please try again.', [], true, false); // Don't animate network error messages
             history.push({role: 'model', parts: [{text: '⚠️ Network error — please try again.'}]});
             saveHistory(); // Save history for network error
+            // Unselect all product checkboxes after AI response
+            $('.mwai-product-checkbox').prop('checked', false);
+            selectedProducts.clear();
+            addProductActionButtons(); // Update buttons after clearing selection
         });
     }
 
