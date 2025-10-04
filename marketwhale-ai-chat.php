@@ -21,6 +21,16 @@ function mwai_enqueue_assets() {
         'ajax_url' => admin_url( 'admin-ajax.php' ),
         'nonce'    => wp_create_nonce( 'mwai_ajax_nonce' )
     ) );
+
+    // Enqueue shop page enhancement assets only on shop-related pages
+    if ( is_shop() || is_product_category() || is_product_tag() ) {
+        wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
+        wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
+        wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )
+        ) );
+    }
 }
 add_action( 'wp_enqueue_scripts', 'mwai_enqueue_assets' );
 
@@ -110,6 +120,12 @@ add_action( 'admin_init', 'mwai_register_settings' );
 // Add AJAX action for connection test
 add_action( 'wp_ajax_mwai_test_connection', 'mwai_test_connection_callback' );
 add_action( 'wp_ajax_mwai_generate_seo_content', 'mwai_generate_seo_content_callback' ); // New AJAX action for product SEO
+
+// New AJAX actions for shop page enhancements
+add_action( 'wp_ajax_mwai_filter_products', array( 'MWAI_Ajax_Handler', 'filter_products' ) );
+add_action( 'wp_ajax_nopriv_mwai_filter_products', array( 'MWAI_Ajax_Handler', 'filter_products' ) );
+add_action( 'wp_ajax_mwai_get_categories', array( 'MWAI_Ajax_Handler', 'get_categories' ) );
+add_action( 'wp_ajax_nopriv_mwai_get_categories', array( 'MWAI_Ajax_Handler', 'get_categories' ) );
 
 // Add meta box to product edit screen
 function mwai_add_product_seo_meta_box() {

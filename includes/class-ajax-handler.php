@@ -6,6 +6,12 @@ class MWAI_Ajax_Handler {
     public function __construct() {
         add_action( 'wp_ajax_mwai_get_response', array( $this, 'get_response' ) );
         add_action( 'wp_ajax_nopriv_mwai_get_response', array( $this, 'get_response' ) );
+
+        // Shop page enhancements
+        add_action( 'wp_ajax_mwai_filter_products', array( $this, 'filter_products' ) );
+        add_action( 'wp_ajax_nopriv_mwai_filter_products', array( $this, 'filter_products' ) );
+        add_action( 'wp_ajax_mwai_get_categories', array( $this, 'get_categories' ) );
+        add_action( 'wp_ajax_nopriv_mwai_get_categories', array( $this, 'get_categories' ) );
     }
 
     public function get_response() {
@@ -445,6 +451,126 @@ class MWAI_Ajax_Handler {
             'link'   => get_permalink( $pid ),
         );
     }
+
+    /**
+     * AJAX callback to filter products by category.
+     */
+    public function filter_products() {
+        check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
+
+        $category_id = isset( $_POST['category_id'] ) ? intval( $_POST['category_id'] ) : 0;
+        $search_query = isset( $_POST['search_query'] ) ? sanitize_text_field( $_POST['search_query'] ) : '';
+        $posts_per_page = isset( $_POST['posts_per_page'] ) ? intval( $_POST['posts_per_page'] ) : 12;
+        $paged = isset( $_POST['paged'] ) ? intval( $_POST['paged'] ) : 1;
+
+        $args = array(
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => $posts_per_page,
+            'paged'          => $paged,
+            'orderby'        => 'menu_order title', // Default sorting
+            'order'          => 'ASC',
+        );
+
+        if ( $category_id > 0 ) {
+            $args['tax_query'] = array(
+                array(
+                    'taxonomy' => 'product_cat',
+                    'field'    => 'term_id',
+                    'terms'    => $category_id,
+                    'operator' => 'IN',
+                ),
+            );
+        }
+
+        if ( ! empty( $search_query ) ) {
+            $args['s'] = $search_query;
+        }
+
+        $products_query = new WP_Query( $args );
+        $products_html = '';
+
+        if ( $products_query->have_posts() ) {
+            while ( $products_query->have_posts() ) {
+                $products_query->the_post();
+                $product = wc_get_product( get_the_ID() );
+                if ( $product ) {
+                    $products_html .= $this->render_product_card( $product );
+                }
+            }
+            wp_reset_postdata();
+        } else {
+            $products_html = '<p>No products found for this selection.</p>';
+        }
+
+        wp_send_json_success( array(
+            'products_html' => $products_html,
+            'max_pages'     => $products_query->max_num_pages,
+            'current_page'  => $paged,
+        ) );
+    }
+
+    /**
+     * AJAX callback to get product categories and subcategories.
+     */
+    public function get_categories() {
+        check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
+
+        $parent_id = isset( $_POST['parent_id'] ) ? intval( $_POST['parent_id'] ) : 0;
+
+        $args = array(
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => true,
+            'parent'     => $parent_id,
+            'orderby'    => 'name',
+            'order'      => 'ASC',
+        );
+
+        $categories = get_terms( $args );
+        $formatted_categories = array();
+
+        if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
+            foreach ( $categories as $category ) {
+                $formatted_categories[] = array(
+                    'id'           => $category->term_id,
+                    'name'         => $category->name,
+                    'slug'         => $category->slug,
+                    'count'        => $category->count,
+                    'has_children' => (bool) get_terms( array(
+                        'taxonomy'   => 'product_cat',
+                        'hide_empty' => true,
+                        'parent'     => $category->term_id,
+                        'fields'     => 'ids',
+                    ) ),
+                );
+            }
+        }
+
+        wp_send_json_success( array( 'categories' => $formatted_categories ) );
+    }
+
+    /**
+     * Helper function to render a single product card HTML.
+     */
+    private function render_product_card( $product ) {
+        $product_id = $product->get_id();
+        $image_url = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' ) ?: wc_placeholder_img_src();
+        $title = $product->get_name();
+        $price = $product->get_price_html();
+        $link = get_permalink( $product_id );
+
+        ob_start();
+        ?>
+        <div class="mwai-shop-product-card" data-product-id="<?php echo esc_attr( $product_id ); ?>">
+            <a href="<?php echo esc_url( $link ); ?>">
+                <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                <h3><?php echo esc_html( $title ); ?></h3>
+                <p class="price"><?php echo wp_kses_post( $price ); ?></p>
+            </a>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
 }
 
 // Helper function to get product ID by name (WooCommerce doesn't have this natively)
@@ -458,4 +584,3 @@ if ( ! function_exists( 'wc_get_product_id_by_name' ) ) {
 
 // Initialize
 new MWAI_Ajax_Handler();
-?>
