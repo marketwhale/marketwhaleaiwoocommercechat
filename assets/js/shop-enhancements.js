@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-    const $shopContent = $('.woocommerce-products-header, .woocommerce-notices-wrapper, .woocommerce-archive-description, .woocommerce-result-count, .woocommerce-ordering, ul.products');
+    const $shopContent = $('.woocommerce-products-header, .woocommerce-notices-wrapper, .woocommerce-archive-description, .woocommerce-result-count, .woocommerce-ordering, ul.products, .woocommerce-pagination');
     const $mainContent = $('.site-main'); // Or a more specific container for your shop page content
 
     // Create main container for our enhancements
@@ -27,6 +27,9 @@ jQuery(document).ready(function($) {
     let activeCategoryPathIds = []; // Stores the full path of active category IDs
     let categoriesLoadedCount = 0;
     let totalCategoriesToLoad = 0;
+    let currentPage = 1; // Current page for product loading
+    let maxPages = 1;    // Total pages available for the current product query
+    let isLoadingProducts = false; // Flag to prevent multiple simultaneous AJAX requests
 
     // Function to get URL parameter
     function getUrlParameter(name) {
@@ -227,8 +230,12 @@ jQuery(document).ready(function($) {
             }
             activeCategoryPathIds = [...currentCategoryPath]; // Update activeCategoryPathIds for consistent state
 
+            // Reset pagination state for new category/search
+            currentPage = 1;
+            maxPages = 1;
+
             // Fetch products for the selected category
-            fetchProducts(categoryId);
+            fetchProducts(categoryId, currentSearchQuery, currentPage, false);
 
             // Logic for handling subcategory scrollers
             const isAllTabForLevel = (categoryId === parentId && clickedLevel > 0); // Check if it's an "All [Parent Category]" tab
@@ -244,8 +251,11 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function fetchProducts(categoryId = 0, searchQuery = '', paged = 1) {
+    function fetchProducts(categoryId = 0, searchQuery = '', paged = 1, append = false) {
+        if (isLoadingProducts) return; // Prevent multiple requests
+        isLoadingProducts = true;
         showLoading();
+
         $.ajax({
             url: MWAI_Shop_Ajax.ajax_url,
             type: 'POST',
@@ -258,19 +268,31 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    $productGrid.html(response.data.products_html);
-                    // Handle pagination if needed (response.data.max_pages, response.data.current_page)
+                    if (append) {
+                        $productGrid.append(response.data.products_html);
+                    } else {
+                        $productGrid.html(response.data.products_html);
+                        // Reset scroll position for new category/search
+                        $productGridContainer.scrollTop(0);
+                    }
+                    currentPage = response.data.current_page;
+                    maxPages = response.data.max_pages;
                 } else {
-                    $productGrid.html('<p>' + (response.data.message || 'Error fetching products.') + '</p>');
+                    if (!append) {
+                        $productGrid.html('<p>' + (response.data.message || 'Error fetching products.') + '</p>');
+                    }
                     console.error('Error fetching products:', response.data.message);
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                $productGrid.html('<p>Network error: Unable to load products.</p>');
+                if (!append) {
+                    $productGrid.html('<p>Network error: Unable to load products.</p>');
+                }
                 console.error('AJAX error fetching products:', textStatus, errorThrown);
             },
             complete: function() {
                 hideLoading();
+                isLoadingProducts = false;
             }
         });
     }
@@ -320,13 +342,15 @@ jQuery(document).ready(function($) {
 
                     // Start loading scrollers recursively
                     loadCategoryScrollersRecursively(activeCategoryPathIds, 0, 0);
-                    fetchProducts(initialCategoryId, initialSearchTerm);
+                    currentPage = 1; // Reset page for new category
+                    fetchProducts(initialCategoryId, initialSearchTerm, currentPage);
                 } else {
                     console.error('Error fetching category path by slugs:', response.data.message);
                     // Fallback to default if path not found
                     totalCategoriesToLoad = 1;
                     fetchCategories(0, 0, []);
-                    fetchProducts(0);
+                    currentPage = 1; // Reset page
+                    fetchProducts(0, '', currentPage);
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
@@ -334,7 +358,8 @@ jQuery(document).ready(function($) {
                 // Fallback to default on error
                 totalCategoriesToLoad = 1;
                 fetchCategories(0, 0, []);
-                fetchProducts(0);
+                currentPage = 1; // Reset page
+                fetchProducts(0, '', currentPage);
             },
             complete: function() {
                 // This complete is for the path fetching, not for all category scrollers
@@ -344,10 +369,25 @@ jQuery(document).ready(function($) {
         currentSearchQuery = initialSearchTerm;
         totalCategoriesToLoad = 1; // Only top-level categories
         fetchCategories(0, 0, []); // Load top-level categories
-        fetchProducts(0, currentSearchQuery); // Load products based on search query
+        currentPage = 1; // Reset page
+        fetchProducts(0, currentSearchQuery, currentPage); // Load products based on search query
     } else {
         totalCategoriesToLoad = 1; // Only top-level categories
         fetchCategories(0, 0, []); // Load top-level categories
-        fetchProducts(0); // Load all products by default
+        currentPage = 1; // Reset page
+        fetchProducts(0, '', currentPage); // Load all products by default
     }
+
+    // Infinite scrolling logic
+    $productGridContainer.on('scroll', function() {
+        const container = $(this)[0];
+        // Check if scrolled to 80% of the way down
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight * 0.8) {
+            if (currentPage < maxPages && !isLoadingProducts) {
+                currentPage++;
+                const currentCategoryId = currentCategoryPath.length > 0 ? currentCategoryPath[currentCategoryPath.length - 1] : 0;
+                fetchProducts(currentCategoryId, currentSearchQuery, currentPage, true);
+            }
+        }
+    });
 });
