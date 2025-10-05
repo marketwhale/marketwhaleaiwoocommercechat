@@ -16,7 +16,8 @@ body.mwai-shop-loading .woocommerce-notices-wrapper,
 body.mwai-shop-loading .woocommerce-archive-description,
 body.mwai-shop-loading .woocommerce-result-count,
 body.mwai-shop-loading .woocommerce-ordering,
-body.mwai-shop-loading ul.products {
+body.mwai-shop-loading ul.products,
+body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loading */
     display: none !important;
 }
 

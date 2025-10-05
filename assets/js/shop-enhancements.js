@@ -16,6 +16,8 @@ jQuery(document).ready(function($) {
     if ($shopContent.length) {
         $shopContent.first().before($enhancementsContainer);
         $shopContent.hide(); // Hide original WooCommerce elements
+        // Also remove pagination elements from DOM to prevent interaction
+        $('.woocommerce-pagination').remove();
     } else {
         // Fallback if standard WooCommerce elements are not found
         $mainContent.prepend($enhancementsContainer);
