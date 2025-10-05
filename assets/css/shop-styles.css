@@ -157,21 +157,25 @@ body.mwai-shop-loading ul.products {
 .mwai-shop-product-card {
     background-color: var(--mwai-shop-bg);
     border: 1px solid var(--mwai-shop-border);
-    border-radius: 10px;
+    border-radius: 12px; /* Slightly larger border-radius */
     overflow: hidden;
     text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Subtle initial shadow */
 }
 
 .mwai-shop-product-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12); /* More pronounced shadow on hover */
 }
 
 .mwai-shop-product-card a {
     text-decoration: none;
     color: inherit;
-    display: block;
+    display: flex; /* Use flexbox for better layout control */
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Ensure the anchor takes full height */
     padding: 15px;
 }
 
@@ -188,6 +192,12 @@ body.mwai-shop-loading ul.products {
     color: var(--mwai-shop-text);
     margin: 0 0 5px 0;
     line-height: 1.3;
+    height: 2.6em; /* Limit to 2 lines (1.3 * 2) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Show only 2 lines */
+    -webkit-box-orient: vertical;
 }
 
 .mwai-shop-product-card .price {
