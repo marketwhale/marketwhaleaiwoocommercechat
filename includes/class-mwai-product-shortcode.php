@@ -1,6 +1,26 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+
+// __How to use the new shortcode:__
+
+// You can now use the `[mwai_products]` shortcode in any WordPress post, page, or widget. Here are some examples of its usage:
+
+// - __Display 12 products with default settings:__ `[mwai_products]`
+
+// - __Display 8 products in 2 columns from a specific category (e.g., 'electronics'):__ `[mwai_products limit="8" columns="2" category="electronics"]`
+
+// - __Display products by specific IDs:__ `[mwai_products ids="1,2,3,4"]`
+
+// - __Display products by specific SKUs:__ `[mwai_products skus="SKU001,SKU002"]`
+
+// - __Display products ordered by title in ascending order:__ `[mwai_products orderby="title" order="asc"]`
+
+// - __Add a custom CSS class to the product grid:__ `[mwai_products class="my-custom-grid"]`
+
+// This new shortcode provides a modern look and offers more flexibility for displaying WooCommerce products on your site.
+
+
 class MWAI_Product_Shortcode {
 
     public function __construct() {
