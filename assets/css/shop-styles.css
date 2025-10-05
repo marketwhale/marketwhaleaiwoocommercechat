@@ -10,6 +10,16 @@
     --mwai-shop-light-bg: #f8fafc;
 }
 
+/* Hide original WooCommerce content when our enhancements are loading */
+body.mwai-shop-loading .woocommerce-products-header,
+body.mwai-shop-loading .woocommerce-notices-wrapper,
+body.mwai-shop-loading .woocommerce-archive-description,
+body.mwai-shop-loading .woocommerce-result-count,
+body.mwai-shop-loading .woocommerce-ordering,
+body.mwai-shop-loading ul.products {
+    display: none !important;
+}
+
 /* Main container for shop enhancements */
 .mwai-shop-enhancements {
     margin-bottom: 30px;

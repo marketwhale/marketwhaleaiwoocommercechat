@@ -34,6 +34,15 @@ function mwai_enqueue_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'mwai_enqueue_assets' );
 
+// Add a body class to hide original shop content while enhancements load
+function mwai_add_shop_loading_body_class( $classes ) {
+    if ( is_shop() || is_product_category() || is_product_tag() ) {
+        $classes[] = 'mwai-shop-loading';
+    }
+    return $classes;
+}
+add_filter( 'body_class', 'mwai_add_shop_loading_body_class' );
+
 // Enqueue admin scripts only on the settings page
 function mwai_admin_enqueue_scripts( $hook_suffix ) {
     if ( 'toplevel_page_mwai-settings' === $hook_suffix ) {

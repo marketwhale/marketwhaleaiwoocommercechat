@@ -24,12 +24,21 @@ jQuery(document).ready(function($) {
     let currentCategoryPath = []; // Stores the IDs of categories in the current path
     let currentSearchQuery = '';
 
+    // Function to get URL parameter
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        const results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
     function showLoading() {
         $loadingOverlay.addClass('active');
     }
 
     function hideLoading() {
         $loadingOverlay.removeClass('active');
+        $('body').removeClass('mwai-shop-loading'); // Remove loading class when content is ready
     }
 
     function fetchCategories(parentId, level) {
@@ -213,6 +222,15 @@ jQuery(document).ready(function($) {
     }
 
     // Initial load
+    const initialSearchTerm = getUrlParameter('s');
+    const isProductSearchPage = getUrlParameter('post_type') === 'product';
+
     fetchCategories(0, 0); // Load top-level categories
-    fetchProducts(0); // Load all products by default
+
+    if (initialSearchTerm && isProductSearchPage) {
+        currentSearchQuery = initialSearchTerm;
+        fetchProducts(0, currentSearchQuery); // Load products based on search query
+    } else {
+        fetchProducts(0); // Load all products by default
+    }
 });
