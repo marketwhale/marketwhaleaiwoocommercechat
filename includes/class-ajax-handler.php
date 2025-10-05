@@ -12,6 +12,12 @@ class MWAI_Ajax_Handler {
         add_action( 'wp_ajax_nopriv_mwai_filter_products', array( $this, 'filter_products' ) );
         add_action( 'wp_ajax_mwai_get_categories', array( $this, 'get_categories' ) );
         add_action( 'wp_ajax_nopriv_mwai_get_categories', array( $this, 'get_categories' ) );
+
+        add_action( 'wp_ajax_mwai_get_category_id_by_slug', array( $this, 'get_category_id_by_slug' ) );
+        add_action( 'wp_ajax_nopriv_mwai_get_category_id_by_slug', array( $this, 'get_category_id_by_slug' ) );
+
+        add_action( 'wp_ajax_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
+        add_action( 'wp_ajax_nopriv_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
     }
 
     public function get_response() {
@@ -570,6 +576,57 @@ class MWAI_Ajax_Handler {
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * AJAX callback to get a category ID by its slug.
+     */
+    public function get_category_id_by_slug() {
+        check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
+
+        $slug = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
+
+        if ( empty( $slug ) ) {
+            wp_send_json_error( array( 'message' => 'Category slug is missing.' ) );
+        }
+
+        $term = get_term_by( 'slug', $slug, 'product_cat' );
+
+        if ( $term && ! is_wp_error( $term ) ) {
+            wp_send_json_success( array( 'category_id' => $term->term_id ) );
+        } else {
+            wp_send_json_error( array( 'message' => 'Category not found for slug: ' . $slug ) );
+        }
+    }
+
+    /**
+     * AJAX callback to get a hierarchical path of category IDs from an array of slugs.
+     */
+    public function get_category_path_by_slugs() {
+        check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
+
+        $slugs = isset( $_POST['slugs'] ) ? (array) wp_unslash( $_POST['slugs'] ) : array();
+        $slugs = array_map( 'sanitize_title', $slugs );
+
+        if ( empty( $slugs ) ) {
+            wp_send_json_error( array( 'message' => 'Category slugs are missing.' ) );
+        }
+
+        $category_path_ids = array();
+        $parent_id = 0; // Start from top-level categories
+
+        foreach ( $slugs as $slug ) {
+            $term = get_term_by( 'slug', $slug, 'product_cat' );
+            if ( $term && ! is_wp_error( $term ) && $term->parent == $parent_id ) {
+                $category_path_ids[] = $term->term_id;
+                $parent_id = $term->term_id; // Set current term as parent for the next iteration
+            } else {
+                // If a slug in the path is not found or not a child of the previous, stop.
+                wp_send_json_error( array( 'message' => 'Invalid category path or slug not found: ' . $slug ) );
+            }
+        }
+
+        wp_send_json_success( array( 'category_path_ids' => $category_path_ids ) );
     }
 }
 
