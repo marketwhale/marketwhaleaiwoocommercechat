@@ -231,7 +231,9 @@ jQuery(document).ready(function($) {
             fetchProducts(categoryId);
 
             // Logic for handling subcategory scrollers
-            if (categoryId === 0) { // "All Products" tab clicked (top level) or "All [Parent Category]" tab clicked
+            const isAllTabForLevel = (categoryId === parentId && clickedLevel > 0); // Check if it's an "All [Parent Category]" tab
+            
+            if (categoryId === 0 || isAllTabForLevel) { // "All Products" tab clicked (top level) or "All [Parent Category]" tab clicked
                 // Remove all scrollers deeper than the current level
                 $categoryScrollerContainer.find(`.mwai-category-scroller-wrapper[data-level="${clickedLevel}"] ~ .mwai-category-scroller-wrapper`).remove();
                 // If "All Products" (top level) or "All [Parent Category]" is clicked, no need to fetch subcategories

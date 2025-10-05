@@ -75,6 +75,9 @@ body.mwai-shop-loading ul.products {
     color: var(--mwai-shop-text);
     transition: all 0.2s ease;
     white-space: nowrap; /* Keep text on one line */
+    display: flex; /* Make it a flex container */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
 }
 
 /* Scroll Buttons */
