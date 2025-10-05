@@ -69,6 +69,8 @@ function mwai_admin_product_seo_enqueue_scripts( $hook_suffix ) {
 
 // Include AJAX handler
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-ajax-handler.php';
+// Include custom product shortcode handler
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-mwai-product-shortcode.php';
 
 // Chat widget HTML
 function mwai_chat_widget_html() {

@@ -6,7 +6,7 @@ jQuery(document).ready(function($) {
     const $enhancementsContainer = $('<div class="mwai-shop-enhancements"></div>');
     const $categoryScrollerContainer = $('<div id="mwai-category-scrollers"></div>');
     const $productGridContainer = $('<div id="mwai-product-grid-wrapper" style="position: relative;"></div>');
-    const $productGrid = $('<div class="mwai-product-grid"></div>');
+    const $productGrid = $('<div class="mwai-products-grid"></div>');
     const $loadingOverlay = $('<div class="mwai-loading-overlay"><div class="mwai-spinner"></div></div>');
 
     $productGridContainer.append($productGrid).append($loadingOverlay);

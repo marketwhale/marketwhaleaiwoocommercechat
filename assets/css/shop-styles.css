@@ -11,12 +11,13 @@
 }
 
 /* Hide original WooCommerce content when our enhancements are loading */
+/* Hide original WooCommerce content when our enhancements are loading */
 body.mwai-shop-loading .woocommerce-products-header,
 body.mwai-shop-loading .woocommerce-notices-wrapper,
 body.mwai-shop-loading .woocommerce-archive-description,
 body.mwai-shop-loading .woocommerce-result-count,
 body.mwai-shop-loading .woocommerce-ordering,
-body.mwai-shop-loading ul.products,
+body.mwai-shop-loading ul.products, /* Re-add ul.products to be hidden during loading */
 body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loading */
     display: none !important;
 }
@@ -147,12 +148,52 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
 }
 
-/* Product Grid */
-.mwai-product-grid {
+/* Product Grid for custom shortcode and default WooCommerce */
+.mwai-products-grid,
+ul.products { /* Apply grid styles to both custom shortcode and default WooCommerce product lists */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 20px;
     padding: 10px 0;
+    list-style: none; /* Remove default list styling */
+    margin: 0; /* Remove default margin */
+}
+
+/* Responsive columns for the custom shortcode */
+.mwai-products-grid.columns-1 { grid-template-columns: repeat(1, 1fr); }
+.mwai-products-grid.columns-2 { grid-template-columns: repeat(2, 1fr); }
+.mwai-products-grid.columns-3 { grid-template-columns: repeat(3, 1fr); }
+.mwai-products-grid.columns-4 { grid-template-columns: repeat(4, 1fr); }
+.mwai-products-grid.columns-5 { grid-template-columns: repeat(5, 1fr); }
+.mwai-products-grid.columns-6 { grid-template-columns: repeat(6, 1fr); }
+
+@media (max-width: 1024px) {
+    .mwai-products-grid.columns-5,
+    .mwai-products-grid.columns-6 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .mwai-products-grid.columns-3,
+    .mwai-products-grid.columns-4,
+    .mwai-products-grid.columns-5,
+    .mwai-products-grid.columns-6,
+    ul.products { /* Apply to default WooCommerce products as well */
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .mwai-products-grid,
+    ul.products {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mwai-products-grid,
+    ul.products { /* Apply to default WooCommerce products as well */
+        grid-template-columns: repeat(2, 1fr); /* Force 2 columns on smallest screens */
+        gap: 10px;
+    }
 }
 
 .mwai-shop-product-card {
@@ -260,8 +301,8 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
 }
 
 @media (max-width: 480px) {
-    .mwai-product-grid {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    .mwai-product-grid { /* This is for the old product grid, keeping it consistent */
+        grid-template-columns: repeat(2, 1fr); /* Force 2 columns on smallest screens */
         gap: 10px;
     }
     .mwai-shop-product-card h3 {
