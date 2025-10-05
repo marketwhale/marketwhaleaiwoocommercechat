@@ -172,6 +172,25 @@ jQuery(document).ready(function($) {
             }
         }
 
+        // Auto-scroll to active tab
+        setTimeout(() => {
+            const $activeTab = $scroller.find('.mwai-category-tab.active');
+            if ($activeTab.length) {
+                const scrollerWidth = $scroller.width();
+                const scrollerScrollLeft = $scroller.scrollLeft();
+                const tabOffsetLeft = $activeTab.position().left;
+                const tabWidth = $activeTab.outerWidth(true); // Include margins
+
+                // Check if tab is outside the current view
+                if (tabOffsetLeft < 0 || tabOffsetLeft + tabWidth > scrollerWidth) {
+                    // Calculate new scroll position to center the active tab
+                    const newScrollLeft = scrollerScrollLeft + tabOffsetLeft - (scrollerWidth / 2) + (tabWidth / 2);
+                    $scroller.animate({ scrollLeft: newScrollLeft }, 300);
+                }
+            }
+            updateScrollButtons(); // Call after potential scroll
+        }, 150); // Small delay to ensure rendering is complete before calculating positions
+
         // Attach scroll event listener
         $scroller.on('scroll', updateScrollButtons);
         // Update on resize
