@@ -27,6 +27,7 @@ class MWAI_Product_Shortcode {
         add_shortcode( 'mwai_products', array( $this, 'render_mwai_products_shortcode' ) );
         add_shortcode( 'mwai_shop_browser', array( $this, 'render_mwai_shop_browser_shortcode' ) ); // New shortcode
         add_shortcode( 'mwai_category_scroller', array( $this, 'render_mwai_category_scroller_shortcode' ) ); // New category scroller shortcode
+        add_shortcode( 'mwai_product_scroller', array( $this, 'render_mwai_product_scroller_shortcode' ) ); // New product scroller shortcode
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_shortcode_assets' ) );
     }
 
@@ -36,11 +37,11 @@ class MWAI_Product_Shortcode {
      */
     public function enqueue_shortcode_assets() {
         global $post;
-        if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_category_scroller' ) ) ) {
+        if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_category_scroller' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
             $plugin_url = plugin_dir_url( dirname( __FILE__ ) ); // Get plugin base URL
             wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
-            // Only enqueue shop-enhancements.js if mwai_shop_browser is used, as it relies on its JS logic
-            if ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) ) {
+            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used, as they rely on its JS logic for scrolling
+            if ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
                 wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -274,6 +275,139 @@ class MWAI_Product_Shortcode {
             <?php
         } else {
             echo '<p>No categories found.</p>';
+        }
+
+        return ob_get_clean();
+    }
+
+    /**
+     * Renders the custom [mwai_product_scroller] shortcode.
+     * Displays products in a horizontal scroll.
+     *
+     * @param array $atts Shortcode attributes.
+     * @return string HTML output for the product scroller.
+     */
+    public function render_mwai_product_scroller_shortcode( $atts ) {
+        $atts = shortcode_atts( array(
+            'limit'      => 12,
+            'category'   => '', // slug or comma-separated slugs
+            'orderby'    => 'date',
+            'order'      => 'desc',
+            'ids'        => '', // comma-separated product IDs
+            'skus'       => '', // comma-separated product SKUs
+            'class'      => '', // additional CSS class for the container
+            'title'      => '', // Optional title for the scroller
+        ), $atts, 'mwai_product_scroller' );
+
+        $query_args = array(
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => intval( $atts['limit'] ),
+            'orderby'        => sanitize_text_field( $atts['orderby'] ),
+            'order'          => sanitize_text_field( $atts['order'] ),
+        );
+
+        // Handle product IDs
+        if ( ! empty( $atts['ids'] ) ) {
+            $ids = array_map( 'absint', explode( ',', $atts['ids'] ) );
+            $query_args['post__in'] = $ids;
+        }
+
+        // Handle product SKUs
+        if ( ! empty( $atts['skus'] ) ) {
+            $skus = array_map( 'sanitize_text_field', explode( ',', $atts['skus'] ) );
+            $query_args['meta_query'][] = array(
+                'key'     => '_sku',
+                'value'   => $skus,
+                'compare' => 'IN',
+            );
+        }
+
+        // Handle categories
+        if ( ! empty( $atts['category'] ) ) {
+            $categories = array_map( 'sanitize_title', explode( ',', $atts['category'] ) );
+            $query_args['tax_query'][] = array(
+                'taxonomy' => 'product_cat',
+                'field'    => 'slug',
+                'terms'    => $categories,
+                'operator' => 'IN',
+            );
+        }
+
+        $products_query = new WP_Query( $query_args );
+        ob_start();
+
+        if ( $products_query->have_posts() ) {
+            $container_classes = array( 'mwai-product-scroller-wrapper', 'mwai-shortcode-product-scroller' );
+            if ( ! empty( $atts['class'] ) ) {
+                $container_classes[] = sanitize_html_class( $atts['class'] );
+            }
+            ?>
+            <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>">
+                <?php if ( ! empty( $atts['title'] ) ) : ?>
+                    <h2 class="mwai-scroller-title"><?php echo esc_html( $atts['title'] ); ?></h2>
+                <?php endif; ?>
+                <div class="mwai-product-scroller">
+                    <?php
+                    while ( $products_query->have_posts() ) {
+                        $products_query->the_post();
+                        $product = wc_get_product( get_the_ID() );
+                        if ( $product ) {
+                            echo $this->get_product_card_html( $product );
+                        }
+                    }
+                    wp_reset_postdata();
+                    ?>
+                </div>
+                <div class="mwai-scroll-button left hidden"><</div>
+                <div class="mwai-scroll-button right hidden">></div>
+            </div>
+            <script type="text/javascript">
+                jQuery(document).ready(function($){
+                    // Ensure this script only runs for the specific shortcode instance
+                    const $scrollerWrapper = $('.mwai-shortcode-product-scroller');
+                    $scrollerWrapper.each(function() {
+                        const $currentScrollerWrapper = $(this);
+                        const $scroller = $currentScrollerWrapper.find('.mwai-product-scroller');
+                        const $leftButton = $currentScrollerWrapper.find('.mwai-scroll-button.left');
+                        const $rightButton = $currentScrollerWrapper.find('.mwai-scroll-button.right');
+
+                        function updateScrollButtons() {
+                            if ($scroller[0].scrollWidth > $scroller[0].clientWidth) {
+                                if ($scroller[0].scrollLeft === 0) {
+                                    $leftButton.addClass('hidden');
+                                } else {
+                                    $leftButton.removeClass('hidden');
+                                }
+
+                                if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth) {
+                                    $rightButton.addClass('hidden');
+                                } else {
+                                    $rightButton.removeClass('hidden');
+                                }
+                            } else {
+                                $leftButton.addClass('hidden');
+                                $rightButton.addClass('hidden');
+                            }
+                        }
+
+                        $scroller.on('scroll', updateScrollButtons);
+                        $(window).on('resize', updateScrollButtons);
+                        setTimeout(updateScrollButtons, 100); // Initial check
+
+                        $leftButton.on('click', function() {
+                            $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
+                        });
+
+                        $rightButton.on('click', function() {
+                            $scroller.animate({ scrollLeft: $scroller.scrollLeft() + 200 }, 300);
+                        });
+                    });
+                });
+            </script>
+            <?php
+        } else {
+            echo '<p>No products found.</p>';
         }
 
         return ob_get_clean();
