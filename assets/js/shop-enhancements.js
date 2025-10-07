@@ -99,10 +99,7 @@ jQuery(document).ready(function($) {
                 if (callback) callback([]);
             },
             complete: function() {
-                categoriesLoadedCount++;
-                if (categoriesLoadedCount >= totalCategoriesToLoad) {
-                    hideLoading();
-                }
+                // Removed hideLoading() from here. It will be handled by fetchProducts.
             }
         });
     }
@@ -317,18 +314,21 @@ jQuery(document).ready(function($) {
 
     // Function to recursively load category scrollers
     function loadCategoryScrollersRecursively(pathIds, currentLevel, parentId) {
-        if (currentLevel >= pathIds.length) {
-            return; // All levels loaded
+        // Base case: If we've processed all categories in the pathIds array
+        if (currentLevel === pathIds.length) {
+            // Now, fetch the subcategories of the deepest active category (which is parentId here)
+            // and render them at the 'currentLevel' (which is pathIds.length, effectively the next level)
+            fetchCategories(parentId, currentLevel, pathIds);
+            return;
         }
 
+        // Recursive step: Process the current level's category
         const targetCategoryId = pathIds[currentLevel];
         
         fetchCategories(parentId, currentLevel, pathIds, (categories) => {
-            // Find the category that matches targetCategoryId at this level
-            const nextParentId = targetCategoryId;
-            if (nextParentId) {
-                loadCategoryScrollersRecursively(pathIds, currentLevel + 1, nextParentId);
-            }
+            // After fetching and rendering the current level's scroller,
+            // proceed to the next level in the path, using targetCategoryId as the new parentId.
+            loadCategoryScrollersRecursively(pathIds, currentLevel + 1, targetCategoryId);
         });
     }
 
@@ -351,12 +351,12 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success && response.data.category_path_ids.length > 0) {
                     activeCategoryPathIds = response.data.category_path_ids;
-                    activeCategoryPathIds = response.data.category_path_ids;
                     initialCategoryId = activeCategoryPathIds[activeCategoryPathIds.length - 1]; // Deepest category ID
                     currentCategoryPath = [...activeCategoryPathIds]; // Initialize currentCategoryPath
 
                     // Set total categories to load for hideLoading logic
-                    totalCategoriesToLoad = activeCategoryPathIds.length + 1; // +1 for the initial top-level fetch
+                    // +1 for the initial top-level fetch, +1 for the subcategories of the deepest active category
+                    totalCategoriesToLoad = activeCategoryPathIds.length + 1; 
 
                     // Start loading scrollers recursively
                     loadCategoryScrollersRecursively(activeCategoryPathIds, 0, 0);
@@ -365,7 +365,7 @@ jQuery(document).ready(function($) {
                 } else {
                     console.error('Error fetching category path by slugs:', response.data.message);
                     // Fallback to default if path not found
-                    totalCategoriesToLoad = 1;
+                    totalCategoriesToLoad = 1; // Only top-level categories
                     fetchCategories(0, 0, []);
                     currentPage = 1; // Reset page
                     fetchProducts(0, '', currentPage, false, productsPerPage);
@@ -374,7 +374,7 @@ jQuery(document).ready(function($) {
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error('AJAX error fetching category path by slugs:', textStatus, errorThrown);
                 // Fallback to default on error
-                totalCategoriesToLoad = 1;
+                totalCategoriesToLoad = 1; // Only top-level categories
                 fetchCategories(0, 0, []);
                 currentPage = 1; // Reset page
                 fetchProducts(0, '', currentPage, false, productsPerPage);
