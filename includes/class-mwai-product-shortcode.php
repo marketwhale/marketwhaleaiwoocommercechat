@@ -26,6 +26,7 @@ class MWAI_Product_Shortcode {
     public function __construct() {
         add_shortcode( 'mwai_products', array( $this, 'render_mwai_products_shortcode' ) );
         add_shortcode( 'mwai_shop_browser', array( $this, 'render_mwai_shop_browser_shortcode' ) ); // New shortcode
+        add_shortcode( 'mwai_category_scroller', array( $this, 'render_mwai_category_scroller_shortcode' ) ); // New category scroller shortcode
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_shortcode_assets' ) );
     }
 
@@ -35,14 +36,17 @@ class MWAI_Product_Shortcode {
      */
     public function enqueue_shortcode_assets() {
         global $post;
-        if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) ) ) {
+        if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_category_scroller' ) ) ) {
             $plugin_url = plugin_dir_url( dirname( __FILE__ ) ); // Get plugin base URL
             wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
-            wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
-            wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )
-            ) );
+            // Only enqueue shop-enhancements.js if mwai_shop_browser is used, as it relies on its JS logic
+            if ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) ) {
+                wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
+                wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )
+                ) );
+            }
         }
     }
 
@@ -175,6 +179,103 @@ class MWAI_Product_Shortcode {
             </a>
         </div>
         <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Renders the custom [mwai_category_scroller] shortcode.
+     * Displays product categories in a horizontal scroll with thumbnails and names.
+     *
+     * @param array $atts Shortcode attributes.
+     * @return string HTML output for the category scroller.
+     */
+    public function render_mwai_category_scroller_shortcode( $atts ) {
+        $atts = shortcode_atts( array(
+            'parent_id' => 0, // Display top-level categories by default
+            'columns'   => 4, // Number of columns for responsive grid (not directly used for scroller, but for styling consistency)
+            'class'     => '', // Additional CSS class for the container
+        ), $atts, 'mwai_category_scroller' );
+
+        $parent_id = intval( $atts['parent_id'] );
+
+        $args = array(
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => true,
+            'parent'     => $parent_id,
+            'orderby'    => 'name',
+            'order'      => 'ASC',
+        );
+
+        $categories = get_terms( $args );
+        ob_start();
+
+        if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
+            $container_classes = array( 'mwai-category-scroller-wrapper', 'mwai-shortcode-category-scroller' );
+            if ( ! empty( $atts['class'] ) ) {
+                $container_classes[] = sanitize_html_class( $atts['class'] );
+            }
+            ?>
+            <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>">
+                <div class="mwai-category-scroller">
+                    <?php foreach ( $categories as $category ) :
+                        $thumbnail_id = get_term_meta( $category->term_id, 'thumbnail_id', true );
+                        $image = $thumbnail_id ? wp_get_attachment_image_src( $thumbnail_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src();
+                        $image_url = is_array( $image ) ? $image[0] : $image;
+                        $category_link = get_term_link( $category );
+                        ?>
+                        <a href="<?php echo esc_url( $category_link ); ?>" class="mwai-category-tab mwai-category-card">
+                            <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $category->name ); ?>">
+                            <span><?php echo esc_html( $category->name ); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+                <div class="mwai-scroll-button left hidden"><</div>
+                <div class="mwai-scroll-button right hidden">></div>
+            </div>
+            <script type="text/javascript">
+                jQuery(document).ready(function($){
+                    const $scrollerWrapper = $('.mwai-shortcode-category-scroller');
+                    const $scroller = $scrollerWrapper.find('.mwai-category-scroller');
+                    const $leftButton = $scrollerWrapper.find('.mwai-scroll-button.left');
+                    const $rightButton = $scrollerWrapper.find('.mwai-scroll-button.right');
+
+                    function updateScrollButtons() {
+                        if ($scroller[0].scrollWidth > $scroller[0].clientWidth) {
+                            if ($scroller[0].scrollLeft === 0) {
+                                $leftButton.addClass('hidden');
+                            } else {
+                                $leftButton.removeClass('hidden');
+                            }
+
+                            if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth) {
+                                $rightButton.addClass('hidden');
+                            } else {
+                                $rightButton.removeClass('hidden');
+                            }
+                        } else {
+                            $leftButton.addClass('hidden');
+                            $rightButton.addClass('hidden');
+                        }
+                    }
+
+                    $scroller.on('scroll', updateScrollButtons);
+                    $(window).on('resize', updateScrollButtons);
+                    setTimeout(updateScrollButtons, 100); // Initial check
+
+                    $leftButton.on('click', function() {
+                        $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
+                    });
+
+                    $rightButton.on('click', function() {
+                        $scroller.animate({ scrollLeft: $scroller.scrollLeft() + 200 }, 300);
+                    });
+                });
+            </script>
+            <?php
+        } else {
+            echo '<p>No categories found.</p>';
+        }
+
         return ob_get_clean();
     }
 }
