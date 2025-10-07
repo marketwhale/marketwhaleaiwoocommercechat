@@ -25,6 +25,7 @@ class MWAI_Product_Shortcode {
 
     public function __construct() {
         add_shortcode( 'mwai_products', array( $this, 'render_mwai_products_shortcode' ) );
+        add_shortcode( 'mwai_shop_browser', array( $this, 'render_mwai_shop_browser_shortcode' ) ); // New shortcode
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_shortcode_assets' ) );
     }
 
@@ -34,10 +35,14 @@ class MWAI_Product_Shortcode {
      */
     public function enqueue_shortcode_assets() {
         global $post;
-        if ( has_shortcode( $post->post_content, 'mwai_products' ) ) {
+        if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) ) ) {
             $plugin_url = plugin_dir_url( dirname( __FILE__ ) ); // Get plugin base URL
             wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
             wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
+            wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )
+            ) );
         }
     }
 
@@ -110,7 +115,7 @@ class MWAI_Product_Shortcode {
                     $products_query->the_post();
                     $product = wc_get_product( get_the_ID() );
                     if ( $product ) {
-                        echo $this->render_product_card( $product );
+                        echo $this->get_product_card_html( $product );
                     }
                 }
                 wp_reset_postdata();
@@ -125,10 +130,35 @@ class MWAI_Product_Shortcode {
     }
 
     /**
+     * Renders the custom [mwai_shop_browser] shortcode.
+     * This embeds the full shop browsing experience.
+     *
+     * @param array $atts Shortcode attributes.
+     * @return string HTML output for the shop browser.
+     */
+    public function render_mwai_shop_browser_shortcode( $atts ) {
+        $atts = shortcode_atts( array(
+            'limit' => 12, // Default limit for products
+        ), $atts, 'mwai_shop_browser' );
+
+        ob_start();
+        ?>
+        <div class="mwai-shop-enhancements mwai-embedded-shop" data-product-limit="<?php echo esc_attr( intval( $atts['limit'] ) ); ?>">
+            <div id="mwai-category-scrollers"></div>
+            <div id="mwai-product-grid-wrapper" style="position: relative;">
+                <div class="mwai-products-grid"></div>
+                <div class="mwai-loading-overlay"><div class="mwai-spinner"></div></div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
      * Helper function to render a single product card HTML.
      * This is adapted from MWAI_Ajax_Handler::render_product_card
      */
-    private function render_product_card( $product ) {
+    private function get_product_card_html( $product ) {
         $product_id = $product->get_id();
         $image_url = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' ) ?: wc_placeholder_img_src();
         $title = $product->get_name();

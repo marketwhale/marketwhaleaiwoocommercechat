@@ -1,27 +1,38 @@
 jQuery(document).ready(function($) {
-    const $shopContent = $('.woocommerce-products-header, .woocommerce-notices-wrapper, .woocommerce-archive-description, .woocommerce-result-count, .woocommerce-ordering, ul.products, .woocommerce-pagination');
-    const $mainContent = $('.site-main'); // Or a more specific container for your shop page content
+    // Determine if we are on a standard WooCommerce shop page or within an embedded shortcode
+    const isShopPage = $('body').hasClass('woocommerce-shop') || $('body').hasClass('tax-product_cat') || $('body').hasClass('tax-product_tag');
+    const $embeddedShopContainer = $('.mwai-embedded-shop');
+    const isEmbedded = $embeddedShopContainer.length > 0;
 
-    // Create main container for our enhancements
-    const $enhancementsContainer = $('<div class="mwai-shop-enhancements"></div>');
+    let $targetContainer;
+    let initialProductLimit = 12; // Default limit
+
+    if (isEmbedded) {
+        $targetContainer = $embeddedShopContainer;
+        initialProductLimit = parseInt($embeddedShopContainer.data('product-limit')) || 12;
+        // For embedded shops, we don't hide existing content, we just initialize within the shortcode's div
+    } else if (isShopPage) {
+        const $shopContent = $('.woocommerce-products-header, .woocommerce-notices-wrapper, .woocommerce-archive-description, .woocommerce-result-count, .woocommerce-ordering, ul.products, .woocommerce-pagination');
+        const $mainContent = $('.site-main'); // Or a more specific container for your shop page content
+
+        // Create main container for our enhancements
+        const $enhancementsContainer = $('<div class="mwai-shop-enhancements"></div>');
+        $shopContent.first().before($enhancementsContainer);
+        $shopContent.hide(); // Hide original WooCommerce elements
+        $('.woocommerce-pagination').remove(); // Also remove pagination elements from DOM to prevent interaction
+        $targetContainer = $enhancementsContainer;
+    } else {
+        // If neither shop page nor embedded, do nothing
+        return;
+    }
+
     const $categoryScrollerContainer = $('<div id="mwai-category-scrollers"></div>');
     const $productGridContainer = $('<div id="mwai-product-grid-wrapper" style="position: relative;"></div>');
     const $productGrid = $('<div class="mwai-products-grid"></div>');
     const $loadingOverlay = $('<div class="mwai-loading-overlay"><div class="mwai-spinner"></div></div>');
 
     $productGridContainer.append($productGrid).append($loadingOverlay);
-    $enhancementsContainer.append($categoryScrollerContainer).append($productGridContainer);
-
-    // Replace existing WooCommerce content with our enhanced structure
-    if ($shopContent.length) {
-        $shopContent.first().before($enhancementsContainer);
-        $shopContent.hide(); // Hide original WooCommerce elements
-        // Also remove pagination elements from DOM to prevent interaction
-        $('.woocommerce-pagination').remove();
-    } else {
-        // Fallback if standard WooCommerce elements are not found
-        $mainContent.prepend($enhancementsContainer);
-    }
+    $targetContainer.append($categoryScrollerContainer).append($productGridContainer);
 
     let currentCategoryPath = []; // Stores the IDs of categories in the current path
     let currentSearchQuery = '';
@@ -32,6 +43,7 @@ jQuery(document).ready(function($) {
     let currentPage = 1; // Current page for product loading
     let maxPages = 1;    // Total pages available for the current product query
     let isLoadingProducts = false; // Flag to prevent multiple simultaneous AJAX requests
+    let productsPerPage = initialProductLimit; // Use the initialProductLimit here
 
     // Function to get URL parameter
     function getUrlParameter(name) {
@@ -43,6 +55,7 @@ jQuery(document).ready(function($) {
 
     // Function to extract category slugs from the URL path
     function getCategorySlugsFromUrl() {
+        if (!isShopPage) return []; // Only extract from URL if on a shop page
         const path = window.location.pathname;
         const parts = path.split('/').filter(part => part !== '');
         const categoryIndex = parts.indexOf('product-category');
@@ -58,7 +71,9 @@ jQuery(document).ready(function($) {
 
     function hideLoading() {
         $loadingOverlay.removeClass('active');
-        $('body').removeClass('mwai-shop-loading'); // Remove loading class when content is ready
+        if (isShopPage) {
+            $('body').removeClass('mwai-shop-loading'); // Only remove loading class from body if on shop page
+        }
     }
 
     function fetchCategories(parentId, level, activeCategoryPath = [], callback = null) {
@@ -110,7 +125,7 @@ jQuery(document).ready(function($) {
         // Add an "All" tab for the current level if it's not the top level
         if (level > 0) {
             // Determine the name of the parent category for the "All" tab text
-            const parentCategoryName = $(`#mwai-category-scrollers .mwai-category-tab[data-category-id="${parentId}"]`).text().replace(/\s\(\d+\)/, '');
+            const parentCategoryName = $categoryScrollerContainer.find(`.mwai-category-tab[data-category-id="${parentId}"]`).text().replace(/\s\(\d+\)/, '');
             const $allTab = $('<div class="mwai-category-tab"></div>')
                 .text(`All ${parentCategoryName}`)
                 .data('category-id', parentId)
@@ -237,7 +252,7 @@ jQuery(document).ready(function($) {
             maxPages = 1;
 
             // Fetch products for the selected category
-            fetchProducts(categoryId, currentSearchQuery, currentPage, false);
+            fetchProducts(categoryId, currentSearchQuery, currentPage, false, productsPerPage);
 
             // Logic for handling subcategory scrollers
             const isAllTabForLevel = (categoryId === parentId && clickedLevel > 0); // Check if it's an "All [Parent Category]" tab
@@ -253,7 +268,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function fetchProducts(categoryId = 0, searchQuery = '', paged = 1, append = false) {
+    function fetchProducts(categoryId = 0, searchQuery = '', paged = 1, append = false, limit = productsPerPage) {
         if (isLoadingProducts) return; // Prevent multiple requests
         isLoadingProducts = true;
         showLoading();
@@ -266,6 +281,7 @@ jQuery(document).ready(function($) {
                 category_id: categoryId,
                 search_query: searchQuery,
                 paged: paged,
+                posts_per_page: limit, // Pass the limit here
                 nonce: MWAI_Shop_Ajax.nonce
             },
             success: function(response) {
@@ -345,14 +361,14 @@ jQuery(document).ready(function($) {
                     // Start loading scrollers recursively
                     loadCategoryScrollersRecursively(activeCategoryPathIds, 0, 0);
                     currentPage = 1; // Reset page for new category
-                    fetchProducts(initialCategoryId, initialSearchTerm, currentPage);
+                    fetchProducts(initialCategoryId, initialSearchTerm, currentPage, false, productsPerPage);
                 } else {
                     console.error('Error fetching category path by slugs:', response.data.message);
                     // Fallback to default if path not found
                     totalCategoriesToLoad = 1;
                     fetchCategories(0, 0, []);
                     currentPage = 1; // Reset page
-                    fetchProducts(0, '', currentPage);
+                    fetchProducts(0, '', currentPage, false, productsPerPage);
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
@@ -361,7 +377,7 @@ jQuery(document).ready(function($) {
                 totalCategoriesToLoad = 1;
                 fetchCategories(0, 0, []);
                 currentPage = 1; // Reset page
-                fetchProducts(0, '', currentPage);
+                fetchProducts(0, '', currentPage, false, productsPerPage);
             },
             complete: function() {
                 // This complete is for the path fetching, not for all category scrollers
@@ -372,12 +388,12 @@ jQuery(document).ready(function($) {
         totalCategoriesToLoad = 1; // Only top-level categories
         fetchCategories(0, 0, []); // Load top-level categories
         currentPage = 1; // Reset page
-        fetchProducts(0, currentSearchQuery, currentPage); // Load products based on search query
+        fetchProducts(0, currentSearchQuery, currentPage, false, productsPerPage); // Load products based on search query
     } else {
         totalCategoriesToLoad = 1; // Only top-level categories
         fetchCategories(0, 0, []); // Load top-level categories
         currentPage = 1; // Reset page
-        fetchProducts(0, '', currentPage); // Load all products by default
+        fetchProducts(0, '', currentPage, false, productsPerPage); // Load all products by default
     }
 
     // Infinite scrolling logic
@@ -388,7 +404,7 @@ jQuery(document).ready(function($) {
             if (currentPage < maxPages && !isLoadingProducts) {
                 currentPage++;
                 const currentCategoryId = currentCategoryPath.length > 0 ? currentCategoryPath[currentCategoryPath.length - 1] : 0;
-                fetchProducts(currentCategoryId, currentSearchQuery, currentPage, true);
+                fetchProducts(currentCategoryId, currentSearchQuery, currentPage, true, productsPerPage);
             }
         }
     });
