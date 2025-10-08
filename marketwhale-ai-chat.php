@@ -54,7 +54,8 @@ function mwai_admin_enqueue_scripts( $hook_suffix ) {
     }
 }
 add_action( 'admin_enqueue_scripts', 'mwai_admin_enqueue_scripts' );
-add_action( 'admin_enqueue_scripts', 'mwai_admin_product_seo_enqueue_scripts' ); // New action for product SEO script
+add_action( 'admin_enqueue_scripts', 'mwai_admin_product_seo_enqueue_scripts' ); // New action for product SEO
+add_action( 'admin_enqueue_scripts', 'mwai_admin_bulk_categories_enqueue_scripts' ); // New action for bulk categories
 
 // Enqueue admin scripts for product SEO on product edit screen
 function mwai_admin_product_seo_enqueue_scripts( $hook_suffix ) {
@@ -67,10 +68,24 @@ function mwai_admin_product_seo_enqueue_scripts( $hook_suffix ) {
     }
 }
 
+// Enqueue admin scripts and styles for bulk category management
+function mwai_admin_bulk_categories_enqueue_scripts( $hook_suffix ) {
+    if ( 'edit-tags.php' === $hook_suffix && isset($_GET['taxonomy']) && $_GET['taxonomy'] === 'product_cat' ) {
+        wp_enqueue_style( 'mwai-admin-bulk-categories-style', plugin_dir_url( __FILE__ ) . 'assets/css/admin-bulk-categories.css', array(), '1.0' );
+        wp_enqueue_script( 'mwai-admin-bulk-categories-js', plugin_dir_url( __FILE__ ) . 'assets/js/admin-bulk-categories.js', array( 'jquery' ), '1.0', true );
+        wp_localize_script( 'mwai-admin-bulk-categories-js', 'MWAI_Bulk_Categories_Ajax', array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'mwai_bulk_add_categories_nonce' ),
+        ) );
+    }
+}
+
 // Include AJAX handler
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-ajax-handler.php';
 // Include custom product shortcode handler
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-mwai-product-shortcode.php';
+// Include bulk category handler
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-mwai-bulk-category-handler.php';
 
 // Chat widget HTML
 function mwai_chat_widget_html() {
@@ -131,6 +146,7 @@ add_action( 'admin_init', 'mwai_register_settings' );
 // Add AJAX action for connection test
 add_action( 'wp_ajax_mwai_test_connection', 'mwai_test_connection_callback' );
 add_action( 'wp_ajax_mwai_generate_seo_content', 'mwai_generate_seo_content_callback' ); // New AJAX action for product SEO
+add_action( 'wp_ajax_mwai_bulk_add_categories', array( 'MWAI_Bulk_Category_Handler', 'bulk_add_categories' ) ); // New AJAX action for bulk category creation
 
 // New AJAX actions for shop page enhancements
 add_action( 'wp_ajax_mwai_filter_products', array( 'MWAI_Ajax_Handler', 'filter_products' ) );
