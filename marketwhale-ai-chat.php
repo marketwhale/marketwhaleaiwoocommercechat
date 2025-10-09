@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: MarketWhale AI Chat
+ * Plugin Name: MarketWhaleAI
  * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API + SerpAPI).
  * Version: 1.6
  * Author: Your Name
@@ -75,7 +75,7 @@ function mwai_admin_bulk_categories_enqueue_scripts( $hook_suffix ) {
         wp_enqueue_script( 'mwai-admin-bulk-categories-js', plugin_dir_url( __FILE__ ) . 'assets/js/admin-bulk-categories.js', array( 'jquery' ), '1.0', true );
         wp_localize_script( 'mwai-admin-bulk-categories-js', 'MWAI_Bulk_Categories_Ajax', array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),
-            'nonce'    => wp_create_nonce( 'mwai_bulk_add_categories_nonce' ),
+            'nonce'    => wp_create_nonce( 'mwai_bulk_add_categories_nonce' )
         ) );
     }
 }
@@ -122,8 +122,8 @@ add_action( 'wp_footer', 'mwai_chat_widget_html' );
 // Admin menu
 function mwai_admin_menu() {
     add_menu_page(
-        'MarketWhale AI Chat Settings',
-        'MarketWhale AI Chat',
+        'MarketWhaleAI Settings',
+        'MarketWhaleAI',
         'manage_options',
         'mwai-settings',
         'mwai_settings_page',
@@ -192,9 +192,9 @@ function mwai_settings_page() {
     ?>
     <div class="wrap">
         <h1>MarketWhale AI Chat Settings</h1>
-        <?php if ( empty( $api_key ) || $api_key === 'AIzaSyA2vmScQRlnniWTaWLNwkpr-9PdhPyKsTk' ) : ?>
+        <?php if ( empty( $api_key ) ) : ?>
             <div class="notice notice-error">
-                <p><strong>Important:</strong> Please enter your actual Gemini API Key below. The placeholder key will not work.</p>
+                <p><strong>Important:</strong> Please enter your Gemini API Key below to enable AI functionalities.</p>
             </div>
         <?php endif; ?>
         <form method="post" action="options.php">
@@ -280,6 +280,75 @@ function mwai_settings_page() {
             });
         });
     </script>
+
+    <hr style="margin: 40px 0;">
+
+    <h2>MarketWhaleAI: Empowering Your WooCommerce Store with AI</h2>
+    <p>MarketWhaleAI is a comprehensive WordPress plugin engineered to integrate intelligent, AI-powered capabilities into your WooCommerce store. It aims to elevate the customer shopping experience and streamline administrative tasks, making your online store more dynamic and efficient.</p>
+
+    <h3>1. AI Chat Widget (Frontend)</h3>
+    <p>The AI Chat Widget is a floating conversational assistant that appears on your website's frontend, offering instant support and personalized shopping guidance to your customers.</p>
+    <ul>
+        <li><strong>Interactive Shopping Assistant:</strong> Provides a direct line of communication for customers to interact with an AI. It's designed to be friendly, engaging, and always ready to help.</li>
+        <li><strong>Product Discovery:</strong> The AI can understand product-related queries and suggest relevant items from your store. It leverages advanced AI to interpret customer needs beyond simple keyword searches.</li>
+        <li><strong>Detailed Information & Comparison:</strong> When products are suggested, customers can select multiple items within the chat to get more detailed information or a side-by-side comparison.</li>
+    </ul>
+
+    <h3>2. Shop Page Enhancements (Frontend)</h3>
+    <p>MarketWhaleAI transforms your standard WooCommerce shop, category, and tag archive pages into a modern, dynamic browsing experience. This functionality can also be embedded on any page using a shortcode.</p>
+    <ul>
+        <li><strong>Dynamic Browsing Experience:</strong> Replaces the default, often static, WooCommerce product listings with a more interactive and visually appealing layout.</li>
+        <li><strong>Category Scrollers:</strong> Presents product categories and subcategories in intuitive, horizontally scrollable lists. This allows for quick navigation without reloading the entire page.</li>
+        <li><strong>Infinite Product Grid:</strong> Products are displayed in a responsive grid that loads more items automatically as the customer scrolls down, eliminating the need for pagination buttons.</li>
+        <li><strong>Embeddable Shop Browser (<code>[mwai_shop_browser]</code> shortcode):</strong> Allows you to place the entire dynamic shop browsing experience (category scrollers + infinite product grid) on any WordPress page, post, or widget area.
+            <ul>
+                <li><em>How to use:</em> Simply add <code>[mwai_shop_browser]</code> to your content. You can specify the default product limit: <code>[mwai_shop_browser limit="16"]</code>.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>3. Admin Tools (For Store Administrators)</h3>
+    <p>MarketWhaleAI provides powerful tools within your WordPress admin dashboard to manage AI settings, optimize product SEO, and streamline category management.</p>
+    <ul>
+        <li><strong>Gemini API Settings:</strong> This dedicated section allows you to configure the core AI functionality of the plugin.
+            <ul>
+                <li><em>How to use:</em> Navigate to <code>MarketWhaleAI</code> in your WordPress admin menu. Enter your unique API key obtained from Google AI Studio. Configure AI model parameters like temperature, max output tokens, and top P. Click "Test Connection" to verify your API key.</li>
+            </ul>
+        </li>
+        <li><strong>Product SEO Generation:</strong> Leverages Gemini AI to automatically generate SEO-optimized content for your WooCommerce products.
+            <ul>
+                <li><em>How to use:</em> When editing any product in your WordPress admin, look for the "MarketWhale AI SEO" meta box in the sidebar. Click "Generate SEO Content" to populate product fields with AI-generated content.</li>
+            </ul>
+        </li>
+        <li><strong>Bulk Category Management:</strong> Simplifies the process of creating and organizing multiple product categories and subcategories at once.
+            <ul>
+                <li><em>How to use:</em> Navigate to <code>Products > Categories</code> in your WordPress admin. Click the "Bulk Add Categories" button. Enter category names, using hyphens (<code>-</code>) to define hierarchy (e.g., <code>Category1</code>, <code>-SubCategory1</code>, <code>--SubSubCategoryA</code>). Click "Add Categories" to process.</li>
+            </ul>
+        </li>
+        <li><strong>Custom Shortcodes:</strong> Provides flexible shortcodes to display various product and category layouts anywhere on your site.
+            <ul>
+                <li><strong><code>[mwai_products]</code>:</strong> Displays a grid of products.
+                    <ul>
+                        <li><em>Example:</em> <code>[mwai_products limit="8" columns="2" category="electronics" orderby="price" order="asc"]</code></li>
+                        <li><em>Attributes:</em> <code>limit</code>, <code>columns</code>, <code>category</code> (slugs), <code>orderby</code>, <code>order</code>, <code>ids</code> (product IDs), <code>skus</code> (product SKUs), <code>class</code> (custom CSS class).</li>
+                    </ul>
+                </li>
+                <li><strong><code>[mwai_category_scroller]</code>:</strong> Displays a horizontal scroller of categories.
+                    <ul>
+                        <li><em>Example:</em> <code>[mwai_category_scroller parent_id="0" class="homepage-categories"]</code></li>
+                        <li><em>Attributes:</em> <code>parent_id</code> (0 for top-level), <code>columns</code> (for styling), <code>class</code>.</li>
+                    </ul>
+                </li>
+                <li><strong><code>[mwai_product_scroller]</code>:</strong> Displays a horizontal scroller of products.
+                    <ul>
+                        <li><em>Example:</em> <code>[mwai_product_scroller title="New Arrivals" limit="8" orderby="date" order="desc"]</code></li>
+                        <li><em>Attributes:</em> <code>limit</code>, <code>category</code> (slugs), <code>orderby</code>, <code>order</code>, <code>ids</code> (product IDs), <code>skus</code> (product SKUs), <code>class</code>, <code>title</code>.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+    <p>This detailed overview should provide customers with a clear understanding of MarketWhaleAI's capabilities and how to best utilize them to enhance their WooCommerce store.</p>
     <?php
 }
 
@@ -290,8 +359,8 @@ function mwai_test_connection_callback() {
     $api_key = get_option( 'mwai_gemini_api_key', '' );
     $model   = get_option( 'mwai_gemini_model', 'gemini-1.0-pro' ); // Changed default model
 
-    if ( empty( $api_key ) || $api_key === 'AIzaSyA2vmScQRlnniWTaWLNwkpr-9PdhPyKsTk' ) {
-        wp_send_json_error( array( 'message' => 'Gemini API Key is not configured or is still the placeholder key.' ) );
+    if ( empty( $api_key ) ) {
+        wp_send_json_error( array( 'message' => 'Gemini API Key is not configured.' ) );
     }
 
     $url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=" . rawurlencode( $api_key );
