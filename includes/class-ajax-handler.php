@@ -541,7 +541,7 @@ class MWAI_Ajax_Handler {
                     'id'           => $category->term_id,
                     'name'         => $category->name,
                     'slug'         => $category->slug,
-                    'count'        => $category->count,
+                    'count'        => count( wc_get_term_product_ids( $category->term_id, 'product_cat' ) ),
                     'has_children' => (bool) get_terms( array(
                         'taxonomy'   => 'product_cat',
                         'hide_empty' => true,

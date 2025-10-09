@@ -226,7 +226,7 @@ class MWAI_Product_Shortcode {
                         ?>
                         <a href="<?php echo esc_url( $category_link ); ?>" class="mwai-category-tab mwai-category-card">
                             <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $category->name ); ?>">
-                            <span><?php echo esc_html( $category->name ); ?></span>
+                            <span><?php echo esc_html( $category->name ); ?> (<?php echo esc_html( $category->count ); ?>)</span>
                         </a>
                     <?php endforeach; ?>
                 </div>
