@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: MarketWhaleAI
- * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API + SerpAPI).
+ * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API), dynamic shop enhancements, and admin tools for SEO and bulk category management.
  * Version: 1.6
- * Author: Your Name
+ * Author: MarketWhaleAI
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
