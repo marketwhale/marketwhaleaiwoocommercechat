@@ -3,7 +3,7 @@ Contributors: marketwhaleai
 Link: https://aiforbusinesses.marketwhaleai.com/
 Tags: woocommerce, ai, chat, product suggestions, seo, bulk categories, gemini, google ai
 Requires at least: 5.8
-Tested up to: 6.5
+Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 1.6
 License: GPLv2 or later

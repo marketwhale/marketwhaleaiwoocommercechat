@@ -4,6 +4,8 @@
  * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API), dynamic shop enhancements, and admin tools for SEO and bulk category management.
  * Version: 1.6
  * Author: MarketWhaleAI
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -135,11 +137,31 @@ add_action( 'admin_menu', 'mwai_admin_menu' );
 
 // Register settings
 function mwai_register_settings() {
-    register_setting( 'mwai_settings_group', 'mwai_gemini_api_key' );
-    register_setting( 'mwai_settings_group', 'mwai_gemini_model' );
-    register_setting( 'mwai_settings_group', 'mwai_gemini_temperature' );
-    register_setting( 'mwai_settings_group', 'mwai_gemini_max_tokens' );
-    register_setting( 'mwai_settings_group', 'mwai_gemini_top_p' );
+    register_setting( 'mwai_settings_group', 'mwai_gemini_api_key', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_gemini_model', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => 'gemini-2.5-flash',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_gemini_temperature', array(
+        'type'              => 'number',
+        'sanitize_callback' => 'floatval',
+        'default'           => '0.7',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_gemini_max_tokens', array(
+        'type'              => 'integer',
+        'sanitize_callback' => 'intval',
+        'default'           => '2048',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_gemini_top_p', array(
+        'type'              => 'number',
+        'sanitize_callback' => 'floatval',
+        'default'           => '0.9',
+    ) );
 }
 add_action( 'admin_init', 'mwai_register_settings' );
 
