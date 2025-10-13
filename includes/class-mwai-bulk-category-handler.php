@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class MWAI_Bulk_Category_Handler {
 
     public function __construct() {
-        // This class's methods are hooked in marketwhale-ai-chat.php
+        // This class's methods are hooked in marketwhaleai.php
     }
 
     /**
