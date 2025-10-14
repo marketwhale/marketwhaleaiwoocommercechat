@@ -42,18 +42,17 @@ jQuery(document).ready(function($){
                 $body.empty();
                 history.forEach(entry => {
                     if (entry.role === 'user') {
-                        appendMessage('user', $('<div>').text(entry.parts[0].text).html(), [], false); // Don't save again
+                        appendMessage('user', $('<div>').text(entry.parts[0].text).html(), [], false, false); // Don't save, don't animate
                     } else if (entry.role === 'model') {
                         const products = entry.products || [];
-                        appendMessage('ai', entry.parts[0].text, products, false, false); // Don't save again, pass products, and don't animate
+                        appendMessage('ai', entry.parts[0].text, products, false, false); // Don't save, don't animate
                     }
                 });
                 $body.scrollTop($body[0].scrollHeight);
-                // After loading all messages, set the quick buttons based on the last message
-                const lastMessage = history[history.length - 1];
-                if (lastMessage && lastMessage.role === 'model' && lastMessage.products && lastMessage.products.length > 0) {
-                    updateProductActionButtons();
-                } else {
+                // After loading all messages, ensure quick buttons are set based on the final state
+                // This is now handled by appendMessage calling updateProductActionButtons,
+                // but we ensure default buttons are added if no products were rendered.
+                if ($('.mwai-products').length === 0) { // If no product grids were rendered from history
                     addDefaultQuickButtons();
                 }
                 return true; // History loaded
@@ -95,14 +94,12 @@ jQuery(document).ready(function($){
 
         const afterMessageRender = () => {
             if (productsData.length > 0) {
-                renderProducts(productsData, () => {
-                    // No need to call updateProductActionButtons here, it's handled by the main flow
-                    if (save) { saveHistory(); }
-                });
-            } else {
-                // No products, so no product action buttons for this message
-                if (save) { saveHistory(); }
+                renderProducts(productsData);
             }
+            // Always update product action buttons after any message that might contain products
+            // or after any message that might clear product selection.
+            updateProductActionButtons();
+            if (save) { saveHistory(); }
             $body.scrollTop($body[0].scrollHeight);
         };
 
