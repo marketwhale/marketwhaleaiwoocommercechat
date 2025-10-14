@@ -49,7 +49,7 @@ jQuery(document).ready(function($){
                     }
                 });
                 $body.scrollTop($body[0].scrollHeight);
-                // Add appropriate quick buttons based on the last message
+                // After loading all messages, set the quick buttons based on the last message
                 const lastMessage = history[history.length - 1];
                 if (lastMessage && lastMessage.role === 'model' && lastMessage.products && lastMessage.products.length > 0) {
                     updateProductActionButtons();
@@ -93,64 +93,24 @@ jQuery(document).ready(function($){
         wrapper.append($p);
         $body.append(wrapper);
 
-        if (role === 'ai') {
-            if (animate) {
-                typeMessage($p, contentHtml, () => {
-                    // After typing, render products (if any) and add quick buttons
-                    if (productsData.length > 0) {
-                        renderProducts(productsData, () => {
-                            // Add product-specific buttons after products
-                            updateProductActionButtons();
-                            if (save) {
-                                saveHistory();
-                            }
-                        });
-                    } else {
-                        // Add default quick buttons for non-product responses
-                        addDefaultQuickButtons();
-                        if (save) {
-                            saveHistory();
-                        }
-                    }
-                    $body.scrollTop($body[0].scrollHeight);
-                });
-            } else {
-                $p.html(contentHtml);
-                if (productsData.length > 0) {
-                    renderProducts(productsData, () => {
-                        // Add product-specific buttons after products
-                        updateProductActionButtons();
-                        if (save) {
-                            saveHistory();
-                        }
-                    });
-                } else {
-                    // Add default quick buttons for non-product responses
-                    addDefaultQuickButtons();
-                    if (save) {
-                        saveHistory();
-                    }
-                }
-                $body.scrollTop($body[0].scrollHeight);
-            }
-        } else {
-            $p.html(contentHtml);
+        const afterMessageRender = () => {
             if (productsData.length > 0) {
                 renderProducts(productsData, () => {
-                    // Add product-specific buttons after products
-                    updateProductActionButtons();
-                    if (save) {
-                        saveHistory();
-                    }
+                    // No need to call updateProductActionButtons here, it's handled by the main flow
+                    if (save) { saveHistory(); }
                 });
             } else {
-                // Add default quick buttons for non-product responses
-                addDefaultQuickButtons();
-                if (save) {
-                    saveHistory();
-                }
+                // No products, so no product action buttons for this message
+                if (save) { saveHistory(); }
             }
             $body.scrollTop($body[0].scrollHeight);
+        };
+
+        if (role === 'ai' && animate) {
+            typeMessage($p, contentHtml, afterMessageRender);
+        } else {
+            $p.html(contentHtml);
+            afterMessageRender();
         }
     }
 
