@@ -176,6 +176,8 @@
     border-radius: 0; /* Remove border-radius */
     box-shadow: none; /* Remove box-shadow */
     padding: 0; /* Remove padding to make it flush with the edge */
+    font-size: 15px; /* Adjusted font size */
+    text-transform: none; /* Ensure normal capitalization */
 }
 
 /* Typing indicator */

@@ -7,6 +7,7 @@ jQuery(document).ready(function($){
     const $close = $('#mwai-close-btn');
     const CHAT_HISTORY_KEY = 'mwai_chat_history';
     const CHAT_OPEN_STATE_KEY = 'mwai_chat_open';
+    const CHAT_DRAFT_KEY = 'mwai_chat_draft'; // New key for draft message
     let history = []; // For multi-turn conversation
 
     // Accessibility: focus input when chat opens
@@ -14,7 +15,14 @@ jQuery(document).ready(function($){
         localStorage.setItem(CHAT_OPEN_STATE_KEY, 'true');
         $chat.addClass('open').removeClass('hidden');
         $fab.addClass('hidden-fab');
-        setTimeout(() => { $input.focus(); }, 300);
+        setTimeout(() => {
+            $input.focus();
+            // Restore draft message if available
+            const savedDraft = localStorage.getItem(CHAT_DRAFT_KEY);
+            if (savedDraft) {
+                $input.val(savedDraft);
+            }
+        }, 300);
         // Scroll to bottom when opening
         $body.scrollTop($body[0].scrollHeight);
     }
@@ -149,7 +157,7 @@ jQuery(document).ready(function($){
     // Typing animation for AI messages
     function typeMessage($element, text, callback) {
         let i = 0;
-        const speed = 20; // Typing speed in milliseconds
+        const speed = 5; // Typing speed in milliseconds (adjusted for faster typing)
         const interval = setInterval(() => {
             if (i < text.length) {
                 $element.html(text.substring(0, i + 1));
@@ -353,15 +361,17 @@ jQuery(document).ready(function($){
                 const aiMessage = response.data.message || '';
                 const productsData = response.data.products || [];
 
-                // Append AI text and products. The appendMessage function now handles adding quick buttons.
-                appendMessage('ai', aiMessage, productsData, true, true); // Pass true to save history after typing and animate
-
-                // Add to history with products (this will be saved by appendMessage's callback)
+                // Add to history with products immediately after receiving response
                 history.push({role: 'model', parts: [{text: aiMessage}], products: productsData});
+                saveHistory(); // Save history immediately
+
+                // Append AI text and products. The appendMessage function now handles adding quick buttons.
+                appendMessage('ai', aiMessage, productsData, false, true); // Pass false for save, as it's already saved
             } else {
-                appendMessage('ai', '⚠️ Sorry — unable to get a response. Please try again.', [], true, false); // Don't animate error messages
-                history.push({role: 'model', parts: [{text: '⚠️ Sorry — unable to get a response. Please try again.'}]});
+                const errorMessage = '⚠️ Sorry — unable to get a response. Please try again.';
+                history.push({role: 'model', parts: [{text: errorMessage}]});
                 saveHistory(); // Save history for error message
+                appendMessage('ai', errorMessage, [], false, false); // Don't animate error messages, already saved
             }
             // Unselect all product checkboxes after AI response
             $('.mwai-product-checkbox').prop('checked', false);
@@ -404,4 +414,21 @@ jQuery(document).ready(function($){
             }
         }
     });
+
+    // Save user's draft input to localStorage on keyup
+    $input.on('keyup', function() {
+        localStorage.setItem(CHAT_DRAFT_KEY, $input.val());
+    });
+
+    // Clear draft when message is sent
+    function clearDraft() {
+        localStorage.removeItem(CHAT_DRAFT_KEY);
+    }
+
+    // Modify sendMessage to clear draft
+    const originalSendMessage = sendMessage;
+    sendMessage = function() {
+        originalSendMessage();
+        clearDraft();
+    };
 });
