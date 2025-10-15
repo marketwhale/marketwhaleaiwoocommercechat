@@ -1,0 +1,399 @@
+/* Shop Page Enhancements Styles */
+
+:root {
+    --mwai-shop-accent-1: #6366f1;
+    --mwai-shop-accent-2: #4f46e5;
+    --mwai-shop-bg: #ffffff;
+    --mwai-shop-text: #0f172a;
+    --mwai-shop-muted: #9ca3af;
+    --mwai-shop-border: #e5e7eb;
+    --mwai-shop-light-bg: #f8fafc;
+}
+
+/* Hide original WooCommerce content when our enhancements are loading */
+/* Hide original WooCommerce content when our enhancements are loading */
+body.mwai-shop-loading .woocommerce-products-header,
+body.mwai-shop-loading .woocommerce-notices-wrapper,
+body.mwai-shop-loading .woocommerce-archive-description,
+body.mwai-shop-loading .woocommerce-result-count,
+body.mwai-shop-loading .woocommerce-ordering,
+body.mwai-shop-loading ul.products, /* Re-add ul.products to be hidden during loading */
+body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loading */
+    display: none !important;
+}
+
+/* Main container for shop enhancements */
+.mwai-shop-enhancements {
+    margin-bottom: 30px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Scroller Wrapper (for scroll buttons and blur effect) */
+.mwai-category-scroller-wrapper,
+.mwai-product-scroller-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+    background-color: var(--mwai-shop-bg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    border-radius: 8px;
+    padding: 0 10px; /* Padding for blur effect */
+}
+
+/* Scroller Title */
+.mwai-scroller-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--mwai-shop-text);
+    margin: 15px 10px 15px 10px; /* Adjust margin to align with scroller padding */
+    padding-top: 10px;
+}
+
+/* Category Scroller & Product Scroller */
+.mwai-category-scroller,
+.mwai-product-scroller {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+    padding: 10px 0; /* Adjust padding to account for wrapper padding */
+    border-bottom: 1px solid var(--mwai-shop-border); /* Keep border on the scroller itself */
+    /* Hide scrollbar for all devices, buttons will handle scrolling */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.mwai-category-scroller::-webkit-scrollbar,
+.mwai-product-scroller::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+/* Responsive adjustments for buttons */
+@media (max-width: 768px) {
+    .mwai-scroll-button {
+        display: none; /* Hide buttons on mobile, rely on touch scroll */
+    }
+    .mwai-category-scroller-wrapper,
+    .mwai-product-scroller-wrapper {
+        padding: 0; /* Remove padding on mobile if buttons are hidden */
+    }
+}
+
+.mwai-category-scroller .mwai-category-tab,
+.mwai-product-scroller .mwai-shop-product-card {
+    flex-shrink: 0; /* Prevent items from shrinking */
+    margin: 0 5px; /* Spacing between items */
+    background-color: var(--mwai-shop-light-bg);
+    border: 1px solid var(--mwai-shop-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.mwai-category-scroller .mwai-category-tab {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--mwai-shop-text);
+    white-space: nowrap; /* Keep text on one line */
+    display: flex; /* Make it a flex container */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+}
+
+/* Specific styles for category cards within the scroller */
+.mwai-category-scroller .mwai-category-card {
+    flex-direction: column; /* Stack image and text vertically */
+    padding: 10px;
+    width: 120px; /* Fixed width for cards */
+    height: 120px; /* Fixed height for cards */
+    border-radius: 12px; /* More rounded corners for cards */
+    justify-content: space-around; /* Distribute space */
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.mwai-category-scroller .mwai-category-card img {
+    max-width: 60px; /* Smaller image size */
+    max-height: 60px;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    object-fit: contain; /* Ensure image fits without cropping */
+}
+
+.mwai-category-scroller .mwai-category-card span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mwai-shop-text);
+    white-space: normal; /* Allow text to wrap */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limit to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.mwai-category-scroller .mwai-category-card:hover,
+.mwai-product-scroller .mwai-shop-product-card:hover {
+    background-color: #eef2ff;
+    border-color: var(--mwai-shop-accent-1);
+    color: var(--mwai-shop-accent-2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1);
+}
+
+.mwai-category-scroller .mwai-category-card.active,
+.mwai-product-scroller .mwai-shop-product-card.active {
+    background: linear-gradient(135deg, var(--mwai-shop-accent-1), var(--mwai-shop-accent-2));
+    color: #fff;
+    border-color: var(--mwai-shop-accent-2);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.mwai-category-scroller .mwai-category-card.active span {
+    color: #fff;
+}
+
+/* Scroll Buttons */
+.mwai-scroll-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    border: 1px solid var(--mwai-shop-border);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    color: var(--mwai-shop-text);
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.mwai-scroll-button:hover {
+    background: var(--mwai-shop-accent-1);
+    color: #fff;
+    border-color: var(--mwai-shop-accent-1);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.mwai-scroll-button.left {
+    left: 0;
+}
+
+.mwai-scroll-button.right {
+    right: 0;
+}
+
+.mwai-scroll-button.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Responsive adjustments for buttons */
+@media (max-width: 768px) {
+    .mwai-scroll-button {
+        display: none; /* Hide buttons on mobile, rely on touch scroll */
+    }
+    .mwai-category-scroller-wrapper,
+    .mwai-product-scroller-wrapper {
+        padding: 0; /* Remove padding on mobile if buttons are hidden */
+    }
+}
+
+.mwai-category-scroller .mwai-category-tab:hover,
+.mwai-product-scroller .mwai-shop-product-card:hover {
+    background-color: #eef2ff;
+    border-color: var(--mwai-shop-accent-1);
+    color: var(--mwai-shop-accent-2);
+}
+
+.mwai-category-scroller .mwai-category-tab.active,
+.mwai-product-scroller .mwai-shop-product-card.active {
+    background: linear-gradient(135deg, var(--mwai-shop-accent-1), var(--mwai-shop-accent-2));
+    color: #fff;
+    border-color: var(--mwai-shop-accent-2);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+/* Product Grid for custom shortcode and default WooCommerce */
+.mwai-products-grid,
+ul.products { /* Apply grid styles to both custom shortcode and default WooCommerce product lists */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 10px 0;
+    list-style: none; /* Remove default list styling */
+    margin: 0; /* Remove default margin */
+}
+
+/* Responsive columns for the custom shortcode */
+.mwai-products-grid.columns-1 { grid-template-columns: repeat(1, 1fr); }
+.mwai-products-grid.columns-2 { grid-template-columns: repeat(2, 1fr); }
+.mwai-products-grid.columns-3 { grid-template-columns: repeat(3, 1fr); }
+.mwai-products-grid.columns-4 { grid-template-columns: repeat(4, 1fr); }
+.mwai-products-grid.columns-5 { grid-template-columns: repeat(5, 1fr); }
+.mwai-products-grid.columns-6 { grid-template-columns: repeat(6, 1fr); }
+
+@media (max-width: 1024px) {
+    .mwai-products-grid.columns-5,
+    .mwai-products-grid.columns-6 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .mwai-products-grid.columns-3,
+    .mwai-products-grid.columns-4,
+    .mwai-products-grid.columns-5,
+    .mwai-products-grid.columns-6,
+    ul.products { /* Apply to default WooCommerce products as well */
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .mwai-products-grid,
+    ul.products {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mwai-products-grid,
+    ul.products { /* Apply to default WooCommerce products as well */
+        grid-template-columns: repeat(2, 1fr); /* Force 2 columns on smallest screens */
+        gap: 10px;
+    }
+}
+
+/* Product Card specific styles for scroller */
+.mwai-product-scroller .mwai-shop-product-card {
+    width: 180px; /* Fixed width for product cards in scroller */
+    height: auto; /* Allow height to adjust */
+    padding: 0; /* Remove padding from card itself, it's inside the anchor */
+    text-align: left; /* Align text left within the card */
+}
+
+.mwai-shop-product-card {
+    background-color: var(--mwai-shop-bg);
+    border: 1px solid var(--mwai-shop-border);
+    border-radius: 12px; /* Slightly larger border-radius */
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Subtle initial shadow */
+}
+
+.mwai-shop-product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12); /* More pronounced shadow on hover */
+}
+
+.mwai-shop-product-card a {
+    text-decoration: none;
+    color: inherit;
+    display: flex; /* Use flexbox for better layout control */
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Ensure the anchor takes full height */
+    padding: 15px;
+}
+
+.mwai-shop-product-card img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.mwai-shop-product-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--mwai-shop-text);
+    margin: 0 0 5px 0;
+    line-height: 1.3;
+    height: 2.6em; /* Limit to 2 lines (1.3 * 2) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Show only 2 lines */
+    -webkit-box-orient: vertical;
+}
+
+.mwai-shop-product-card .price {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--mwai-shop-accent-2);
+    margin: 0;
+}
+
+/* Loading indicator */
+.mwai-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.mwai-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mwai-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--mwai-shop-accent-1);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mwai-product-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    .mwai-category-scroller {
+        padding: 8px 0;
+    }
+    .mwai-category-scroller .mwai-category-tab {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mwai-product-grid { /* This is for the old product grid, keeping it consistent */
+        grid-template-columns: repeat(2, 1fr); /* Force 2 columns on smallest screens */
+        gap: 10px;
+    }
+    .mwai-shop-product-card h3 {
+        font-size: 14px;
+    }
+    .mwai-shop-product-card .price {
+        font-size: 13px;
+    }
+}
