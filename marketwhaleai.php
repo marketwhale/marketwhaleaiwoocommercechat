@@ -93,10 +93,6 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/class-mwai-bulk-category-ha
 function mwai_chat_widget_html() {
     $plugin_url = plugin_dir_url( __FILE__ );
     ?>
-    <div id="mwai-fab" aria-hidden="false" title="Chat with us">
-        <img src="<?php echo esc_url( $plugin_url . 'assets/images/chat-icon.png' ); ?>" alt="Chat">
-    </div>
-
     <div id="mwai-chat-window" class="hidden" role="dialog" aria-label="MarketWhale AI chat">
         <div id="mwai-chat-header">
             <span>MarketWhale AI</span>
@@ -106,13 +102,13 @@ function mwai_chat_widget_html() {
         <div id="mwai-chat-body" aria-live="polite"></div>
 
         <div id="mwai-quick-actions-container" class="mwai-quick-buttons"></div> <!-- New persistent container for quick buttons -->
+    </div>
 
-        <div id="mwai-chat-footer">
-            <input type="text" id="mwai-user-input" placeholder="Type your message..." aria-label="Type your message">
-            <button id="mwai-send-btn" aria-label="Send message">
-                <img src="<?php echo esc_url( $plugin_url . 'assets/images/send-icon.png' ); ?>" alt="Send">
-            </button>
-        </div>
+    <div id="mwai-chat-bar" aria-hidden="false" role="toolbar" aria-label="Chat input bar">
+        <input type="text" id="mwai-user-input" placeholder="Type your message..." aria-label="Type your message">
+        <button id="mwai-toggle-send-btn" aria-label="Open chat or Send message">
+            <img src="<?php echo esc_url( $plugin_url . 'assets/images/openchat.png' ); ?>" alt="Open Chat">
+        </button>
     </div>
     <?php
 }

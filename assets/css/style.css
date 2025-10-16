@@ -11,53 +11,21 @@
     --border: #e5e7eb;
 }
 
-/* FAB */
-#mwai-fab {
-    position: fixed;
-    bottom: 16px;
-    right: 16px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-    cursor: pointer;
-    z-index: 99999;
-    box-shadow: 0 8px 30px rgba(79, 70, 229, 0.18);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.22s ease, visibility 0.22s ease;
-}
-#mwai-fab:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 12px 40px rgba(79, 70, 229, 0.22); 
-}
-#mwai-fab.hidden-fab {
-    opacity: 0;
-    visibility: hidden;
-    transform: scale(0);
-    pointer-events: none;
-}
-#mwai-fab img { 
-    width: 28px; 
-    height: 28px; 
-    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.05)); 
-}
-
 /* Chat window */
 #mwai-chat-window {
     position: fixed;
-    bottom: 88px;
-    right: 16px;
-    width: 92%; /* Keep 92% for smaller screens */
-    max-width: 100%; /* Allow full width on larger screens */
+    bottom: 80px; /* Position above the new chat bar */
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    width: calc(100% - 32px); /* 100% minus 16px margin on each side */
+    max-width: 600px; /* Max width for desktop */
     max-height: 76vh;
     background: var(--bg);
     border-radius: 14px;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden; /* Disable horizontal scrolling */
-    overflow-y: hidden; /* Ensure main window doesn't scroll vertically, body handles it */
+    overflow-x: hidden;
+    overflow-y: hidden;
     box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     transition: transform 0.22s cubic-bezier(.2,.9,.2,1), opacity 0.18s ease;
@@ -66,15 +34,15 @@
 #mwai-chat-window.hidden {
     opacity: 0;
     visibility: hidden;
-    transform: scale(0.5) translate(50%, 50%); /* Start from bottom-right, scaled down */
-    pointer-events: none; /* Disable interactions when hidden */
+    transform: translateX(-50%) translateY(50px) scale(0.9); /* Animate from below and slightly scaled */
+    pointer-events: none;
 }
 
 #mwai-chat-window.open {
     opacity: 1;
     visibility: visible;
-    transform: scale(1) translate(0, 0); /* End at proper position */
-    pointer-events: auto; /* Enable interactions when open */
+    transform: translateX(-50%) translateY(0) scale(1);
+    pointer-events: auto;
 }
 
 /* Header */
@@ -99,20 +67,34 @@
 #mwai-chat-body {
     flex: 1;
     padding: 16px;
-    overflow-y: auto; /* Enable vertical scrolling */
-    overflow-x: hidden; /* Disable horizontal scrolling */
+    overflow-y: auto;
+    overflow-x: hidden;
     background: #f8fafc;
 }
 
-/* Footer */
-#mwai-chat-footer {
+/* New Chat Bar */
+#mwai-chat-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px); /* 100% minus 16px margin on each side */
+    max-width: 600px; /* Max width for desktop */
+    height: 56px; /* Fixed height for the bar */
+    background: var(--bg);
+    border-radius: 14px;
     display: flex;
-    gap: 8px;
-    padding: 10px;
     align-items: center;
-    border-top: 1px solid var(--border);
-    background: #fff;
+    padding: 0 10px;
+    box-shadow: 0 8px 30px rgba(79, 70, 229, 0.18);
+    z-index: 99999;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+
+#mwai-chat-bar:hover {
+    box-shadow: 0 12px 40px rgba(79, 70, 229, 0.22);
+}
+
 #mwai-user-input {
     flex: 1;
     padding: 12px;
@@ -121,31 +103,39 @@
     outline: none;
     font-size: 14px;
     background: #fbfdff;
+    margin-right: 8px; /* Space between input and button */
 }
 #mwai-user-input:focus { 
     box-shadow: 0 6px 18px rgba(79,70,229,0.06); 
     border-color: rgba(79,70,229,0.12); 
 }
-#mwai-send-btn {
+
+#mwai-toggle-send-btn {
     padding: 8px 10px;
-    background: transparent;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
     border: none;
     cursor: pointer;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background 0.2s ease, transform 0.1s ease;
 }
-#mwai-send-btn img { 
+#mwai-toggle-send-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+}
+#mwai-toggle-send-btn img { 
     width: 24px; 
     height: 24px; 
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.05)); 
 }
 
 /* Messages */
 .mwai-msg { 
     margin-bottom: 16px; 
     display: block; 
-    max-width: 100%; /* AI response takes full width */
+    max-width: 100%;
     word-wrap: break-word; 
 }
 .mwai-msg p { 
@@ -156,8 +146,8 @@
     font-size: 14px; 
     line-height: 1.5; 
     animation: fadeInUp .25s ease; 
-    white-space: pre-wrap; /* Preserve formatting */
-    word-break: break-word; /* Ensure long words break to prevent overflow */
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 .mwai-msg.user { 
     margin-left: auto; 
@@ -170,14 +160,14 @@
     box-shadow: 0 6px 16px rgba(79,70,229,0.12); 
 }
 .mwai-msg.ai p { 
-    background: transparent; /* Remove background to eliminate bubble effect */
+    background: transparent;
     color: var(--text); 
-    border: none; /* Remove border */
-    border-radius: 0; /* Remove border-radius */
-    box-shadow: none; /* Remove box-shadow */
-    padding: 0; /* Remove padding to make it flush with the edge */
-    font-size: 15px; /* Adjusted font size */
-    text-transform: none; /* Ensure normal capitalization */
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    font-size: 15px;
+    text-transform: none;
 }
 
 /* Typing indicator */
@@ -227,19 +217,19 @@
 /* Product grid / unified card */
 .mwai-products { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* fluid two-column layout */
+    grid-template-columns: repeat(auto-fit, minminmax(140px, 1fr));
     gap: 6px; 
     margin-top: 24px; 
     margin-bottom: 16px; 
     padding: 6px; 
     background: #f8fafc; 
     border-radius: 12px;
-    width: 100%; /* Ensure it takes full width of its parent */
+    width: 100%;
 }
 
 .mwai-product-card {
     display: flex;
-    flex-direction: column; /* vertical layout */
+    flex-direction: column;
     align-items: center;
     text-decoration: none;
     color: inherit;
@@ -249,7 +239,7 @@
     background: #fff;
     transition: transform .18s ease, box-shadow .18s ease;
     text-align: center;
-    position: relative; /* for badge */
+    position: relative;
 }
 
 .mwai-product-card:hover { 
@@ -282,7 +272,7 @@
     font-weight: 600; 
     line-height: 1.3;
     color: #111827;
-    text-transform: none; /* normal case */
+    text-transform: none;
     display: -webkit-box;
     -webkit-line-clamp: 2; 
     -webkit-box-orient: vertical;
@@ -318,9 +308,9 @@
     border-radius: 6px;
     font-size: 9px;
     font-weight: 600;
-    text-transform: none; /* normal case */
+    text-transform: none;
     line-height: 1.2;
-    z-index: 1; /* Ensure badge is above other elements if needed */
+    z-index: 1;
 }
 
 /* Product checkbox */
@@ -328,11 +318,11 @@
     position: absolute;
     top: 8px;
     right: 8px;
-    z-index: 2; /* Ensure checkbox is above badge */
+    z-index: 2;
     width: 18px;
     height: 18px;
     cursor: pointer;
-    appearance: none; /* Hide default checkbox */
+    appearance: none;
     background-color: rgba(255, 255, 255, 0.8);
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -371,7 +361,7 @@
 /* Tablet (768px–1023px) adjustments */
 @media (max-width: 1023px) and (min-width: 768px) {
     .mwai-product-card img {
-        max-width: 100%; /* Images take full width of card */
+        max-width: 100%;
     }
     .mwai-product-meta h4,
     .mwai-product-price,
@@ -387,24 +377,22 @@
 /* Mobile (<768px) adjustments */
 @media (max-width: 767px) {
     .mwai-products {
-        grid-template-columns: repeat(2, 1fr); /* always 2 columns on mobile */
+        grid-template-columns: repeat(2, 1fr);
         gap: 8px;
     }
     .mwai-product-card img {
-        max-width: 100%; /* Images take full width of card */
+        max-width: 100%;
     }
     .mwai-product-meta h4,
     .mwai-product-price,
     .mwai-product-cta {
-        font-size: 10px; /* Increased from 8px for better readability */
+        font-size: 10px;
     }
     .mwai-badge {
-        font-size: 9px; /* Increased from 7px for better readability */
+        font-size: 9px;
         padding: 1px 3px;
     }
 }
-
-
 
 /* Small animations */
 @keyframes blink { 
@@ -419,10 +407,6 @@
 /* Desktop tweaks */
 @media(min-width: 768px) {
     #mwai-chat-window { 
-        width: 90%; /* Allow chat window to take more width on desktop */
-        max-width: 600px; /* Example: increased max-width for desktop */
-        max-height: 520px; 
-        right: 24px; 
-        bottom: 96px; 
+        bottom: 96px; /* Adjust for desktop chat bar height */
     }
 }
