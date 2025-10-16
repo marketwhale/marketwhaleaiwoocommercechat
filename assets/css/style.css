@@ -396,10 +396,10 @@
     .mwai-product-meta h4,
     .mwai-product-price,
     .mwai-product-cta {
-        font-size: 8px;
+        font-size: 10px; /* Increased from 8px for better readability */
     }
     .mwai-badge {
-        font-size: 7px;
+        font-size: 9px; /* Increased from 7px for better readability */
         padding: 1px 3px;
     }
 }

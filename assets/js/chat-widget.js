@@ -132,10 +132,15 @@ jQuery(document).ready(function($){
         const interval = setInterval(() => {
             if (i < text.length) {
                 $element.html(text.substring(0, i + 1));
-                $body.scrollTop($body[0].scrollHeight); // Keep scrolling to bottom
+                // Only scroll to bottom if user is near the bottom
+                if ($body[0].scrollHeight - $body.scrollTop() - $body.outerHeight() < 50) { // 50px threshold
+                    $body.scrollTop($body[0].scrollHeight);
+                }
                 i++;
             } else {
                 clearInterval(interval);
+                // Ensure final scroll to bottom after message is fully typed
+                $body.scrollTop($body[0].scrollHeight);
                 if (callback) callback();
             }
         }, speed);
