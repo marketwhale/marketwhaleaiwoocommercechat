@@ -52,9 +52,7 @@ jQuery(document).ready(function($){
                 // After loading all messages, ensure quick buttons are set based on the final state
                 // This is now handled by appendMessage calling updateProductActionButtons,
                 // but we ensure default buttons are added if no products were rendered.
-                if ($('.mwai-products').length === 0) { // If no product grids were rendered from history
-                    addDefaultQuickButtons();
-                }
+                updateFinalQuickButtons(); // Ensure quick buttons are set after history loads
                 return true; // History loaded
             } catch (e) {
                 console.error("Failed to parse chat history from localStorage", e);
@@ -68,6 +66,19 @@ jQuery(document).ready(function($){
     // Save history to localStorage
     function saveHistory() {
         localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(history));
+    }
+
+    // Determine and render the appropriate quick action buttons
+    function updateFinalQuickButtons() {
+        const lastAiMessage = history.slice().reverse().find(entry => entry.role === 'model');
+        if (lastAiMessage && lastAiMessage.products && lastAiMessage.products.length > 0) {
+            // If the last AI message had products, show product action buttons (if any are selected)
+            // This will be handled by updateProductActionButtons which clears and re-adds based on selection
+            updateProductActionButtons(); 
+        } else {
+            // Otherwise, show default quick buttons
+            addDefaultQuickButtons();
+        }
     }
 
     // Toggle chat
@@ -94,7 +105,10 @@ jQuery(document).ready(function($){
 
         const afterMessageRender = () => {
             if (productsData.length > 0) {
-                renderProducts(productsData);
+                // Create a container for products within this specific message wrapper
+                const $productsContainer = $('<div class="mwai-products-container"></div>');
+                wrapper.append($productsContainer);
+                renderProducts(productsData, $productsContainer); // Pass the container to renderProducts
             }
             // Always update product action buttons after any message that might contain products
             // or after any message that might clear product selection.
@@ -150,7 +164,7 @@ jQuery(document).ready(function($){
                 $body.scrollTop($body[0].scrollHeight);
 
                 if (i === greetings.length - 1) {
-                    addDefaultQuickButtons(); // Add default buttons after greeting
+                    updateFinalQuickButtons(); // Ensure quick buttons are set after greeting
                 }
             }, delay * (i + 1));
         });
@@ -162,19 +176,18 @@ jQuery(document).ready(function($){
         saveHistory(); // Save history after greeting
     }
 
+    const $quickActionsContainer = $('#mwai-quick-actions-container'); // Reference to the new persistent container
+
     // Add default quick action buttons
     function addDefaultQuickButtons() {
-        // Remove existing quick buttons to prevent duplication
-        $('#mwai-default-quick-buttons, #mwai-product-action-buttons').remove();
-        const $defaultButtonsContainer = $('<div id="mwai-default-quick-buttons" class="mwai-quick-buttons"></div>');
-        $defaultButtonsContainer.html(`
+        $quickActionsContainer.empty(); // Clear previous buttons
+        $quickActionsContainer.html(`
             <button data-message="Show catalog">Catalog</button>
             <button data-message="List categories">Categories</button>
             <button data-message="Search for a product">Search</button>
         `);
-        $body.append($defaultButtonsContainer);
         // Handle button clicks for default buttons
-        $('#mwai-default-quick-buttons button').off('click').on('click', function(){
+        $quickActionsContainer.off('click', 'button').on('click', 'button', function(){
             const message = $(this).data('message');
             $input.val(message);
             sendMessage();
@@ -184,21 +197,17 @@ jQuery(document).ready(function($){
 
     // Add product-specific quick action buttons
     function addProductActionButtons() {
-        // Remove existing quick buttons to prevent duplication
-        $('#mwai-default-quick-buttons, #mwai-product-action-buttons').remove();
-        let $productActionButtonsContainer = $('<div id="mwai-product-action-buttons" class="mwai-quick-buttons"></div>');
-        $body.append($productActionButtonsContainer);
-
+        $quickActionsContainer.empty(); // Clear previous buttons
         const numSelected = selectedProducts.size;
 
         if (numSelected === 1) {
-            $productActionButtonsContainer.append('<button data-action="show_details">Show details</button>');
+            $quickActionsContainer.append('<button data-action="show_details">Show details</button>');
         } else if (numSelected >= 2) {
-            $productActionButtonsContainer.append('<button data-action="compare_products">Compare</button>');
+            $quickActionsContainer.append('<button data-action="compare_products">Compare</button>');
         }
 
         // Re-attach event listeners for the new product action buttons
-        $productActionButtonsContainer.off('click', 'button').on('click', 'button', function(){
+        $quickActionsContainer.off('click', 'button').on('click', 'button', function(){
             const action = $(this).data('action');
 
             if (action === 'show_details') {
@@ -223,7 +232,7 @@ jQuery(document).ready(function($){
     }
 
     // Render unified product cards
-    function renderProducts(products, callback) {
+    function renderProducts(products, $targetContainer, callback) { // Added $targetContainer parameter
         if (!products || products.length === 0) {
             if (callback) callback();
             return;
@@ -256,13 +265,14 @@ jQuery(document).ready(function($){
             `);
             container.append(card);
         });
-        $body.append(container);
+        $targetContainer.append(container); // Append to the specified target container
         $body.scrollTop($body[0].scrollHeight);
 
         // Attach event listener for checkboxes
-        $('.mwai-product-checkbox').off('change').on('change', updateProductActionButtons);
+        // These listeners should be attached to the products within the specific container
+        $targetContainer.find('.mwai-product-checkbox').off('change').on('change', updateProductActionButtons);
         // Attach event listener for product card content clicks (excluding checkbox)
-        $('.mwai-product-card .mwai-product-content').off('click').on('click', function() {
+        $targetContainer.find('.mwai-product-card .mwai-product-content').off('click').on('click', function() {
             const link = $(this).parent().data('product-link');
             if (link && link !== '#') {
                 window.location.href = link; // Open in the same tab
@@ -333,7 +343,7 @@ jQuery(document).ready(function($){
             // Unselect all product checkboxes after AI response
             $('.mwai-product-checkbox').prop('checked', false);
             selectedProducts.clear();
-            addProductActionButtons(); // Update buttons after clearing selection
+            updateFinalQuickButtons(); // Update buttons after clearing selection and receiving response
         }, 'json').fail(function(){
             $typing.remove();
             appendMessage('ai', '⚠️ Network error — please try again.', [], true, false); // Don't animate network error messages
@@ -342,7 +352,7 @@ jQuery(document).ready(function($){
             // Unselect all product checkboxes after AI response
             $('.mwai-product-checkbox').prop('checked', false);
             selectedProducts.clear();
-            addProductActionButtons(); // Update buttons after clearing selection
+            updateFinalQuickButtons(); // Update buttons after clearing selection and network error
         });
     }
 

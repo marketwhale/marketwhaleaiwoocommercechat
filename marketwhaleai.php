@@ -105,10 +105,12 @@ function mwai_chat_widget_html() {
 
         <div id="mwai-chat-body" aria-live="polite"></div>
 
+        <div id="mwai-quick-actions-container" class="mwai-quick-buttons"></div> <!-- New persistent container for quick buttons -->
+
         <div id="mwai-chat-footer">
             <input type="text" id="mwai-user-input" placeholder="Type your message..." aria-label="Type your message">
             <button id="mwai-send-btn" aria-label="Send message">
-                <img src="<?php echo esc_url( $plugin_url . 'assets/images/chat-icon.png' ); ?>" alt="Send">
+                <img src="<?php echo esc_url( $plugin_url . 'assets/images/send-icon.png' ); ?>" alt="Send">
             </button>
         </div>
     </div>
