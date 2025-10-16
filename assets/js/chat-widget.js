@@ -12,18 +12,65 @@ jQuery(document).ready(function($){
     const CHAT_DRAFT_KEY = 'mwai_chat_draft';
     let history = [];
 
-    const OPEN_CHAT_ICON = MWAI_Ajax.plugin_url + 'assets/images/openchat.png'; // Assuming plugin_url is localized
+    const OPEN_CHAT_ICON = MWAI_Ajax.plugin_url + 'assets/images/openchat.png';
     const SEND_ICON = MWAI_Ajax.plugin_url + 'assets/images/send-icon.png';
+
+    let placeholders = [
+        "Ask Shopping AI: What’s the best deal today?",
+        "Find me sneakers under $50",
+        "Compare iPhone 15 vs Samsung S24",
+        "Show trending fashion this week",
+        "Which laptop is best for students?",
+        "Search top-rated headphones",
+        "What’s on discount right now?",
+        "Suggest gifts for under ₹2000",
+        "Find eco-friendly products",
+        "Show me today’s top offers"
+    ];
+    let currentPlaceholderIndex = 0;
+    let typingInterval;
+    let placeholderRotationInterval;
 
     // Helper to get plugin URL (if not already localized)
     if (typeof MWAI_Ajax.plugin_url === 'undefined') {
-        // Fallback if plugin_url is not localized, though it should be.
-        // This would require knowing the plugin's base URL, which is hard in JS.
-        // For now, assume MWAI_Ajax.plugin_url is available.
         console.error("MWAI_Ajax.plugin_url is not defined. Please ensure it's localized.");
-        // Using relative paths as a last resort, but this is less robust.
-        // OPEN_CHAT_ICON = 'assets/images/openchat.png';
-        // SEND_ICON = 'assets/images/send-icon.png';
+    }
+
+    function typePlaceholder(text, callback) {
+        let i = 0;
+        $input.attr('placeholder', ''); // Clear existing placeholder
+        typingInterval = setInterval(() => {
+            if (i < text.length) {
+                $input.attr('placeholder', $input.attr('placeholder') + text[i]);
+                i++;
+            } else {
+                clearInterval(typingInterval);
+                setTimeout(callback, 1500); // Wait before rotating to next
+            }
+        }, 50);
+    }
+
+    function startPlaceholderRotation() {
+        stopPlaceholderRotation(); // Ensure any existing rotation is stopped
+        placeholderRotationInterval = setInterval(() => {
+            if ($input.is(':focus') || $input.val().length > 0) {
+                // If input is focused or has text, don't rotate
+                return;
+            }
+            typePlaceholder(placeholders[currentPlaceholderIndex], () => {
+                currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholders.length;
+            });
+        }, 3000); // Rotate every 3 seconds (after typing effect + 1.5s pause)
+        // Initial call
+        typePlaceholder(placeholders[currentPlaceholderIndex], () => {
+            currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholders.length;
+        });
+    }
+
+    function stopPlaceholderRotation() {
+        clearInterval(typingInterval);
+        clearInterval(placeholderRotationInterval);
+        $input.attr('placeholder', ''); // Clear placeholder when stopped
     }
 
     function openChat() {
@@ -35,6 +82,9 @@ jQuery(document).ready(function($){
             const savedDraft = localStorage.getItem(CHAT_DRAFT_KEY);
             if (savedDraft) {
                 $input.val(savedDraft);
+                stopPlaceholderRotation(); // Stop if draft exists
+            } else {
+                startPlaceholderRotation(); // Start if no draft
             }
         }, 300);
         $body.scrollTop($body[0].scrollHeight);
@@ -44,6 +94,7 @@ jQuery(document).ready(function($){
         $chat.removeClass('open').addClass('hidden');
         $toggleSendBtnImg.attr('src', OPEN_CHAT_ICON).attr('alt', 'Open Chat');
         localStorage.setItem(CHAT_OPEN_STATE_KEY, 'false');
+        stopPlaceholderRotation(); // Stop rotation when chat is closed
     }
 
     function loadHistory() {
@@ -360,7 +411,32 @@ jQuery(document).ready(function($){
         $body.scrollTop($body[0].scrollHeight);
     });
 
+    // Fetch dynamic placeholders on load
+    function fetchDynamicPlaceholders() {
+        $.post(MWAI_Ajax.ajax_url, {
+            action: 'mwai_get_dynamic_placeholders',
+            // No nonce needed for this public data fetch
+        }, function(response) {
+            if (response.success && response.data && response.data.placeholders.length > 0) {
+                placeholders = response.data.placeholders;
+                console.log('MWAI: Dynamic placeholders loaded:', placeholders);
+            } else {
+                console.log('MWAI: Using default placeholders (or no dynamic placeholders found).');
+            }
+        }).fail(function() {
+            console.error('MWAI: Failed to fetch dynamic placeholders, using default.');
+        }).always(function() {
+            // Start rotation after fetching, or immediately if fetch fails
+            const wasChatOpen = localStorage.getItem(CHAT_OPEN_STATE_KEY) === 'true';
+            if (!wasChatOpen || (wasChatOpen && $input.val().length === 0)) {
+                startPlaceholderRotation();
+            }
+        });
+    }
+
     $(window).on('load', function() {
+        fetchDynamicPlaceholders(); // Start fetching dynamic placeholders
+
         const wasChatOpen = localStorage.getItem(CHAT_OPEN_STATE_KEY) === 'true';
         if (wasChatOpen) {
             openChat();
@@ -375,5 +451,20 @@ jQuery(document).ready(function($){
 
     $input.on('keyup', function() {
         localStorage.setItem(CHAT_DRAFT_KEY, $input.val());
+        if ($input.val().length > 0) {
+            stopPlaceholderRotation();
+        } else {
+            startPlaceholderRotation(); // Resume if input becomes empty
+        }
+    });
+
+    $input.on('focus', function() {
+        stopPlaceholderRotation();
+    });
+
+    $input.on('blur', function() {
+        if ($input.val().length === 0) {
+            startPlaceholderRotation();
+        }
     });
 });

@@ -18,8 +18,15 @@ class MWAI_Ajax_Handler {
 
         add_action( 'wp_ajax_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
         add_action( 'wp_ajax_nopriv_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
+
+        // Dynamic placeholders for chat widget
+        add_action( 'wp_ajax_mwai_get_dynamic_placeholders', array( $this, 'get_dynamic_placeholders' ) );
+        add_action( 'wp_ajax_nopriv_mwai_get_dynamic_placeholders', array( $this, 'get_dynamic_placeholders' ) );
     }
 
+    /**
+     * Handles the AJAX request for AI chat responses.
+     */
     public function get_response() {
         // Basic request & nonce optional check (client did not send nonce previously)
         // Get history (array of content parts)
@@ -439,6 +446,65 @@ class MWAI_Ajax_Handler {
         }
 
         return $products;
+    }
+
+    /**
+     * AJAX callback to get dynamic placeholder texts (e.g., popular product names).
+     */
+    public function get_dynamic_placeholders() {
+        // No nonce check needed for public data fetching, but can be added if sensitive.
+        // check_ajax_referer( 'mwai_shop_nonce', 'nonce' ); // If you want to add a nonce
+
+        $placeholders = array();
+
+        // Fetch popular products (e.g., by total sales)
+        $args = array(
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => 10, // Fetch up to 10 popular products
+            'meta_key'       => 'total_sales',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'DESC',
+        );
+
+        $products_query = new WP_Query( $args );
+
+        if ( $products_query->have_posts() ) {
+            while ( $products_query->have_posts() ) {
+                $products_query->the_post();
+                $product = wc_get_product( get_the_ID() );
+                if ( $product && $product->is_visible() ) {
+                    $placeholders[] = 'Find me ' . esc_html( $product->get_name() );
+                }
+            }
+            wp_reset_postdata();
+        }
+
+        // Add some generic popular search terms as fallback or additional options
+        $generic_placeholders = array(
+            "What’s the best deal today?",
+            "Find me sneakers under $50",
+            "Compare iPhone 15 vs Samsung S24",
+            "Show trending fashion this week",
+            "Which laptop is best for students?",
+            "Search top-rated headphones",
+            "What’s on discount right now?",
+            "Suggest gifts for under ₹2000",
+            "Find eco-friendly products",
+            "Show me today’s top offers"
+        );
+
+        // Combine and ensure uniqueness, prioritize dynamic ones
+        $final_placeholders = array_unique( array_merge( $placeholders, $generic_placeholders ) );
+        // Limit to a reasonable number
+        $final_placeholders = array_slice( $final_placeholders, 0, 10 );
+
+
+        if ( ! empty( $final_placeholders ) ) {
+            wp_send_json_success( array( 'placeholders' => $final_placeholders ) );
+        } else {
+            wp_send_json_error( array( 'message' => 'No dynamic placeholders found.' ) );
+        }
     }
 
     /**
