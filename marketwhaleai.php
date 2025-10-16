@@ -20,8 +20,9 @@ function mwai_enqueue_assets() {
     wp_enqueue_script( 'mwai-js', $plugin_url . 'assets/js/chat-widget.js', array( 'jquery' ), '1.6', true );
 
     wp_localize_script( 'mwai-js', 'MWAI_Ajax', array(
-        'ajax_url' => admin_url( 'admin-ajax.php' ),
-        'nonce'    => wp_create_nonce( 'mwai_ajax_nonce' )
+        'ajax_url'   => admin_url( 'admin-ajax.php' ),
+        'nonce'      => wp_create_nonce( 'mwai_ajax_nonce' ),
+        'plugin_url' => $plugin_url, // Add plugin URL
     ) );
 
     // Enqueue shop page enhancement assets only on shop-related pages
