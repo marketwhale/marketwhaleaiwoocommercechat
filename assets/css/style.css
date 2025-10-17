@@ -84,8 +84,11 @@
     width: calc(100% - 32px); /* 100% minus 16px margin on each side */
     max-width: 600px; /* Max width for desktop */
     height: 56px; /* Fixed height for the bar */
-    background: var(--bg);
-    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 18px;
     display: flex;
     align-items: center;
     padding: 0 10px;
@@ -102,12 +105,15 @@
 #mwai-user-input {
     flex: 1;
     padding: 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
     outline: none;
     font-size: 14px;
     background: #fbfdff;
     margin-right: 8px; /* Space between input and button */
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.7);
+    color: #111;
+    transition: all 0.2s ease;
 }
 #mwai-user-input:focus { 
     box-shadow: 0 4px 12px rgba(79,70,229,0.08); 
