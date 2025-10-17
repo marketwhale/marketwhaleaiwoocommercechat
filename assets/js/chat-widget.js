@@ -164,11 +164,15 @@ jQuery(document).ready(function($){
             if (productsData.length > 0) {
                 const $productsContainer = $('<div class="mwai-products-container"></div>');
                 wrapper.append($productsContainer);
-                renderProducts(productsData, $productsContainer);
+                renderProducts(productsData, $productsContainer, () => {
+                    updateProductActionButtons(); // Update product action buttons after rendering products
+                });
+            } else {
+                updateProductActionButtons(); // Call even if no products to clear product-specific buttons
             }
-            updateProductActionButtons();
             if (save) { saveHistory(); }
             $body.scrollTop($body[0].scrollHeight);
+            updateFinalQuickButtons(); // Always re-evaluate final quick buttons
         };
 
         if (role === 'ai' && animate) {
