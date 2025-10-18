@@ -20,9 +20,14 @@ class MWAI_Product_Shortcode {
         global $post;
         if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_category_scroller' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
             $plugin_url = plugin_dir_url( dirname( __FILE__ ) ); // Get plugin base URL
-            wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
-            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used, as they rely on its JS logic for scrolling
-            if ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
+            
+            // Enqueue shop styles if shop enhancements are enabled
+            if ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
+                wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
+            }
+
+            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used, and shop enhancements are enabled
+            if ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) && ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
                 wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -123,6 +128,10 @@ class MWAI_Product_Shortcode {
      * @return string HTML output for the shop browser.
      */
     public function render_mwai_shop_browser_shortcode( $atts ) {
+        if ( ! get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
+            return '<p>Shop enhancements are currently disabled by the administrator.</p>';
+        }
+
         $atts = shortcode_atts( array(
             'limit' => 12, // Default limit for products
         ), $atts, 'mwai_shop_browser' );

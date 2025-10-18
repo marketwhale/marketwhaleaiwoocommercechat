@@ -11,6 +11,9 @@ class MWAI_Bulk_Category_Handler {
      * AJAX callback to handle bulk category creation.
      */
     public static function bulk_add_categories() {
+        if ( ! get_option( 'mwai_feature_bulk_categories_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'Bulk category management is currently disabled by the administrator.' ) );
+        }
         check_ajax_referer( 'mwai_bulk_add_categories_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_product_terms' ) ) {

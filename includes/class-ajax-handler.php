@@ -28,6 +28,13 @@ class MWAI_Ajax_Handler {
      * Handles the AJAX request for AI chat responses.
      */
     public function get_response() {
+        if ( ! get_option( 'mwai_feature_chat_widget_enabled', true ) ) {
+            wp_send_json_success( array(
+                'message'  => 'The chat widget is currently disabled by the administrator.',
+                'products' => array(),
+            ) );
+        }
+
         // Basic request & nonce optional check (client did not send nonce previously)
         // Get history (array of content parts)
         $history = isset( $_POST['history'] ) ? wp_unslash( $_POST['history'] ) : '[]';
@@ -528,6 +535,9 @@ class MWAI_Ajax_Handler {
      * AJAX callback to filter products by category.
      */
     public function filter_products() {
+        if ( ! get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
         $category_id = isset( $_POST['category_id'] ) ? intval( $_POST['category_id'] ) : 0;
@@ -586,6 +596,9 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get product categories and subcategories.
      */
     public function get_categories() {
+        if ( ! get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
         $parent_id = isset( $_POST['parent_id'] ) ? intval( $_POST['parent_id'] ) : 0;
@@ -648,6 +661,9 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get a category ID by its slug.
      */
     public function get_category_id_by_slug() {
+        if ( ! get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
         $slug = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
@@ -669,6 +685,9 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get a hierarchical path of category IDs from an array of slugs.
      */
     public function get_category_path_by_slugs() {
+        if ( ! get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
         $slugs = isset( $_POST['slugs'] ) ? (array) wp_unslash( $_POST['slugs'] ) : array();
