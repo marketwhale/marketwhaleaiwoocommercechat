@@ -18,10 +18,6 @@ class MWAI_Ajax_Handler {
 
         add_action( 'wp_ajax_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
         add_action( 'wp_ajax_nopriv_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
-
-        // Dynamic placeholders for chat widget
-        add_action( 'wp_ajax_mwai_get_dynamic_placeholders', array( $this, 'get_dynamic_placeholders' ) );
-        add_action( 'wp_ajax_nopriv_mwai_get_dynamic_placeholders', array( $this, 'get_dynamic_placeholders' ) );
     }
 
     /**

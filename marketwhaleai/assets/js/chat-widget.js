@@ -15,7 +15,7 @@ jQuery(document).ready(function($){
     const OPEN_CHAT_ICON = MWAI_Ajax.plugin_url + 'assets/images/openchat.png';
     const SEND_ICON = MWAI_Ajax.plugin_url + 'assets/images/send-icon.png';
 
-    let placeholders = [
+    const placeholders = [
         "Ask Shopping AI: What’s the best deal today?",
         "Find me sneakers under $50",
         "Compare iPhone 15 vs Samsung S24",
@@ -415,32 +415,7 @@ jQuery(document).ready(function($){
         $body.scrollTop($body[0].scrollHeight);
     });
 
-    // Fetch dynamic placeholders on load
-    function fetchDynamicPlaceholders() {
-        $.post(MWAI_Ajax.ajax_url, {
-            action: 'mwai_get_dynamic_placeholders',
-            // No nonce needed for this public data fetch
-        }, function(response) {
-            if (response.success && response.data && response.data.placeholders.length > 0) {
-                placeholders = response.data.placeholders;
-                console.log('MWAI: Dynamic placeholders loaded:', placeholders);
-            } else {
-                console.log('MWAI: Using default placeholders (or no dynamic placeholders found).');
-            }
-        }).fail(function() {
-            console.error('MWAI: Failed to fetch dynamic placeholders, using default.');
-        }).always(function() {
-            // Start rotation after fetching, or immediately if fetch fails
-            const wasChatOpen = localStorage.getItem(CHAT_OPEN_STATE_KEY) === 'true';
-            if (!wasChatOpen || (wasChatOpen && $input.val().length === 0)) {
-                startPlaceholderRotation();
-            }
-        });
-    }
-
     $(window).on('load', function() {
-        fetchDynamicPlaceholders(); // Start fetching dynamic placeholders
-
         const wasChatOpen = localStorage.getItem(CHAT_OPEN_STATE_KEY) === 'true';
         if (wasChatOpen) {
             openChat();
@@ -451,6 +426,7 @@ jQuery(document).ready(function($){
         } else {
             closeChat(); // Ensure button is 'openchat.png' if chat is closed on load
         }
+        startPlaceholderRotation(); // Always start rotation on load
     });
 
     $input.on('keyup', function() {
