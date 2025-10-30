@@ -447,7 +447,7 @@ function mwai_test_connection_callback() {
     check_ajax_referer( 'mwai_test_connection_nonce', '_wpnonce' );
 
     $api_key = get_option( 'mwai_gemini_api_key', '' );
-    $model   = get_option( 'mwai_gemini_model', 'gemini-1.0-pro' ); // Changed default model
+    $model   = get_option( 'mwai_gemini_model', 'gemini-2.5-flash' ); // Changed default model
 
     if ( empty( $api_key ) ) {
         wp_send_json_error( array( 'message' => 'Gemini API Key is not configured.' ) );
