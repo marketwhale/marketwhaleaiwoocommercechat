@@ -26,13 +26,21 @@ class MWAI_Product_Shortcode {
                 wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
             }
 
-            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used, as they rely on its JS logic for scrolling
-            if ( get_option( 'mwai_enable_shop_enhancements', true ) && ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
+            // Enqueue shop-enhancements.js if mwai_shop_browser is used, as it relies on its JS logic for scrolling
+            if ( get_option( 'mwai_enable_shop_enhancements', true ) && has_shortcode( $post->post_content, 'mwai_shop_browser' ) ) {
                 wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )
                 ) );
+            }
+
+            // Enqueue specific inline scripts for scrollers if their shortcodes are present
+            if ( has_shortcode( $post->post_content, 'mwai_category_scroller' ) ) {
+                wp_enqueue_script( 'mwai-category-scroller-inline-js', $plugin_url . 'assets/js/mwai-category-scroller-inline.js', array( 'jquery' ), '1.0', true );
+            }
+            if ( has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
+                wp_enqueue_script( 'mwai-product-scroller-inline-js', $plugin_url . 'assets/js/mwai-product-scroller-inline.js', array( 'jquery' ), '1.0', true );
             }
         }
     }
@@ -219,45 +227,6 @@ class MWAI_Product_Shortcode {
                 <div class="mwai-scroll-button left hidden"><</div>
                 <div class="mwai-scroll-button right hidden">></div>
             </div>
-            <script type="text/javascript">
-                jQuery(document).ready(function($){
-                    const $scrollerWrapper = $('.mwai-shortcode-category-scroller');
-                    const $scroller = $scrollerWrapper.find('.mwai-category-scroller');
-                    const $leftButton = $scrollerWrapper.find('.mwai-scroll-button.left');
-                    const $rightButton = $scrollerWrapper.find('.mwai-scroll-button.right');
-
-                    function updateScrollButtons() {
-                        if ($scroller[0].scrollWidth > $scroller[0].clientWidth) {
-                            if ($scroller[0].scrollLeft === 0) {
-                                $leftButton.addClass('hidden');
-                            } else {
-                                $leftButton.removeClass('hidden');
-                            }
-
-                            if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth) {
-                                $rightButton.addClass('hidden');
-                            } else {
-                                $rightButton.removeClass('hidden');
-                            }
-                        } else {
-                            $leftButton.addClass('hidden');
-                            $rightButton.addClass('hidden');
-                        }
-                    }
-
-                    $scroller.on('scroll', updateScrollButtons);
-                    $(window).on('resize', updateScrollButtons);
-                    setTimeout(updateScrollButtons, 100); // Initial check
-
-                    $leftButton.on('click', function() {
-                        $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
-                    });
-
-                    $rightButton.on('click', function() {
-                        $scroller.animate({ scrollLeft: $scroller.scrollLeft() + 200 }, 300);
-                    });
-                });
-            </script>
             <?php
         } else {
             echo '<p>No categories found.</p>';
@@ -348,49 +317,6 @@ class MWAI_Product_Shortcode {
                 <div class="mwai-scroll-button left hidden"><</div>
                 <div class="mwai-scroll-button right hidden">></div>
             </div>
-            <script type="text/javascript">
-                jQuery(document).ready(function($){
-                    // Ensure this script only runs for the specific shortcode instance
-                    const $scrollerWrapper = $('.mwai-shortcode-product-scroller');
-                    $scrollerWrapper.each(function() {
-                        const $currentScrollerWrapper = $(this);
-                        const $scroller = $currentScrollerWrapper.find('.mwai-product-scroller');
-                        const $leftButton = $currentScrollerWrapper.find('.mwai-scroll-button.left');
-                        const $rightButton = $currentScrollerWrapper.find('.mwai-scroll-button.right');
-
-                        function updateScrollButtons() {
-                            if ($scroller[0].scrollWidth > $scroller[0].clientWidth) {
-                                if ($scroller[0].scrollLeft === 0) {
-                                    $leftButton.addClass('hidden');
-                                } else {
-                                    $leftButton.removeClass('hidden');
-                                }
-
-                                if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth) {
-                                    $rightButton.addClass('hidden');
-                                } else {
-                                    $rightButton.removeClass('hidden');
-                                }
-                            } else {
-                                $leftButton.addClass('hidden');
-                                $rightButton.addClass('hidden');
-                            }
-                        }
-
-                        $scroller.on('scroll', updateScrollButtons);
-                        $(window).on('resize', updateScrollButtons);
-                        setTimeout(updateScrollButtons, 100); // Initial check
-
-                        $leftButton.on('click', function() {
-                            $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
-                        });
-
-                        $rightButton.on('click', function() {
-                            $scroller.animate({ scrollLeft: $scroller.scrollLeft() + 200 }, 300);
-                        });
-                    });
-                });
-            </script>
             <?php
         } else {
             echo '<p>No products found.</p>';

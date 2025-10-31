@@ -1,7 +1,9 @@
 <?php
 /**
  * Plugin Name: MarketWhaleAI
+ *
  * Description: AI-powered floating chat widget with WooCommerce product suggestions (Gemini API), dynamic shop enhancements, and admin tools for SEO and bulk category management.
+ *
  * Version: 1.6
  * Author: MarketWhaleAI
  * License: GPLv2 or later
@@ -11,6 +13,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
 
 
 // Assets (CSS/JS)
@@ -55,8 +58,8 @@ function mwai_admin_enqueue_scripts( $hook_suffix ) {
         wp_enqueue_style( 'mwai-admin-tabs-style', plugin_dir_url( __FILE__ ) . 'assets/css/admin-tabs.css', array(), '1.0' );
         wp_enqueue_script( 'mwai-admin-tabs-js', plugin_dir_url( __FILE__ ) . 'assets/js/admin-tabs.js', array( 'jquery' ), '1.0', true );
         // Ensure admin-settings.js loads after admin-tabs.js if it has dependencies on tab functionality
-        wp_enqueue_script( 'mwai-admin-js', plugin_dir_url( __FILE__ ) . 'assets/js/admin-settings.js', array( 'jquery', 'mwai-admin-tabs-js' ), '1.0', true );
-        wp_localize_script( 'mwai-admin-js', 'MWAI_Admin_Ajax', array(
+        wp_enqueue_script( 'mwai-admin-settings-inline-js', plugin_dir_url( __FILE__ ) . 'assets/js/mwai-admin-settings-inline.js', array( 'jquery' ), '1.0', true );
+        wp_localize_script( 'mwai-admin-settings-inline-js', 'MWAI_Admin_Settings_Ajax', array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'mwai_test_connection_nonce' ),
         ) );
@@ -454,32 +457,6 @@ function mwai_settings_page() {
         </div> <!-- End of new wrapper div -->
     </div>
 
-    <script type="text/javascript">
-        jQuery(document).ready(function($){
-            $('#mwai-test-connection-btn').on('click', function(e){
-                e.preventDefault();
-                const $button = $(this);
-                const $result = $('#mwai-test-connection-result');
-                $result.text('Testing connection...');
-                $button.prop('disabled', true);
-
-                $.post(ajaxurl, {
-                    action: 'mwai_test_connection',
-                    _wpnonce: '<?php echo wp_create_nonce( 'mwai_test_connection_nonce' ); ?>'
-                }, function(response){
-                    if (response.success) {
-                        $result.css('color', 'green').text('Connection successful! ' + response.data.message);
-                    } else {
-                        $result.css('color', 'red').text('Connection failed: ' + response.data.message);
-                    }
-                }).fail(function(){
-                    $result.css('color', 'red').text('Network error during connection test.');
-                }).always(function(){
-                    $button.prop('disabled', false);
-                });
-            });
-        });
-    </script>
     <?php
 }
 
