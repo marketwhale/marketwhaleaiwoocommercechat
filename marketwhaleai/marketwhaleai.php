@@ -276,10 +276,12 @@ function mwai_settings_page() {
                     <p>Control which MarketWhaleAI features are active on your store.</p>
 
                     <div class="mwai-feature-toggle">
-                        <label for="mwai_enable_chat_widget">
-                            AI Chat Widget
-                            <span class="description">Enable or disable the floating AI chat widget on your storefront.</span>
-                        </label>
+                        <div class="mwai-feature-text">
+                            <label for="mwai_enable_chat_widget">
+                                AI Chat Widget
+                                <span class="description">Enable or disable the floating AI chat widget on your storefront.</span>
+                            </label>
+                        </div>
                         <label class="mwai-switch">
                             <input type="checkbox" name="mwai_enable_chat_widget" id="mwai_enable_chat_widget" value="1" <?php checked( $enable_chat_widget, true ); ?>>
                             <span class="mwai-slider"></span>
@@ -287,10 +289,12 @@ function mwai_settings_page() {
                     </div>
 
                     <div class="mwai-feature-toggle">
-                        <label for="mwai_enable_shop_enhancements">
-                            Shop Page Enhancements
-                            <span class="description">Enable or disable dynamic category scrollers and infinite product grids on shop pages.</span>
-                        </label>
+                        <div class="mwai-feature-text">
+                            <label for="mwai_enable_shop_enhancements">
+                                Shop Page Enhancements
+                                <span class="description">Enable or disable dynamic category scrollers and infinite product grids on shop pages.</span>
+                            </label>
+                        </div>
                         <label class="mwai-switch">
                             <input type="checkbox" name="mwai_enable_shop_enhancements" id="mwai_enable_shop_enhancements" value="1" <?php checked( $enable_shop_enhancements, true ); ?>>
                             <span class="mwai-slider"></span>
@@ -298,10 +302,12 @@ function mwai_settings_page() {
                     </div>
 
                     <div class="mwai-feature-toggle">
-                        <label for="mwai_enable_product_seo">
-                            Product SEO Generation
-                            <span class="description">Enable or disable the AI-powered SEO content generation tool on product edit screens.</span>
-                        </label>
+                        <div class="mwai-feature-text">
+                            <label for="mwai_enable_product_seo">
+                                Product SEO Generation
+                                <span class="description">Enable or disable the AI-powered SEO content generation tool on product edit screens.</span>
+                            </label>
+                        </div>
                         <label class="mwai-switch">
                             <input type="checkbox" name="mwai_enable_product_seo" id="mwai_enable_product_seo" value="1" <?php checked( $enable_product_seo, true ); ?>>
                             <span class="mwai-slider"></span>
@@ -309,10 +315,12 @@ function mwai_settings_page() {
                     </div>
 
                     <div class="mwai-feature-toggle">
-                        <label for="mwai_enable_bulk_categories">
-                            Bulk Category Management
-                            <span class="description">Enable or disable the bulk category creation tool on the product categories page.</span>
-                        </label>
+                        <div class="mwai-feature-text">
+                            <label for="mwai_enable_bulk_categories">
+                                Bulk Category Management
+                                <span class="description">Enable or disable the bulk category creation tool on the product categories page.</span>
+                            </label>
+                        </div>
                         <label class="mwai-switch">
                             <input type="checkbox" name="mwai_enable_bulk_categories" id="mwai_enable_bulk_categories" value="1" <?php checked( $enable_bulk_categories, true ); ?>>
                             <span class="mwai-slider"></span>
@@ -366,8 +374,6 @@ function mwai_settings_page() {
                             </td>
                         </tr>
                     </table>
-
-                    <?php submit_button(); ?>
 
                     <h2>Test Gemini Connection</h2>
                     <p>Click the button below to test if your Gemini API Key is working correctly.</p>
@@ -432,7 +438,7 @@ function mwai_settings_page() {
                                         <li><em>Attributes:</em> <code>parent_id</code> (0 for top-level), <code>columns</code> (for styling), <code>class</code>.</li>
                                     </ul>
                                 </li>
-                                <li><strong><code>[mwai_product_scroller]</code>:</strong> Displays a horizontal scroller of products.
+                                <li><strong><code>[mwai_product_scroller]</code>:</b> Displays a horizontal scroller of products.
                                     <ul>
                                         <li><em>Example:</em> <code>[mwai_product_scroller title="New Arrivals" limit="8" orderby="date" order="desc"]</code></li>
                                         <li><em>Attributes:</em> <code>limit</code>, <code>category</code> (slugs), <code>orderby</code>, <code>order</code>, <code>ids</code> (product IDs), <code>skus</code> (product SKUs), <code>class</code>, <code>title</code>.</li>
@@ -443,8 +449,8 @@ function mwai_settings_page() {
                     </ul>
                     <p>This detailed overview should provide customers with a clear understanding of MarketWhaleAI's capabilities and how to best utilize them to enhance their WooCommerce store.</p>
                 </div>
-                <?php submit_button(); ?>
             </form>
+            <?php submit_button(); ?>
         </div> <!-- End of new wrapper div -->
     </div>
 

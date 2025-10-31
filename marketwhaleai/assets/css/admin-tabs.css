@@ -2,46 +2,58 @@
 
 .mwai-admin-tabs {
     margin-top: 20px;
+    background-color: #f9fafb; /* Light background for the whole tab area */
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    padding: 20px; /* Add padding around the entire tab content */
 }
 
 .mwai-admin-tabs .nav-tab-wrapper {
     margin-bottom: 20px;
-    border-bottom: 1px solid #c3c4c7;
+    border-bottom: 1px solid #e5e7eb; /* Softer border */
     padding-bottom: 0;
+    display: flex; /* Use flexbox for tabs */
+    gap: 8px; /* Space between tabs */
 }
 
 .mwai-admin-tabs .nav-tab {
-    padding: 8px 15px;
-    font-size: 14px;
-    line-height: 20px;
-    color: #2271b1;
-    background: #f0f0f1;
-    border: 1px solid #c3c4c7;
+    padding: 10px 18px; /* Increased padding */
+    font-size: 15px; /* Slightly larger font */
+    line-height: 1.5;
+    color: #4b5563; /* Darker grey for inactive tabs */
+    background: #f3f4f6; /* Lighter background for inactive tabs */
+    border: 1px solid #e5e7eb; /* Softer border */
     border-bottom: none;
-    border-radius: 4px 4px 0 0;
-    margin-right: 5px;
+    border-radius: 8px 8px 0 0; /* More rounded top corners */
     text-decoration: none;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
+    font-weight: 500; /* Medium font weight */
 }
 
 .mwai-admin-tabs .nav-tab:hover {
-    background: #e0e0e1;
-    color: #135e96;
+    background: #e0e7ff; /* Light blue hover */
+    color: #3b82f6; /* Blue text on hover */
+    border-color: #a5b4fc; /* Lighter blue border on hover */
 }
 
 .mwai-admin-tabs .nav-tab.nav-tab-active {
-    background: #fff;
-    border-bottom: 1px solid #fff;
-    color: #000;
-    font-weight: 600;
+    background: #ffffff; /* White background for active tab */
+    border-color: #e5e7eb; /* Keep border color consistent */
+    border-bottom: 1px solid #ffffff; /* Hide bottom border to blend with content */
+    color: #1f2937; /* Darker text for active tab */
+    font-weight: 600; /* Stronger font weight */
+    position: relative; /* For z-index to overlap border */
+    z-index: 1;
 }
 
 .mwai-admin-tabs .tab-content {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    padding: 20px;
-    border-radius: 0 4px 4px 4px;
+    background: #ffffff; /* White background for content */
+    border: 1px solid #e5e7eb; /* Softer border */
+    padding: 25px; /* Increased padding */
+    border-radius: 0 0 8px 8px; /* Rounded bottom corners */
+    margin-top: -1px; /* Overlap with tab border */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Subtle shadow for content */
 }
 
 .mwai-admin-tabs .tab-content.hidden {
@@ -51,7 +63,7 @@
 /* Styles for feature toggles */
 .mwai-feature-toggle {
     display: flex;
-    align-items: center;
+    align-items: center; /* Vertically align items in the middle */
     margin-bottom: 15px;
     padding: 10px 0;
     border-bottom: 1px solid #eee;
@@ -61,12 +73,17 @@
     border-bottom: none;
 }
 
+.mwai-feature-toggle .mwai-feature-text { /* New style for the wrapper div */
+    flex-grow: 1; /* Allow text content to take available space */
+    margin-right: 15px; /* Space between text and switch */
+}
+
 .mwai-feature-toggle label {
-    flex-grow: 1;
     font-weight: 600;
     font-size: 15px;
     color: #333;
     cursor: pointer;
+    display: block; /* Ensure label takes full width within its div */
 }
 
 .mwai-feature-toggle .description {
@@ -79,9 +96,10 @@
 /* Custom Toggle Switch */
 .mwai-switch {
     position: relative;
-    display: inline-block;
+    display: inline-block; /* Reverted to inline-block for proper alignment within flex */
     width: 48px;
     height: 24px;
+    flex-shrink: 0; /* Prevent switch from shrinking */
 }
 
 .mwai-switch input {
@@ -97,7 +115,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: #d1d5db; /* Light grey for off state */
     transition: .4s;
     border-radius: 24px;
 }
@@ -112,14 +130,15 @@
     background-color: white;
     transition: .4s;
     border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow for the thumb */
 }
 
 input:checked + .mwai-slider {
-    background-color: #2196F3;
+    background-color: #3b82f6; /* Blue for on state */
 }
 
 input:focus + .mwai-slider {
-    box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); /* Blue focus ring */
 }
 
 input:checked + .mwai-slider:before {
