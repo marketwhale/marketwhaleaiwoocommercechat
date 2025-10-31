@@ -21,6 +21,11 @@ class MWAI_Ajax_Handler {
     }
 
     public function get_response() {
+        // Check if chat widget is enabled
+        if ( ! get_option( 'mwai_enable_chat_widget', true ) ) {
+            wp_send_json_error( array( 'message' => 'Chat widget is currently disabled by the administrator.' ) );
+        }
+
         // Basic request & nonce optional check (client did not send nonce previously)
         // Get history (array of content parts)
         $history = isset( $_POST['history'] ) ? wp_unslash( $_POST['history'] ) : '[]';
@@ -462,6 +467,11 @@ class MWAI_Ajax_Handler {
      * AJAX callback to filter products by category.
      */
     public function filter_products() {
+        // Check if shop enhancements are enabled
+        if ( ! get_option( 'mwai_enable_shop_enhancements', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
+
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
         $category_id = isset( $_POST['category_id'] ) ? intval( $_POST['category_id'] ) : 0;
@@ -520,6 +530,11 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get product categories and subcategories.
      */
     public function get_categories() {
+        // Check if shop enhancements are enabled
+        if ( ! get_option( 'mwai_enable_shop_enhancements', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
+
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
         $parent_id = isset( $_POST['parent_id'] ) ? intval( $_POST['parent_id'] ) : 0;

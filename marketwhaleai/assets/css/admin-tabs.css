@@ -1,0 +1,127 @@
+/* Styles for the MarketWhaleAI Admin Tabbed Interface */
+
+.mwai-admin-tabs {
+    margin-top: 20px;
+}
+
+.mwai-admin-tabs .nav-tab-wrapper {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #c3c4c7;
+    padding-bottom: 0;
+}
+
+.mwai-admin-tabs .nav-tab {
+    padding: 8px 15px;
+    font-size: 14px;
+    line-height: 20px;
+    color: #2271b1;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    margin-right: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.mwai-admin-tabs .nav-tab:hover {
+    background: #e0e0e1;
+    color: #135e96;
+}
+
+.mwai-admin-tabs .nav-tab.nav-tab-active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    color: #000;
+    font-weight: 600;
+}
+
+.mwai-admin-tabs .tab-content {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    padding: 20px;
+    border-radius: 0 4px 4px 4px;
+}
+
+.mwai-admin-tabs .tab-content.hidden {
+    display: none;
+}
+
+/* Styles for feature toggles */
+.mwai-feature-toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.mwai-feature-toggle:last-of-type {
+    border-bottom: none;
+}
+
+.mwai-feature-toggle label {
+    flex-grow: 1;
+    font-weight: 600;
+    font-size: 15px;
+    color: #333;
+    cursor: pointer;
+}
+
+.mwai-feature-toggle .description {
+    font-size: 13px;
+    color: #777;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Custom Toggle Switch */
+.mwai-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.mwai-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mwai-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.mwai-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .mwai-slider {
+    background-color: #2196F3;
+}
+
+input:focus + .mwai-slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .mwai-slider:before {
+    transform: translateX(24px);
+}

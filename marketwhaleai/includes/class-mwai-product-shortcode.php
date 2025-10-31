@@ -20,9 +20,14 @@ class MWAI_Product_Shortcode {
         global $post;
         if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_category_scroller' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
             $plugin_url = plugin_dir_url( dirname( __FILE__ ) ); // Get plugin base URL
-            wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
+            
+            // Enqueue shop-styles.css if shop enhancements are enabled or any shop-related shortcode is used
+            if ( get_option( 'mwai_enable_shop_enhancements', true ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_category_scroller' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
+                wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
+            }
+
             // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used, as they rely on its JS logic for scrolling
-            if ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
+            if ( get_option( 'mwai_enable_shop_enhancements', true ) && ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
                 wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
