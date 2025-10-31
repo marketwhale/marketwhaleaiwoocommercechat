@@ -97,9 +97,9 @@ function mwai_chat_widget_html() {
         <img src="<?php echo esc_url( $plugin_url . 'assets/images/chat-icon.png' ); ?>" alt="Chat">
     </div>
 
-    <div id="mwai-chat-window" class="hidden" role="dialog" aria-label="MarketWhale AI chat">
+    <div id="mwai-chat-window" class="hidden" role="dialog" aria-label="MarketWhaleAI chat">
         <div id="mwai-chat-header">
-            <span>MarketWhale AI</span>
+            <span>MarketWhaleAI</span>
             <img id="mwai-close-btn" src="<?php echo esc_url( $plugin_url . 'assets/images/close-icon.png' ); ?>" alt="Close chat">
         </div>
 
@@ -182,7 +182,7 @@ add_action( 'wp_ajax_nopriv_mwai_get_categories', array( 'MWAI_Ajax_Handler', 'g
 function mwai_add_product_seo_meta_box() {
     add_meta_box(
         'mwai_product_seo_meta_box',
-        __( 'MarketWhale AI SEO', 'marketwhale-ai-chat' ),
+        __( 'MarketWhaleAI SEO', 'marketwhaleai' ),
         'mwai_product_seo_meta_box_callback',
         'product',
         'side', // Position in the right sidebar
@@ -215,7 +215,7 @@ function mwai_settings_page() {
     $top_p       = esc_attr( get_option( 'mwai_gemini_top_p', '0.9' ) );
     ?>
     <div class="wrap">
-        <h1>MarketWhale AI Chat Settings</h1>
+        <h1>MarketWhaleAI Settings</h1>
         <?php if ( empty( $api_key ) ) : ?>
             <div class="notice notice-error">
                 <p><strong>Important:</strong> Please enter your Gemini API Key below to enable AI functionalities.</p>
@@ -341,7 +341,7 @@ function mwai_settings_page() {
         </li>
         <li><strong>Product SEO Generation:</strong> Leverages Gemini AI to automatically generate SEO-optimized content for your WooCommerce products.
             <ul>
-                <li><em>How to use:</em> When editing any product in your WordPress admin, look for the "MarketWhale AI SEO" meta box in the sidebar. Click "Generate SEO Content" to populate product fields with AI-generated content.</li>
+                <li><em>How to use:</em> When editing any product in your WordPress admin, look for the "MarketWhaleAI SEO" meta box in the sidebar. Click "Generate SEO Content" to populate product fields with AI-generated content.</li>
             </ul>
         </li>
         <li><strong>Bulk Category Management:</strong> Simplifies the process of creating and organizing multiple product categories and subcategories at once.

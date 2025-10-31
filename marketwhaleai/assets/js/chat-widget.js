@@ -154,7 +154,7 @@ jQuery(document).ready(function($){
     // Show greeting sequence
     function showGreeting() {
         const greetings = [
-            "👋 Hi! I'm MarketWhale AI — your shopping assistant.",
+            "👋 Hi! I'm MarketWhaleAI — your shopping assistant.",
             "🛍️ I can help answer questions, find products, and recommend items.",
             "💬 Try: “I'm looking for a blue jacket” or ask any product question."
         ];

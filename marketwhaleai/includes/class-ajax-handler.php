@@ -147,7 +147,7 @@ class MWAI_Ajax_Handler {
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=" . rawurlencode( $api_key );
 
                 
-                $system_instruction = 'You are MarketWhale AI, a friendly, engaging, and globally product-aware AI with access to a vast products database.
+                $system_instruction = 'You are MarketWhaleAI, a friendly, engaging, and globally product-aware AI with access to a vast products database.
 
                 Your core responsibilities:
                 - Provide helpful, concise, and customer-centric answers.
