@@ -70,13 +70,14 @@ jQuery(document).ready(function($){
 
     // Determine and render the appropriate quick action buttons
     function updateFinalQuickButtons() {
+        console.log('MWAI: updateFinalQuickButtons called.');
         const lastAiMessage = history.slice().reverse().find(entry => entry.role === 'model');
+        console.log('MWAI: lastAiMessage:', lastAiMessage);
         if (lastAiMessage && lastAiMessage.products && lastAiMessage.products.length > 0) {
-            // If the last AI message had products, show product action buttons (if any are selected)
-            // This will be handled by updateProductActionButtons which clears and re-adds based on selection
-            updateProductActionButtons(); 
+            console.log('MWAI: Products found in last AI message. Calling updateProductActionButtons.');
+            updateProductActionButtons();
         } else {
-            // Otherwise, show default quick buttons
+            console.log('MWAI: No products found in last AI message or no AI message. Calling addDefaultQuickButtons.');
             addDefaultQuickButtons();
         }
     }
@@ -112,7 +113,8 @@ jQuery(document).ready(function($){
             }
             // Always update product action buttons after any message that might contain products
             // or after any message that might clear product selection.
-            updateProductActionButtons();
+            // This call is now redundant as updateFinalQuickButtons is called after AJAX.
+            // updateProductActionButtons();
             if (save) { saveHistory(); }
             $body.scrollTop($body[0].scrollHeight);
         };
@@ -185,6 +187,7 @@ jQuery(document).ready(function($){
 
     // Add default quick action buttons
     function addDefaultQuickButtons() {
+        console.log('MWAI: addDefaultQuickButtons called.');
         $quickActionsContainer.empty(); // Clear previous buttons
         $quickActionsContainer.html(`
             <button data-message="Show catalog">Catalog</button>
@@ -202,8 +205,10 @@ jQuery(document).ready(function($){
 
     // Add product-specific quick action buttons
     function addProductActionButtons() {
+        console.log('MWAI: addProductActionButtons called.');
         $quickActionsContainer.empty(); // Clear previous buttons
         const numSelected = selectedProducts.size;
+        console.log('MWAI: numSelected:', numSelected);
 
         if (numSelected === 1) {
             $quickActionsContainer.append('<button data-action="show_details">Show details</button>');
