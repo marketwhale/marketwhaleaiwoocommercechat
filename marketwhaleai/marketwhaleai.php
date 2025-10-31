@@ -86,6 +86,11 @@ function mwai_register_feature_settings() {
         'sanitize_callback' => 'rest_sanitize_boolean',
         'default'           => true,
     ) );
+    register_setting( 'mwai_settings_group', 'mwai_feature_custom_shortcodes_enabled', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => true,
+    ) );
 }
 add_action( 'admin_init', 'mwai_register_feature_settings' );
 
@@ -249,6 +254,7 @@ function mwai_settings_page() {
     $shop_enhancements_enabled  = get_option( 'mwai_feature_shop_enhancements_enabled', true );
     $product_seo_enabled        = get_option( 'mwai_feature_product_seo_enabled', true );
     $bulk_categories_enabled    = get_option( 'mwai_feature_bulk_categories_enabled', true );
+    $custom_shortcodes_enabled  = get_option( 'mwai_feature_custom_shortcodes_enabled', true );
     ?>
     <div class="wrap">
         <h1>MarketWhale AI Chat Settings</h1>
@@ -362,6 +368,16 @@ function mwai_settings_page() {
                                 <span class="mwai-slider round"></span>
                             </label>
                             <label for="mwai_feature_bulk_categories_enabled">Enable the tool for bulk adding and organizing product categories.</label>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Custom Product Shortcodes (Frontend)</th>
+                        <td>
+                            <label class="mwai-switch">
+                                <input type="checkbox" name="mwai_feature_custom_shortcodes_enabled" value="1" <?php checked( $custom_shortcodes_enabled, true ); ?> />
+                                <span class="mwai-slider round"></span>
+                            </label>
+                            <label for="mwai_feature_custom_shortcodes_enabled">Enable custom shortcodes like `[mwai_products]`, `[mwai_category_scroller]`, and `[mwai_product_scroller]`.</label>
                         </td>
                     </tr>
                 </table>

@@ -296,6 +296,17 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     box-shadow: 0 12px 24px rgba(0,0,0,0.12); /* More pronounced shadow on hover */
 }
 
+.mwai-shop-product-card {
+    background-color: var(--mwai-shop-bg);
+    border: 1px solid var(--mwai-shop-border);
+    border-radius: 12px; /* Slightly larger border-radius */
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Subtle initial shadow */
+    padding: 15px; /* Moved padding here */
+}
+
 .mwai-shop-product-card a {
     text-decoration: none;
     color: inherit;
@@ -303,7 +314,21 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     flex-direction: column;
     justify-content: space-between;
     height: 100%; /* Ensure the anchor takes full height */
-    padding: 15px;
+}
+
+.mwai-shop-product-card .mwai-product-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center image and text horizontally */
+    width: 100%;
+}
+
+.mwai-shop-product-card .mwai-product-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center title and price horizontally */
+    width: 100%;
+    text-align: center; /* Ensure text is centered */
 }
 
 .mwai-shop-product-card img {

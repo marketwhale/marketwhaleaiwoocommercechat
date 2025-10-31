@@ -19,15 +19,18 @@ class MWAI_Product_Shortcode {
     public function enqueue_shortcode_assets() {
         global $post;
         if ( is_a( $post, 'WP_Post' ) && ( has_shortcode( $post->post_content, 'mwai_products' ) || has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_category_scroller' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
-            $plugin_url = plugin_dir_url( dirname( __FILE__ ) ); // Get plugin base URL
-            
-            // Enqueue shop styles if shop enhancements are enabled
-            if ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
-                wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
+            // Check if custom shortcodes feature is enabled
+            if ( ! get_option( 'mwai_feature_custom_shortcodes_enabled', true ) ) {
+                return; // Do not enqueue assets if feature is disabled
             }
 
-            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used, and shop enhancements are enabled
-            if ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) && ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) ) {
+            $plugin_url = plugin_dir_url( dirname( __FILE__ ) ); // Get plugin base URL
+            
+            // Enqueue shop styles
+            wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
+
+            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used
+            if ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
                 wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -44,6 +47,10 @@ class MWAI_Product_Shortcode {
      * @return string HTML output for the product grid.
      */
     public function render_mwai_products_shortcode( $atts ) {
+        if ( ! get_option( 'mwai_feature_custom_shortcodes_enabled', true ) ) {
+            return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
+        }
+
         // Parse shortcode attributes
         $atts = shortcode_atts( array(
             'limit'      => 12,
@@ -128,8 +135,12 @@ class MWAI_Product_Shortcode {
      * @return string HTML output for the shop browser.
      */
     public function render_mwai_shop_browser_shortcode( $atts ) {
+        if ( ! get_option( 'mwai_feature_custom_shortcodes_enabled', true ) ) {
+            return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
+        }
+        // The mwai_shop_browser shortcode also relies on shop enhancements being enabled for its full functionality
         if ( ! get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
-            return '<p>Shop enhancements are currently disabled by the administrator.</p>';
+            return '<p>Shop page enhancements are required for the shop browser shortcode and are currently disabled by the administrator.</p>';
         }
 
         $atts = shortcode_atts( array(
@@ -164,9 +175,13 @@ class MWAI_Product_Shortcode {
         ?>
         <div class="mwai-shop-product-card" data-product-id="<?php echo esc_attr( $product_id ); ?>">
             <a href="<?php echo esc_url( $link ); ?>">
-                <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
-                <h3><?php echo esc_html( $title ); ?></h3>
-                <p class="price"><?php echo wp_kses_post( $price ); ?></p>
+                <div class="mwai-product-content">
+                    <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                    <div class="mwai-product-meta">
+                        <h3><?php echo esc_html( $title ); ?></h3>
+                        <p class="price"><?php echo wp_kses_post( $price ); ?></p>
+                    </div>
+                </div>
             </a>
         </div>
         <?php
@@ -181,6 +196,10 @@ class MWAI_Product_Shortcode {
      * @return string HTML output for the category scroller.
      */
     public function render_mwai_category_scroller_shortcode( $atts ) {
+        if ( ! get_option( 'mwai_feature_custom_shortcodes_enabled', true ) ) {
+            return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
+        }
+
         $atts = shortcode_atts( array(
             'parent_id' => 0, // Display top-level categories by default
             'columns'   => 4, // Number of columns for responsive grid (not directly used for scroller, but for styling consistency)
@@ -278,6 +297,10 @@ class MWAI_Product_Shortcode {
      * @return string HTML output for the product scroller.
      */
     public function render_mwai_product_scroller_shortcode( $atts ) {
+        if ( ! get_option( 'mwai_feature_custom_shortcodes_enabled', true ) ) {
+            return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
+        }
+
         $atts = shortcode_atts( array(
             'limit'      => 12,
             'category'   => '', // slug or comma-separated slugs
