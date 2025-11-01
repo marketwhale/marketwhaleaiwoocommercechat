@@ -61,7 +61,11 @@ class MWAI_Product_Shortcode {
             'ids'        => '', // comma-separated product IDs
             'skus'       => '', // comma-separated product SKUs
             'class'      => '', // additional CSS class for the container
+            'slideshow'  => true, // New attribute: enable/disable slideshow
         ), $atts, 'mwai_products' );
+
+        // Sanitize slideshow attribute
+        $atts['slideshow'] = filter_var( $atts['slideshow'], FILTER_VALIDATE_BOOLEAN );
 
         $query_args = array(
             'post_type'      => 'product',
@@ -113,7 +117,7 @@ class MWAI_Product_Shortcode {
                     $products_query->the_post();
                     $product = wc_get_product( get_the_ID() );
                     if ( $product ) {
-                        echo $this->get_product_card_html( $product );
+                        echo $this->get_product_card_html( $product, $atts['slideshow'] );
                     }
                 }
                 wp_reset_postdata();
@@ -145,11 +149,15 @@ class MWAI_Product_Shortcode {
 
         $atts = shortcode_atts( array(
             'limit' => 12, // Default limit for products
+            'slideshow' => true, // New attribute: enable/disable slideshow
         ), $atts, 'mwai_shop_browser' );
+
+        // Sanitize slideshow attribute
+        $atts['slideshow'] = filter_var( $atts['slideshow'], FILTER_VALIDATE_BOOLEAN );
 
         ob_start();
         ?>
-        <div class="mwai-shop-enhancements mwai-embedded-shop" data-product-limit="<?php echo esc_attr( intval( $atts['limit'] ) ); ?>">
+        <div class="mwai-shop-enhancements mwai-embedded-shop" data-product-limit="<?php echo esc_attr( intval( $atts['limit'] ) ); ?>" data-slideshow-enabled="<?php echo esc_attr( $atts['slideshow'] ? 'true' : 'false' ); ?>">
             <div id="mwai-category-scrollers"></div>
             <div id="mwai-product-grid-wrapper" style="position: relative;">
                 <div class="mwai-products-grid"></div>
@@ -164,9 +172,8 @@ class MWAI_Product_Shortcode {
      * Helper function to render a single product card HTML.
      * This is adapted from MWAI_Ajax_Handler::render_product_card
      */
-    private function get_product_card_html( $product ) {
+    private function get_product_card_html( $product, $enable_slideshow = true ) {
         $product_id = $product->get_id();
-        $image_url = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' ) ?: wc_placeholder_img_src();
         $title = $product->get_name();
         $price = $product->get_price_html();
         $link = get_permalink( $product_id );
@@ -176,7 +183,39 @@ class MWAI_Product_Shortcode {
         <div class="mwai-shop-product-card" data-product-id="<?php echo esc_attr( $product_id ); ?>">
             <a href="<?php echo esc_url( $link ); ?>">
                 <div class="mwai-product-content">
-                    <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                    <?php if ( $enable_slideshow ) :
+                        $gallery_image_ids = $product->get_gallery_image_ids();
+                        $all_image_urls = [];
+
+                        // Add featured image first
+                        $featured_image_id = $product->get_image_id();
+                        if ( $featured_image_id ) {
+                            $all_image_urls[] = wp_get_attachment_image_url( $featured_image_id, 'woocommerce_thumbnail' );
+                        } else {
+                            $all_image_urls[] = wc_placeholder_img_src();
+                        }
+
+                        // Add gallery images
+                        foreach ( $gallery_image_ids as $image_id ) {
+                            $all_image_urls[] = wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' );
+                        }
+
+                        // Filter out any false/empty URLs and ensure at least one image
+                        $all_image_urls = array_filter( $all_image_urls );
+                        if ( empty( $all_image_urls ) ) {
+                            $all_image_urls[] = wc_placeholder_img_src();
+                        }
+                        ?>
+                        <div class="mwai-product-image-slideshow" data-images="<?php echo esc_attr( json_encode( $all_image_urls ) ); ?>">
+                            <?php foreach ( $all_image_urls as $index => $image_url ) : ?>
+                                <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>" class="mwai-slideshow-image <?php echo $index === 0 ? 'active' : ''; ?>">
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else :
+                        $image_url = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' ) ?: wc_placeholder_img_src();
+                        ?>
+                        <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                    <?php endif; ?>
                     <div class="mwai-product-meta">
                         <h3><?php echo esc_html( $title ); ?></h3>
                         <p class="price"><?php echo wp_kses_post( $price ); ?></p>
@@ -310,7 +349,11 @@ class MWAI_Product_Shortcode {
             'skus'       => '', // comma-separated product SKUs
             'class'      => '', // additional CSS class for the container
             'title'      => '', // Optional title for the scroller
+            'slideshow'  => true, // New attribute: enable/disable slideshow
         ), $atts, 'mwai_product_scroller' );
+
+        // Sanitize slideshow attribute
+        $atts['slideshow'] = filter_var( $atts['slideshow'], FILTER_VALIDATE_BOOLEAN );
 
         $query_args = array(
             'post_type'      => 'product',
@@ -366,7 +409,7 @@ class MWAI_Product_Shortcode {
                         $products_query->the_post();
                         $product = wc_get_product( get_the_ID() );
                         if ( $product ) {
-                            echo $this->get_product_card_html( $product );
+                            echo $this->get_product_card_html( $product, $atts['slideshow'] );
                         }
                     }
                     wp_reset_postdata();

@@ -270,6 +270,9 @@ jQuery(document).ready(function($) {
         isLoadingProducts = true;
         showLoading();
 
+        const $embeddedShop = $('.mwai-embedded-shop');
+        const slideshowEnabledForAjax = $embeddedShop.length ? ($embeddedShop.data('slideshow-enabled') === true || $embeddedShop.data('slideshow-enabled') === 'true') : true;
+
         $.ajax({
             url: MWAI_Shop_Ajax.ajax_url,
             type: 'POST',
@@ -279,6 +282,7 @@ jQuery(document).ready(function($) {
                 search_query: searchQuery,
                 paged: paged,
                 posts_per_page: limit, // Pass the limit here
+                slideshow_enabled: slideshowEnabledForAjax, // Pass slideshow state to AJAX
                 nonce: MWAI_Shop_Ajax.nonce
             },
             success: function(response) {
@@ -408,4 +412,77 @@ jQuery(document).ready(function($) {
             }
         }
     });
+
+    // --- Product Image Slideshow Logic ---
+    const transitionClasses = ['transition-top-down', 'transition-right-left'];
+
+    function startSlideshow(productCard) {
+        const $slideshowContainer = $(productCard).find('.mwai-product-image-slideshow');
+        const imagesData = $slideshowContainer.data('images');
+        if (!imagesData || imagesData.length <= 1) {
+            return; // No slideshow needed if 0 or 1 image
+        }
+
+        let images = imagesData;
+        let currentIndex = 0;
+
+        function showNextImage() {
+            const $currentImage = $slideshowContainer.find('.mwai-slideshow-image.active');
+            $currentImage.removeClass('active');
+
+            // Remove all transition classes from the current image after it's hidden
+            setTimeout(() => {
+                $currentImage.removeClass(transitionClasses.join(' '));
+            }, 500); // Match CSS transition duration
+
+            currentIndex = (currentIndex + 1) % images.length;
+            const $nextImage = $slideshowContainer.find(`.mwai-slideshow-image:eq(${currentIndex})`);
+
+            // Randomly select a transition class
+            const randomTransition = transitionClasses[Math.floor(Math.random() * transitionClasses.length)];
+            $nextImage.addClass(randomTransition);
+
+            // Apply active class after a short delay to allow transition to take effect
+            setTimeout(() => {
+                $nextImage.addClass('active');
+            }, 50); // Small delay
+
+            // Random interval for the next transition (e.g., between 3 to 7 seconds)
+            const randomInterval = Math.floor(Math.random() * (7000 - 3000 + 1)) + 3000;
+            setTimeout(showNextImage, randomInterval);
+        }
+
+        // Start the slideshow after a random initial delay for staggered effect
+        const initialDelay = Math.floor(Math.random() * 2000); // 0 to 2 seconds
+        setTimeout(showNextImage, initialDelay);
+    }
+
+    // Initialize slideshows for all product cards after products are loaded
+    function initializeSlideshows() {
+        const $embeddedShop = $('.mwai-embedded-shop');
+        const slideshowEnabledForEmbedded = $embeddedShop.length ? ($embeddedShop.data('slideshow-enabled') === true || $embeddedShop.data('slideshow-enabled') === 'true') : true;
+
+        $('.mwai-shop-product-card').each(function() {
+            const $productCard = $(this);
+            const $slideshowContainer = $productCard.find('.mwai-product-image-slideshow');
+
+            // Only start slideshow if it's enabled globally (for embedded shop) AND the slideshow container exists for this product
+            if (slideshowEnabledForEmbedded && $slideshowContainer.length > 0) {
+                startSlideshow(this);
+            }
+        });
+    }
+
+    // Call initializeSlideshows after initial product load and subsequent loads
+    $(document).ajaxStop(function() {
+        // This will run after any AJAX request completes.
+        // We need to ensure it only runs after product loading AJAX.
+        // A more robust solution might involve custom events or checking the specific AJAX action.
+        // For now, we'll re-initialize all slideshows.
+        initializeSlideshows();
+    });
+
+    // Initial call on document ready for any products rendered directly by PHP
+    initializeSlideshows();
+
 });

@@ -540,6 +540,7 @@ class MWAI_Ajax_Handler {
         $search_query = isset( $_POST['search_query'] ) ? sanitize_text_field( $_POST['search_query'] ) : '';
         $posts_per_page = isset( $_POST['posts_per_page'] ) ? intval( $_POST['posts_per_page'] ) : 12;
         $paged = isset( $_POST['paged'] ) ? intval( $_POST['paged'] ) : 1;
+        $enable_slideshow = isset( $_POST['slideshow_enabled'] ) ? filter_var( $_POST['slideshow_enabled'], FILTER_VALIDATE_BOOLEAN ) : true;
 
         $args = array(
             'post_type'      => 'product',
@@ -573,7 +574,7 @@ class MWAI_Ajax_Handler {
                 $products_query->the_post();
                 $product = wc_get_product( get_the_ID() );
                 if ( $product ) {
-                    $products_html .= $this->render_product_card( $product );
+                    $products_html .= $this->render_product_card( $product, $enable_slideshow );
                 }
             }
             wp_reset_postdata();
@@ -633,9 +634,8 @@ class MWAI_Ajax_Handler {
     /**
      * Helper function to render a single product card HTML.
      */
-    private function render_product_card( $product ) {
+    private function render_product_card( $product, $enable_slideshow = true ) {
         $product_id = $product->get_id();
-        $image_url = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' ) ?: wc_placeholder_img_src();
         $title = $product->get_name();
         $price = $product->get_price_html();
         $link = get_permalink( $product_id );
@@ -644,9 +644,45 @@ class MWAI_Ajax_Handler {
         ?>
         <div class="mwai-shop-product-card" data-product-id="<?php echo esc_attr( $product_id ); ?>">
             <a href="<?php echo esc_url( $link ); ?>">
-                <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
-                <h3><?php echo esc_html( $title ); ?></h3>
-                <p class="price"><?php echo wp_kses_post( $price ); ?></p>
+                <div class="mwai-product-content">
+                    <?php if ( $enable_slideshow ) :
+                        $gallery_image_ids = $product->get_gallery_image_ids();
+                        $all_image_urls = [];
+
+                        // Add featured image first
+                        $featured_image_id = $product->get_image_id();
+                        if ( $featured_image_id ) {
+                            $all_image_urls[] = wp_get_attachment_image_url( $featured_image_id, 'woocommerce_thumbnail' );
+                        } else {
+                            $all_image_urls[] = wc_placeholder_img_src();
+                        }
+
+                        // Add gallery images
+                        foreach ( $gallery_image_ids as $image_id ) {
+                            $all_image_urls[] = wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' );
+                        }
+
+                        // Filter out any false/empty URLs and ensure at least one image
+                        $all_image_urls = array_filter( $all_image_urls );
+                        if ( empty( $all_image_urls ) ) {
+                            $all_image_urls[] = wc_placeholder_img_src();
+                        }
+                        ?>
+                        <div class="mwai-product-image-slideshow" data-images="<?php echo esc_attr( json_encode( $all_image_urls ) ); ?>">
+                            <?php foreach ( $all_image_urls as $index => $image_url ) : ?>
+                                <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>" class="mwai-slideshow-image <?php echo $index === 0 ? 'active' : ''; ?>">
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else :
+                        $image_url = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' ) ?: wc_placeholder_img_src();
+                        ?>
+                        <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
+                    <?php endif; ?>
+                    <div class="mwai-product-meta">
+                        <h3><?php echo esc_html( $title ); ?></h3>
+                        <p class="price"><?php echo wp_kses_post( $price ); ?></p>
+                    </div>
+                </div>
             </a>
         </div>
         <?php
