@@ -29,8 +29,8 @@ class MWAI_Product_Shortcode {
             // Enqueue shop styles
             wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
 
-            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used
-            if ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
+            // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used AND the respective feature is enabled
+            if ( ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) && get_option( 'mwai_feature_shop_browser_enabled', true ) ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
                 wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -142,10 +142,12 @@ class MWAI_Product_Shortcode {
         if ( ! get_option( 'mwai_feature_custom_shortcodes_enabled', true ) ) {
             return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
         }
-        // The mwai_shop_browser shortcode also relies on shop enhancements being enabled for its full functionality
-        if ( ! get_option( 'mwai_feature_shop_enhancements_enabled', true ) ) {
-            return '<p>Shop page enhancements are required for the shop browser shortcode and are currently disabled by the administrator.</p>';
+        // Check if the dedicated shop browser feature is enabled
+        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
+            return '<p>The MarketWhaleAI Shop Browser shortcode is currently disabled by the administrator.</p>';
         }
+        // The mwai_shop_browser shortcode relies on shop enhancements, but its own enablement implies intent to use them.
+        // The necessary assets are enqueued if this shortcode is present and enabled.
 
         $atts = shortcode_atts( array(
             'limit' => 12, // Default limit for products
