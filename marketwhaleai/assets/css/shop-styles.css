@@ -347,22 +347,30 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0;
+    opacity: 0; /* Start hidden */
     transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    z-index: 1; /* Default z-index */
 }
 
 .mwai-product-image-slideshow img.active {
-    opacity: 1;
+    opacity: 1; /* Fully visible when active */
     transform: translateY(0) translateX(0);
+    z-index: 2; /* Active image on top */
 }
 
-/* Transition effects */
+/* Transition effects for incoming images */
 .mwai-product-image-slideshow img.transition-top-down {
     transform: translateY(-100%);
 }
 
 .mwai-product-image-slideshow img.transition-right-left {
     transform: translateX(100%);
+}
+
+/* Styles for outgoing images */
+.mwai-product-image-slideshow img.outgoing {
+    opacity: 0; /* Fade out outgoing image */
+    z-index: 1; /* Keep it below the incoming active image */
 }
 
 .mwai-shop-product-card img {

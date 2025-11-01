@@ -425,20 +425,27 @@ jQuery(document).ready(function($) {
 
         let images = imagesData;
         let currentIndex = 0;
+        let $currentImage = $slideshowContainer.find('.mwai-slideshow-image.active'); // Keep track of the current image
 
         function showNextImage() {
-            const $currentImage = $slideshowContainer.find('.mwai-slideshow-image.active');
-            $currentImage.removeClass('active');
-
-            // Remove all transition classes from the current image after it's hidden
+            const $prevImage = $currentImage; // The image that was active
+            
+            // Add 'outgoing' class to the previous image to start its fade-out
+            $prevImage.addClass('outgoing');
+            // Remove 'active' class from the previous image after a short delay
             setTimeout(() => {
-                $currentImage.removeClass(transitionClasses.join(' '));
-            }, 500); // Match CSS transition duration
+                $prevImage.removeClass('active');
+                // Remove 'outgoing' and transition classes after its transition completes
+                setTimeout(() => {
+                    $prevImage.removeClass('outgoing ' + transitionClasses.join(' '));
+                }, 500); // Match CSS transition duration
+            }, 50); // Small delay to ensure 'outgoing' class takes effect before 'active' is removed
 
             currentIndex = (currentIndex + 1) % images.length;
             const $nextImage = $slideshowContainer.find(`.mwai-slideshow-image:eq(${currentIndex})`);
+            $currentImage = $nextImage; // Update currentImage to the new active image
 
-            // Randomly select a transition class
+            // Randomly select a transition class for the incoming image
             const randomTransition = transitionClasses[Math.floor(Math.random() * transitionClasses.length)];
             $nextImage.addClass(randomTransition);
 
