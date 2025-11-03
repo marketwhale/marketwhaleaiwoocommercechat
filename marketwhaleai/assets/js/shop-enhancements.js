@@ -414,8 +414,6 @@ jQuery(document).ready(function($) {
     });
 
     // --- Product Image Slideshow Logic ---
-    const transitionClasses = ['transition-top-down', 'transition-right-left'];
-
     function startSlideshow(productCard) {
         const $slideshowContainer = $(productCard).find('.mwai-product-image-slideshow');
         const imagesData = $slideshowContainer.data('images');
@@ -430,31 +428,16 @@ jQuery(document).ready(function($) {
         function showNextImage() {
             const $prevImage = $currentImage; // The image that was active
             
-            // Add 'outgoing' class to the previous image to start its fade-out
-            $prevImage.addClass('outgoing');
-            // Remove 'active' class from the previous image after a short delay
-            setTimeout(() => {
-                $prevImage.removeClass('active');
-                // Remove 'outgoing' and transition classes after its transition completes
-                setTimeout(() => {
-                    $prevImage.removeClass('outgoing ' + transitionClasses.join(' '));
-                }, 500); // Match CSS transition duration
-            }, 50); // Small delay to ensure 'outgoing' class takes effect before 'active' is removed
-
+            // Calculate the next index
             currentIndex = (currentIndex + 1) % images.length;
             const $nextImage = $slideshowContainer.find(`.mwai-slideshow-image:eq(${currentIndex})`);
+            
+            // Remove active from previous and add to next
+            $prevImage.removeClass('active');
+            $nextImage.addClass('active');
             $currentImage = $nextImage; // Update currentImage to the new active image
 
-            // Randomly select a transition class for the incoming image
-            const randomTransition = transitionClasses[Math.floor(Math.random() * transitionClasses.length)];
-            $nextImage.addClass(randomTransition);
-
-            // Apply active class after a short delay to allow transition to take effect
-            setTimeout(() => {
-                $nextImage.addClass('active');
-            }, 50); // Small delay
-
-            // Random interval for the next transition (e.g., between 3 to 7 seconds)
+            // Set the random interval for the next transition
             const randomInterval = Math.floor(Math.random() * (7000 - 3000 + 1)) + 3000;
             setTimeout(showNextImage, randomInterval);
         }
