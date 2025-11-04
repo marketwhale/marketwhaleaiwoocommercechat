@@ -617,7 +617,7 @@ class MWAI_Ajax_Handler {
                     'id'           => $category->term_id,
                     'name'         => $category->name,
                     'slug'         => $category->slug,
-                    'count'        => count( wc_get_term_product_ids( $category->term_id, 'product_cat' ) ),
+                    'count'        => $this->get_product_count_for_category_and_children( $category->term_id ),
                     'has_children' => (bool) get_terms( array(
                         'taxonomy'   => 'product_cat',
                         'hide_empty' => true,
@@ -629,6 +629,61 @@ class MWAI_Ajax_Handler {
         }
 
         wp_send_json_success( array( 'categories' => $formatted_categories ) );
+    }
+
+    /**
+     * Helper function to get all child term IDs recursively for a given parent.
+     *
+     * @param int $parent_id The ID of the parent term.
+     * @param string $taxonomy The taxonomy slug.
+     * @return array An array of child term IDs.
+     */
+    private function get_all_child_term_ids_recursive( $parent_id, $taxonomy ) {
+        $children_ids = get_terms( array(
+            'taxonomy'   => $taxonomy,
+            'hide_empty' => false,
+            'parent'     => $parent_id,
+            'fields'     => 'ids',
+        ) );
+
+        $all_children = array();
+        if ( ! is_wp_error( $children_ids ) && ! empty( $children_ids ) ) {
+            foreach ( $children_ids as $child_id ) {
+                $all_children[] = $child_id;
+                $all_children = array_merge( $all_children, $this->get_all_child_term_ids_recursive( $child_id, $taxonomy ) );
+            }
+        }
+        return $all_children;
+    }
+
+    /**
+     * Helper function to get the total product count for a category, including its children.
+     *
+     * @param int $category_id The ID of the product category.
+     * @return int The total number of products.
+     */
+    private function get_product_count_for_category_and_children( $category_id ) {
+        $term_ids = array( $category_id );
+        $term_ids = array_merge( $term_ids, $this->get_all_child_term_ids_recursive( $category_id, 'product_cat' ) );
+        $term_ids = array_unique( $term_ids );
+
+        $args = array(
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1, // Get all products
+            'fields'         => 'ids', // Only get IDs for performance
+            'tax_query'      => array(
+                array(
+                    'taxonomy' => 'product_cat',
+                    'field'    => 'term_id',
+                    'terms'    => $term_ids,
+                    'operator' => 'IN',
+                ),
+            ),
+        );
+
+        $products_query = new WP_Query( $args );
+        return $products_query->found_posts;
     }
 
     /**
