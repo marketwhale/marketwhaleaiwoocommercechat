@@ -39,16 +39,19 @@
 
         function typePlaceholder(text, callback) {
             let i = 0;
+            const speed = 50; // Speed for placeholder typing
             $input.attr('placeholder', ''); // Clear existing placeholder
-            typingInterval = setInterval(() => {
+
+            function typeCharPlaceholder() {
                 if (i < text.length) {
                     $input.attr('placeholder', $input.attr('placeholder') + text[i]);
                     i++;
+                    typingInterval = setTimeout(typeCharPlaceholder, speed);
                 } else {
-                    clearInterval(typingInterval);
                     setTimeout(callback, 1500); // Wait before rotating to next
                 }
-            }, 50);
+            }
+            typeCharPlaceholder();
         }
 
         function startPlaceholderRotation() {
@@ -155,6 +158,8 @@
             closeChat();
         });
 
+        const PRODUCT_DISPLAY_THRESHOLD = 3; // Number of products to switch from grid to carousel
+
         function appendMessage(role, contentHtml, productsData = [], save = true, animate = true) {
             const wrapper = $('<div>').addClass('mwai-msg ' + role);
             const $p = $('<p>');
@@ -163,17 +168,27 @@
 
             const afterMessageRender = () => {
                 if (productsData.length > 0) {
-                    const $productsContainer = $('<div class="mwai-products-container"></div>');
-                    wrapper.append($productsContainer);
-                    renderProducts(productsData, $productsContainer, () => {
-                        updateProductActionButtons(); // Update product action buttons after rendering products
-                    });
+                    if (productsData.length <= PRODUCT_DISPLAY_THRESHOLD) {
+                        // Display as grid
+                        const $productsGridContainer = $('<div class="mwai-products-grid-container"></div>'); // New wrapper for grid
+                        wrapper.append($productsGridContainer);
+                        renderProductsGrid(productsData, $productsGridContainer, () => {
+                            updateProductActionButtons();
+                        });
+                    } else {
+                        // Display as carousel
+                        const $productsCarouselContainer = $('<div class="mwai-products-carousel-wrapper"></div>');
+                        wrapper.append($productsCarouselContainer);
+                        renderProductsCarousel(productsData, $productsCarouselContainer, () => {
+                            updateProductActionButtons();
+                        });
+                    }
                 } else {
-                    updateProductActionButtons(); // Call even if no products to clear product-specific buttons
+                    updateProductActionButtons();
                 }
                 if (save) { saveHistory(); }
                 $body.scrollTop($body[0].scrollHeight);
-                updateFinalQuickButtons(); // Always re-evaluate final quick buttons
+                updateFinalQuickButtons();
             };
 
             if (role === 'ai' && animate) {
@@ -186,20 +201,23 @@
 
         function typeMessage($element, text, callback) {
             let i = 0;
-            const speed = 5;
-            const interval = setInterval(() => {
+            const speed = 20; // Typing speed in milliseconds per character (increased for consistency)
+
+            function typeChar() {
                 if (i < text.length) {
                     $element.html(text.substring(0, i + 1));
+                    // Auto-scroll to bottom if near the end
                     if ($body[0].scrollHeight - $body.scrollTop() - $body.outerHeight() < 50) {
                         $body.scrollTop($body[0].scrollHeight);
                     }
                     i++;
+                    setTimeout(typeChar, speed); // Schedule next character
                 } else {
-                    clearInterval(interval);
                     $body.scrollTop($body[0].scrollHeight);
-                    if (callback) callback();
+                    if (callback) callback(); // All characters typed, call callback
                 }
-            }, speed);
+            }
+            typeChar(); // Start typing
         }
 
         function createTyping() {
@@ -285,19 +303,20 @@
             $body.scrollTop($body[0].scrollHeight);
         }
 
-        function renderProducts(products, $targetContainer, callback) {
+        // New function to render products in a grid layout
+        function renderProductsGrid(products, $targetContainer, callback) {
             if (!products || products.length === 0) {
                 if (callback) callback();
                 return;
             }
-            const container = $('<div class="mwai-products"></div>');
+            const $grid = $('<div class="mwai-products mwai-products-grid"></div>'); // Add a class for grid-specific styling
+
             products.forEach(function(p){
                 const image = p.image || '';
                 const title = p.title || '';
                 const price = p.price || '';
                 const link  = p.link || '#';
                 const source = p.source || 'WooCommerce';
-                const store = p.store ? p.store : '';
 
                 const sourceBadge = source === 'WooCommerce' ? '<span class="mwai-badge local">Local</span>' : '';
 
@@ -316,13 +335,108 @@
                         </div>
                     </div>
                 `);
-                container.append(card);
+                $grid.append(card);
             });
-            $targetContainer.append(container);
+            $targetContainer.append($grid);
             $body.scrollTop($body[0].scrollHeight);
 
             $targetContainer.find('.mwai-product-checkbox').off('change').on('change', updateProductActionButtons);
             $targetContainer.find('.mwai-product-card .mwai-product-content').off('click').on('click', function() {
+                const link = $(this).parent().data('product-link');
+                if (link && link !== '#') {
+                    window.location.href = link;
+                }
+            });
+
+            if (callback) callback();
+        }
+
+        // Existing function, renamed to renderProductsCarousel
+        function renderProductsCarousel(products, $targetCarouselWrapper, callback) {
+            if (!products || products.length === 0) {
+                if (callback) callback();
+                return;
+            }
+
+            const $carousel = $('<div class="mwai-products-carousel"></div>');
+            const $productsContainer = $('<div class="mwai-products"></div>'); // This will be the flex container
+
+            products.forEach(function(p){
+                const image = p.image || '';
+                const title = p.title || '';
+                const price = p.price || '';
+                const link  = p.link || '#';
+                const source = p.source || 'WooCommerce';
+
+                const sourceBadge = source === 'WooCommerce' ? '<span class="mwai-badge local">Local</span>' : '';
+
+                const card = $(`
+                    <div class="mwai-product-card" data-product-id="${p.id}" data-product-link="${link}" data-product-title="${$('<div>').text(title).html()}">
+                        <input type="checkbox" class="mwai-product-checkbox" data-product-id="${p.id}">
+                        <div class="mwai-product-content">
+                            <div class="mwai-product-media">
+                                <img src="${image}" alt="${$('<div>').text(title).html()}">
+                            </div>
+                            <div class="mwai-product-meta">
+                                <h4>${$('<div>').text(title).html()}</h4>
+                                <div class="mwai-product-price">${price}</div>
+                                ${sourceBadge}
+                            </div>
+                        </div>
+                    </div>
+                `);
+                $productsContainer.append(card);
+            });
+
+            $carousel.append($productsContainer);
+            $targetCarouselWrapper.append($carousel);
+
+            // Add scroll buttons
+            const $leftButton = $('<div class="mwai-scroll-button left hidden"><</div>');
+            const $rightButton = $('<div class="mwai-scroll-button right hidden">></div>');
+            $targetCarouselWrapper.append($leftButton).append($rightButton);
+
+            // Function to update scroll button visibility
+            function updateScrollButtons() {
+                if ($carousel[0].scrollWidth > $carousel[0].clientWidth) {
+                    if ($carousel[0].scrollLeft === 0) {
+                        $leftButton.addClass('hidden');
+                    } else {
+                        $leftButton.removeClass('hidden');
+                    }
+
+                    if ($carousel[0].scrollLeft + $carousel[0].clientWidth >= $carousel[0].scrollWidth) {
+                        $rightButton.addClass('hidden');
+                    } else {
+                        $rightButton.removeClass('hidden');
+                    }
+                } else {
+                    $leftButton.addClass('hidden');
+                    $rightButton.addClass('hidden');
+                }
+            }
+
+            // Attach scroll event listener
+            $carousel.on('scroll', updateScrollButtons);
+            // Update on resize
+            $(window).on('resize', updateScrollButtons);
+
+            // Initial check for button visibility
+            setTimeout(updateScrollButtons, 100);
+
+            // Attach click handlers for scroll buttons
+            $leftButton.on('click', function() {
+                $carousel.animate({ scrollLeft: $carousel.scrollLeft() - 200 }, 300);
+            });
+
+            $rightButton.on('click', function() {
+                $carousel.animate({ scrollLeft: $carousel.scrollLeft() + 200 }, 300);
+            });
+
+            $body.scrollTop($body[0].scrollHeight);
+
+            $targetCarouselWrapper.find('.mwai-product-checkbox').off('change').on('change', updateProductActionButtons);
+            $targetCarouselWrapper.find('.mwai-product-card .mwai-product-content').off('click').on('click', function() {
                 const link = $(this).parent().data('product-link');
                 if (link && link !== '#') {
                     window.location.href = link;

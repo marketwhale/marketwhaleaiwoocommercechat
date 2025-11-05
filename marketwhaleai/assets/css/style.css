@@ -226,20 +226,115 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Enhanced hover shadow */
 }
 
-/* Product grid / unified card */
-.mwai-products { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Corrected minmax syntax */
-    gap: 6px; 
-    margin-top: 24px; 
-    margin-bottom: 16px; 
-    padding: 6px; 
-    background: #f8fafc; 
+/* Product Carousel Wrapper (for scroll buttons and blur effect) */
+.mwai-products-carousel-wrapper {
+    position: relative;
+    margin-top: 24px;
+    margin-bottom: 16px;
+    background: #f8fafc;
     border-radius: 12px;
-    width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    padding: 0 10px; /* Padding for blur effect and buttons */
+}
+
+/* Product Carousel Container */
+.mwai-products-carousel {
+    display: flex;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+    padding: 10px 0; /* Adjust padding to account for wrapper padding */
+    /* Hide scrollbar for all devices, buttons will handle scrolling */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.mwai-products-carousel::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+/* Scroll Buttons for Carousel */
+.mwai-products-carousel-wrapper .mwai-scroll-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.mwai-products-carousel-wrapper .mwai-scroll-button:hover {
+    background: var(--accent-1);
+    color: #fff;
+    border-color: var(--accent-1);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.mwai-products-carousel-wrapper .mwai-scroll-button.left {
+    left: 0;
+}
+
+.mwai-products-carousel-wrapper .mwai-scroll-button.right {
+    right: 0;
+}
+
+.mwai-products-carousel-wrapper .mwai-scroll-button.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Responsive adjustments for buttons */
+@media (max-width: 768px) {
+    .mwai-products-carousel-wrapper .mwai-scroll-button {
+        display: none; /* Hide buttons on mobile, rely on touch scroll */
+    }
+    .mwai-products-carousel-wrapper {
+        padding: 0; /* Remove padding on mobile if buttons are hidden */
+    }
+}
+
+/* Product grid container (for when products are displayed in a grid) */
+.mwai-products-grid-container {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    padding: 6px 10px; /* Consistent padding with carousel */
+    background: #f8fafc;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* Product grid / unified card (now inside carousel or grid) */
+.mwai-products { 
+    display: flex; /* Default to flex for carousel */
+    flex-wrap: nowrap; /* Default to no wrap for carousel */
+    gap: 10px; /* Spacing between cards */
+    padding: 0; /* Padding handled by parent container */
+    width: fit-content; /* Ensure content takes natural width in carousel */
+}
+
+/* Specific styles for when .mwai-products is used as a grid */
+.mwai-products.mwai-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Grid layout */
+    flex-wrap: wrap; /* Allow wrapping in grid */
+    width: 100%; /* Take full width in grid */
 }
 
 .mwai-product-card {
+    flex-shrink: 0; /* Prevent cards from shrinking in carousel */
+    width: 140px; /* Fixed width for cards in carousel */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -253,6 +348,11 @@
     text-align: center;
     position: relative;
     box-shadow: 0 2px 8px rgba(15,23,42,0.04); /* Subtle initial shadow */
+}
+
+/* Override fixed width for grid items to allow them to fill space */
+.mwai-products.mwai-products-grid .mwai-product-card {
+    width: auto; /* Allow grid items to adjust width */
 }
 
 .mwai-product-card:hover { 
