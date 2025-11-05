@@ -68,18 +68,19 @@ class MWAI_Ajax_Handler {
         } elseif ( $message === 'List categories' ) {
             $categories = get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => true ) );
             if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
-                $cat_list = '<ul>';
+                $formatted_categories = array();
                 foreach ( $categories as $cat ) {
-                    $cat_list .= '<li>' . esc_html( $cat->name ) . '</li>';
+                    $formatted_categories[] = array(
+                        'id'   => $cat->term_id,
+                        'name' => $cat->name,
+                        'slug' => $cat->slug,
+                    );
                 }
-                $cat_list .= '</ul>';
-                $ai_text = 'Our product categories:<br>' . $cat_list . '<br>What category are you interested in?';
+                $ai_text = 'Here are our main categories. Which one are you interested in?';
+                $category_buttons_data = $formatted_categories;
             } else {
                 $ai_text = 'No categories found.';
             }
-            $skip_api = true;
-        } elseif ( $message === 'Search for a product' ) {
-            $ai_text = 'What product are you looking for? Please type your search term.';
             $skip_api = true;
         } elseif ( strpos( $message, 'Tell me more about "' ) === 0 ) {
             // Extract product title from message
@@ -282,8 +283,9 @@ class MWAI_Ajax_Handler {
 
         // Return
         wp_send_json_success( array(
-            'message'  => $ai_text,
-            'products' => $final_products,
+            'message'            => $ai_text,
+            'products'           => $final_products,
+            'category_buttons_data' => isset($category_buttons_data) ? $category_buttons_data : array(),
         ) );
     }
 

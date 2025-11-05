@@ -199,6 +199,23 @@
             }
         }
 
+        function renderCategoryButtons(categories, $targetElement) {
+            const $buttonContainer = $('<div class="mwai-quick-buttons mwai-category-buttons"></div>');
+            categories.forEach(category => {
+                const $button = $(`<button data-category-slug="${category.slug}">${category.name}</button>`);
+                $buttonContainer.append($button);
+            });
+            $targetElement.after($buttonContainer); // Append after the AI message paragraph
+
+            $buttonContainer.off('click', 'button').on('click', 'button', function() {
+                const categorySlug = $(this).data('category-slug');
+                const categoryName = $(this).text();
+                $input.val(`Show products in ${categoryName}`); // Pre-fill input with a message
+                sendMessage();
+            });
+            $body.scrollTop($body[0].scrollHeight);
+        }
+
         function typeMessage($element, text, callback) {
             let i = 0;
             const speed = 20; // Typing speed in milliseconds per character (increased for consistency)
@@ -259,7 +276,6 @@
             $quickActionsContainer.html(`
                 <button data-message="Show catalog">Catalog</button>
                 <button data-message="List categories">Categories</button>
-                <button data-message="Search for a product">Search</button>
             `);
             $quickActionsContainer.off('click', 'button').on('click', 'button', function(){
                 const message = $(this).data('message');
@@ -482,15 +498,25 @@
                 _wpnonce: MWAI_Ajax.nonce
             }, function(response){
                 $typing.remove();
+                console.log('MWAI: AJAX Response:', response); // Add this line for debugging
 
-                if (response && response.success && response.data) {
+                if (response && response.success) {
                     const aiMessage = response.data.message || '';
                     const productsData = response.data.products || [];
+                    const categoryButtonsData = response.data.category_buttons_data || [];
 
                     history.push({role: 'model', parts: [{text: aiMessage}], products: productsData});
                     saveHistory();
 
+                    // Append the AI message
                     appendMessage('ai', aiMessage, productsData, false, true);
+
+                    // If category buttons data is present, render them
+                    if (categoryButtonsData.length > 0) {
+                        const $lastAiMessage = $body.find('.mwai-msg.ai').last().find('p');
+                        renderCategoryButtons(categoryButtonsData, $lastAiMessage);
+                    }
+
                 } else {
                     const errorMessage = '⚠️ Sorry — unable to get a response. Please try again.';
                     history.push({role: 'model', parts: [{text: errorMessage}]});
