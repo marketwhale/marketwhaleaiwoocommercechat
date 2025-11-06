@@ -18,6 +18,10 @@ class MWAI_Ajax_Handler {
 
         add_action( 'wp_ajax_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
         add_action( 'wp_ajax_nopriv_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
+
+        // New AJAX action for fetching category products directly for the chat widget
+        add_action( 'wp_ajax_mwai_get_category_products_for_chat', array( $this, 'get_category_products_for_chat' ) );
+        add_action( 'wp_ajax_nopriv_mwai_get_category_products_for_chat', array( $this, 'get_category_products_for_chat' ) );
     }
 
     /**
@@ -59,7 +63,7 @@ class MWAI_Ajax_Handler {
         // Quick actions handling
         $ai_text = '';
         $suggested_keywords = array();
-        $suggested_product_count = 4;
+        $suggested_product_count = 8; // Increased default suggested product count
         $skip_api = false;
 
         if ( $message === 'Show catalog' ) {
@@ -213,8 +217,8 @@ class MWAI_Ajax_Handler {
                             if ( $parsed && isset( $parsed['text'] ) ) {
                                 $ai_text = wp_kses_post( $parsed['text'] );
                                 $suggested_keywords = isset( $parsed['suggested_keywords'] ) ? (array) $parsed['suggested_keywords'] : array();
-                                $suggested_product_count = isset( $parsed['suggested_product_count'] ) ? intval( $parsed['suggested_product_count'] ) : 4;
-                                $suggested_product_count = min( $suggested_product_count, 6 );
+                                $suggested_product_count = isset( $parsed['suggested_product_count'] ) ? intval( $parsed['suggested_product_count'] ) : 8; // Increased default
+                                $suggested_product_count = min( $suggested_product_count, 10 ); // Increased max limit to 10
                             }
                         } else {
                             // If model returned plain text, use it as message (no search)
@@ -235,7 +239,7 @@ class MWAI_Ajax_Handler {
         // Decide whether to fetch products:
         $should_fetch_products = false;
         $search_query = '';
-        $posts_per_page = isset( $suggested_product_count ) ? $suggested_product_count : 4;
+        $posts_per_page = isset( $suggested_product_count ) ? $suggested_product_count : 8; // Use new default
 
         if ( ! empty( $suggested_keywords ) ) {
             $should_fetch_products = true;
@@ -267,7 +271,7 @@ class MWAI_Ajax_Handler {
 
         // If nothing found and Show catalog was requested, do a fallback to random local products (if WC exists)
         if ( empty( $final_products ) && $message === 'Show catalog' && class_exists( 'WooCommerce' ) ) {
-            $fallback = new WP_Query( array( 'post_type' => 'product', 'posts_per_page' => 4, 'orderby' => 'rand' ) );
+            $fallback = new WP_Query( array( 'post_type' => 'product', 'posts_per_page' => $posts_per_page, 'orderby' => 'rand' ) ); // Use $posts_per_page
             if ( $fallback->have_posts() ) {
                 while ( $fallback->have_posts() ) {
                     $fallback->the_post();
@@ -744,6 +748,72 @@ class MWAI_Ajax_Handler {
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * New AJAX callback to fetch products for a given category ID, specifically for the chat widget.
+     */
+    public function get_category_products_for_chat() {
+        if ( ! get_option( 'mwai_feature_chat_widget_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'The chat widget is currently disabled by the administrator.' ) );
+        }
+        check_ajax_referer( 'mwai_ajax_nonce', '_wpnonce' ); // Use the chat widget's nonce
+
+        $category_id = isset( $_POST['category_id'] ) ? intval( $_POST['category_id'] ) : 0;
+        $posts_per_page = get_option( 'mwai_gemini_max_tokens', 8 ); // Use the AI's suggested product count as a base
+        $posts_per_page = min( $posts_per_page, 10 ); // Cap at 10 products
+
+        $args = array(
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => $posts_per_page,
+            'orderby'        => 'menu_order title',
+            'order'          => 'ASC',
+        );
+
+        if ( $category_id > 0 ) {
+            $args['tax_query'] = array(
+                array(
+                    'taxonomy' => 'product_cat',
+                    'field'    => 'term_id',
+                    'terms'    => $category_id,
+                    'operator' => 'IN',
+                ),
+            );
+        } else {
+            // If category_id is 0, it means "All Products" or top-level.
+            // We can fetch popular/random products as a fallback or general display.
+            $args['orderby'] = 'rand'; // Or 'total_sales'
+        }
+
+        $products_query = new WP_Query( $args );
+        $products_data = array();
+
+        if ( $products_query->have_posts() ) {
+            while ( $products_query->have_posts() ) {
+                $products_query->the_post();
+                $product = wc_get_product( get_the_ID() );
+                if ( $product && $product->is_visible() ) {
+                    $products_data[] = $this->format_product_data( $product );
+                }
+            }
+            wp_reset_postdata();
+        }
+
+        $category_name = '';
+        if ($category_id > 0) {
+            $term = get_term( $category_id, 'product_cat' );
+            if ( ! is_wp_error( $term ) && $term ) {
+                $category_name = $term->name;
+            }
+        }
+
+        $message = ! empty($category_name) ? "Here are some of the {$category_name} products we have in stock! Do any of these catch your eye, or are you looking for a specific type or brand? 🔌" : "Here are some products from our catalog! Let me know if you're looking for something specific. 🛍️";
+
+        wp_send_json_success( array(
+            'message'  => $message,
+            'products' => $products_data,
+        ) );
     }
 
     /**

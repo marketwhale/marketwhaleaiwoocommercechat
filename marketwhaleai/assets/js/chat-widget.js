@@ -16,6 +16,8 @@
         const OPEN_CHAT_ICON = MWAI_Ajax.plugin_url + 'assets/images/openchat.png';
         const SEND_ICON = MWAI_Ajax.plugin_url + 'assets/images/send-icon.png';
 
+        const PRODUCT_DISPLAY_THRESHOLD = 6; // Increased to show more products in grid before switching to carousel
+
         const placeholders = [
             "Ask Shopping AI: What’s the best deal today?",
             "Find me sneakers under $50",
@@ -158,8 +160,6 @@
             closeChat();
         });
 
-        const PRODUCT_DISPLAY_THRESHOLD = 3; // Number of products to switch from grid to carousel
-
         function appendMessage(role, contentHtml, productsData = [], save = true, animate = true) {
             const wrapper = $('<div>').addClass('mwai-msg ' + role);
             const $p = $('<p>');
@@ -202,18 +202,66 @@
         function renderCategoryButtons(categories, $targetElement) {
             const $buttonContainer = $('<div class="mwai-quick-buttons mwai-category-buttons"></div>');
             categories.forEach(category => {
-                const $button = $(`<button data-category-slug="${category.slug}">${category.name}</button>`);
+                const $button = $(`<button data-category-id="${category.id}" data-category-name="${category.name}">${category.name}</button>`);
                 $buttonContainer.append($button);
             });
             $targetElement.after($buttonContainer); // Append after the AI message paragraph
 
             $buttonContainer.off('click', 'button').on('click', 'button', function() {
-                const categorySlug = $(this).data('category-slug');
-                const categoryName = $(this).text();
-                $input.val(`Show products in ${categoryName}`); // Pre-fill input with a message
-                sendMessage();
+                const categoryId = $(this).data('category-id');
+                const categoryName = $(this).data('category-name');
+                sendCategoryProductsRequest(categoryId, categoryName);
             });
             $body.scrollTop($body[0].scrollHeight);
+        }
+
+        function sendCategoryProductsRequest(categoryId, categoryName) {
+            const userMessage = `Show products in ${categoryName}`;
+            appendMessage('user', $('<div>').text(userMessage).html());
+            $input.val('');
+            $body.scrollTop($body[0].scrollHeight);
+
+            history.push({role: 'user', parts: [{text: userMessage}]});
+            saveHistory();
+
+            const $typing = createTyping();
+            $body.append($typing);
+            $body.scrollTop($body[0].scrollHeight);
+
+            $.post(MWAI_Ajax.ajax_url, {
+                action: 'mwai_get_category_products_for_chat',
+                category_id: categoryId,
+                _wpnonce: MWAI_Ajax.nonce
+            }, function(response) {
+                $typing.remove();
+                console.log('MWAI: Category Products AJAX Response:', response);
+
+                if (response && response.success) {
+                    const aiMessage = response.data.message || `Here are some of the ${categoryName} products we have in stock! Do any of these catch your eye, or are you looking for a specific type or brand? 🔌`;
+                    const productsData = response.data.products || [];
+
+                    history.push({role: 'model', parts: [{text: aiMessage}], products: productsData});
+                    saveHistory();
+
+                    appendMessage('ai', aiMessage, productsData, false, true);
+                } else {
+                    const errorMessage = '⚠️ Sorry — unable to load products for this category. Please try again.';
+                    history.push({role: 'model', parts: [{text: errorMessage}]});
+                    saveHistory();
+                    appendMessage('ai', errorMessage, [], false, false);
+                }
+                $('.mwai-product-checkbox').prop('checked', false);
+                selectedProducts.clear();
+                updateFinalQuickButtons();
+            }, 'json').fail(function() {
+                $typing.remove();
+                appendMessage('ai', '⚠️ Network error — please try again.', [], true, false);
+                history.push({role: 'model', parts: [{text: '⚠️ Network error — please try again.'}]});
+                saveHistory();
+                $('.mwai-product-checkbox').prop('checked', false);
+                selectedProducts.clear();
+                updateFinalQuickButtons();
+            });
         }
 
         function typeMessage($element, text, callback) {
