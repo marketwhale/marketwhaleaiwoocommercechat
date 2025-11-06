@@ -31,8 +31,8 @@
             "Show me today’s top offers"
         ];
         let currentPlaceholderIndex = 0;
-        let typingInterval;
-        let placeholderRotationInterval;
+        let typingTimeoutId; // Changed to Timeout ID
+        let placeholderRotationTimeoutId; // Changed to Timeout ID
 
         // Helper to get plugin URL (if not already localized)
         if (typeof MWAI_Ajax.plugin_url === 'undefined') {
@@ -48,8 +48,9 @@
                 if (i < text.length) {
                     $input.attr('placeholder', $input.attr('placeholder') + text[i]);
                     i++;
-                    typingInterval = setTimeout(typeCharPlaceholder, speed);
+                    typingTimeoutId = setTimeout(typeCharPlaceholder, speed);
                 } else {
+                    // All characters typed, now wait before calling callback
                     setTimeout(callback, 1500); // Wait before rotating to next
                 }
             }
@@ -58,24 +59,24 @@
 
         function startPlaceholderRotation() {
             stopPlaceholderRotation(); // Ensure any existing rotation is stopped
-            placeholderRotationInterval = setInterval(() => {
+
+            const rotateNextPlaceholder = () => {
                 if ($input.is(':focus') || $input.val().length > 0) {
-                    // If input is focused or has text, don't rotate
+                    // If input is focused or has text, don't rotate, just schedule a check later
+                    placeholderRotationTimeoutId = setTimeout(rotateNextPlaceholder, 1000); // Check again in 1 second
                     return;
                 }
                 typePlaceholder(placeholders[currentPlaceholderIndex], () => {
                     currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholders.length;
+                    placeholderRotationTimeoutId = setTimeout(rotateNextPlaceholder, 0); // Immediately schedule the next rotation after the current one finishes
                 });
-            }, 3000); // Rotate every 3 seconds (after typing effect + 1.5s pause)
-            // Initial call
-            typePlaceholder(placeholders[currentPlaceholderIndex], () => {
-                currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholders.length;
-            });
+            };
+            rotateNextPlaceholder(); // Initial call to start the rotation
         }
 
         function stopPlaceholderRotation() {
-            clearInterval(typingInterval);
-            clearInterval(placeholderRotationInterval);
+            clearTimeout(typingTimeoutId); // Use clearTimeout
+            clearTimeout(placeholderRotationTimeoutId); // Use clearTimeout
             $input.attr('placeholder', ''); // Clear placeholder when stopped
         }
 
@@ -266,23 +267,40 @@
 
         function typeMessage($element, text, callback) {
             let i = 0;
-            const speed = 20; // Typing speed in milliseconds per character (increased for consistency)
+            const charsPerSecond = 50; // Target characters per second
+            const msPerChar = 1000 / charsPerSecond; // Milliseconds per character
+            let lastTimestamp = null;
+            let accumulatedTime = 0;
 
-            function typeChar() {
-                if (i < text.length) {
+            $element.html(''); // Clear existing content before typing
+
+            function animateTyping(timestamp) {
+                if (!lastTimestamp) {
+                    lastTimestamp = timestamp;
+                }
+
+                const deltaTime = timestamp - lastTimestamp;
+                lastTimestamp = timestamp;
+                accumulatedTime += deltaTime;
+
+                while (accumulatedTime >= msPerChar && i < text.length) {
                     $element.html(text.substring(0, i + 1));
                     // Auto-scroll to bottom if near the end
                     if ($body[0].scrollHeight - $body.scrollTop() - $body.outerHeight() < 50) {
                         $body.scrollTop($body[0].scrollHeight);
                     }
                     i++;
-                    setTimeout(typeChar, speed); // Schedule next character
+                    accumulatedTime -= msPerChar;
+                }
+
+                if (i < text.length) {
+                    requestAnimationFrame(animateTyping);
                 } else {
                     $body.scrollTop($body[0].scrollHeight);
                     if (callback) callback(); // All characters typed, call callback
                 }
             }
-            typeChar(); // Start typing
+            requestAnimationFrame(animateTyping); // Start typing animation
         }
 
         function createTyping() {
