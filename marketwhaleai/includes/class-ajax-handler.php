@@ -86,6 +86,131 @@ class MWAI_Ajax_Handler {
                 $ai_text = 'No categories found.';
             }
             $skip_api = true;
+        } elseif ( $message === 'Show new arrivals' ) {
+            $ai_text = 'Check out our latest additions!';
+            $search_query = 'new_arrivals'; // Custom flag for product fetching
+            $should_fetch_products = true;
+            $skip_api = true;
+        } elseif ( $message === 'Show products on sale' ) {
+            $ai_text = 'Grab a deal! Here are our products currently on sale:';
+            $search_query = 'on_sale'; // Custom flag for product fetching
+            $should_fetch_products = true;
+            $skip_api = true;
+        } elseif ( $message === 'Show popular products' ) {
+            $ai_text = 'These are our best-selling items that everyone loves:';
+            $search_query = 'popular_products'; // Custom flag for product fetching
+            $should_fetch_products = true;
+            $skip_api = true;
+        } elseif ( $message === 'Show my account options' ) {
+            if ( is_user_logged_in() ) {
+                $ai_text = 'What would you like to access in your account?';
+                $account_options = array(
+                    array('name' => 'Dashboard', 'message' => 'Show my dashboard'),
+                    array('name' => 'Orders', 'message' => 'Show my orders'),
+                    array('name' => 'Downloads', 'message' => 'Show my downloads'),
+                    array('name' => 'Addresses', 'message' => 'Show my addresses'),
+                    array('name' => 'Payment methods', 'message' => 'Show my payment methods'),
+                    array('name' => 'Account details', 'message' => 'Show my account details'),
+                    array('name' => 'Log out', 'message' => 'Log me out'),
+                );
+                $category_buttons_data = $account_options; // Re-using category_buttons_data for account options
+            } else {
+                $ai_text = 'You need to be logged in to access your account details. Please log in to continue.';
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Show my dashboard' ) === 0 ) {
+            if ( is_user_logged_in() ) {
+                $current_user = wp_get_current_user();
+                $ai_text = "Welcome back, <b>" . esc_html($current_user->display_name) . "</b>! Here's a quick overview:<br><br>";
+                $ai_text .= "You have " . count(wc_get_customer_orders(get_current_user_id())) . " orders.<br>";
+                $ai_text .= "You can manage your account from the <a href='" . esc_url(wc_get_account_endpoint_url('dashboard')) . "' target='_blank'>Dashboard</a>.";
+            } else {
+                $ai_text = 'You need to be logged in to access your dashboard.';
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Show my orders' ) === 0 ) {
+            if ( is_user_logged_in() ) {
+                $customer_orders = wc_get_customer_orders( get_current_user_id() );
+                if ( ! empty( $customer_orders ) ) {
+                    $ai_text = 'Here are your recent orders:<br><ul>';
+                    foreach ( $customer_orders as $order ) {
+                        $ai_text .= '<li>Order #' . $order->get_order_number() . ' - ' . wc_format_datetime( $order->get_date_created() ) . ' - ' . wc_price( $order->get_total() ) . ' (' . wc_get_order_status_name( $order->get_status() ) . ') - <a href="' . esc_url( $order->get_view_order_url() ) . '" target="_blank">View Details</a></li>';
+                    }
+                    $ai_text .= '</ul>';
+                } else {
+                    $ai_text = 'You haven\'t placed any orders yet.';
+                }
+            } else {
+                $ai_text = 'You need to be logged in to view your orders.';
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Show my downloads' ) === 0 ) {
+            if ( is_user_logged_in() ) {
+                $downloads = wc_get_customer_available_downloads( get_current_user_id() );
+                if ( ! empty( $downloads ) ) {
+                    $ai_text = 'Here are your available downloads:<br><ul>';
+                    foreach ( $downloads as $download ) {
+                        $ai_text .= '<li><a href="' . esc_url( $download['download_url'] ) . '" target="_blank">' . esc_html( $download['product_name'] ) . '</a></li>';
+                    }
+                    $ai_text .= '</ul>';
+                } else {
+                    $ai_text = 'You have no downloadable products.';
+                }
+            } else {
+                $ai_text = 'You need to be logged in to view your downloads.';
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Show my addresses' ) === 0 ) {
+            if ( is_user_logged_in() ) {
+                $customer = new WC_Customer( get_current_user_id() );
+                $billing_address = $customer->get_billing();
+                $shipping_address = $customer->get_shipping();
+
+                $ai_text = 'Here are your saved addresses:<br><br>';
+                $ai_text .= '<b>Billing Address:</b><br>';
+                if ( ! empty( array_filter( $billing_address ) ) ) {
+                    $ai_text .= WC()->countries->get_formatted_address( $billing_address ) . '<br>';
+                } else {
+                    $ai_text .= 'No billing address saved.<br>';
+                }
+                $ai_text .= '<br><b>Shipping Address:</b><br>';
+                if ( ! empty( array_filter( $shipping_address ) ) ) {
+                    $ai_text .= WC()->countries->get_formatted_address( $shipping_address ) . '<br>';
+                } else {
+                    $ai_text .= 'No shipping address saved.<br>';
+                }
+                $ai_text .= '<br>You can manage your addresses <a href="' . esc_url( wc_get_account_endpoint_url('edit-address') ) . '" target="_blank">here</a>.';
+            } else {
+                $ai_text = 'You need to be logged in to view your addresses.';
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Show my payment methods' ) === 0 ) {
+            if ( is_user_logged_in() ) {
+                $ai_text = 'For security reasons, I cannot display your payment methods directly here. You can manage them securely on your <a href="' . esc_url( wc_get_account_endpoint_url('payment-methods') ) . '" target="_blank">Payment Methods page</a>.';
+            } else {
+                $ai_text = 'You need to be logged in to manage your payment methods.';
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Show my account details' ) === 0 ) {
+            if ( is_user_logged_in() ) {
+                $current_user = wp_get_current_user();
+                $ai_text = 'Here are your account details:<br><ul>';
+                $ai_text .= '<li><b>Username:</b> ' . esc_html( $current_user->user_login ) . '</li>';
+                $ai_text .= '<li><b>Email:</b> ' . esc_html( $current_user->user_email ) . '</li>';
+                $ai_text .= '<li><b>Display Name:</b> ' . esc_html( $current_user->display_name ) . '</li>';
+                $ai_text .= '</ul>You can edit your account details <a href="' . esc_url( wc_get_account_endpoint_url('edit-account') ) . '" target="_blank">here</a>.';
+            } else {
+                $ai_text = 'You need to be logged in to view your account details.';
+            }
+            $skip_api = true;
+        } elseif ( strpos( $message, 'Log me out' ) === 0 ) {
+            if ( is_user_logged_in() ) {
+                $logout_url = wp_logout_url( wc_get_page_permalink( 'myaccount' ) );
+                $ai_text = 'You can log out by clicking <a href="' . esc_url( $logout_url ) . '">here</a>.';
+            } else {
+                $ai_text = 'You are not currently logged in.';
+            }
+            $skip_api = true;
         } elseif ( strpos( $message, 'Tell me more about "' ) === 0 ) {
             // Extract product title from message
             preg_match('/Tell me more about "([^"]+)"/', $message, $matches);
@@ -307,28 +432,29 @@ class MWAI_Ajax_Handler {
         $products = array();
         $product_ids = array();
 
-        // If no search query, handle catalog or random products
-        if ( empty( $search_query ) ) {
-            $args = array(
-                'post_type'      => 'product',
-                'posts_per_page' => $limit,
-                'post_status'    => 'publish',
-            );
-            if ( $message === 'Show catalog' ) {
-                $args['meta_key'] = 'total_sales';
-                $args['orderby']  = 'meta_value_num';
-                $args['order']    = 'DESC';
-            } else {
-                $args['orderby'] = 'rand';
+        $args = array(
+            'post_type'      => 'product',
+            'posts_per_page' => $limit,
+            'post_status'    => 'publish',
+        );
+
+        // Handle specific quick action queries
+        if ( $search_query === 'new_arrivals' ) {
+            $args['orderby'] = 'date';
+            $args['order']   = 'DESC';
+        } elseif ( $search_query === 'on_sale' ) {
+            $args['post__in'] = wc_get_product_ids_on_sale();
+            if ( empty( $args['post__in'] ) ) {
+                return array(); // No products on sale
             }
-            $wc_query = new WP_Query( $args );
-            if ( $wc_query->have_posts() ) {
-                while ( $wc_query->have_posts() ) {
-                    $wc_query->the_post();
-                    $product_ids[] = get_the_ID();
-                }
-                wp_reset_postdata();
-            }
+            $args['orderby'] = 'rand'; // Randomize order of sale products
+        } elseif ( $search_query === 'popular_products' || $message === 'Show catalog' ) { // 'Show catalog' also implies popular
+            $args['meta_key'] = 'total_sales';
+            $args['orderby']  = 'meta_value_num';
+            $args['order']    = 'DESC';
+        } elseif ( empty( $search_query ) ) {
+            // Default for empty search query (e.g., initial catalog load without specific intent)
+            $args['orderby'] = 'rand';
         } else {
             // Prepare search terms for SQL LIKE queries
             $search_terms_raw = explode( ' ', $search_query );

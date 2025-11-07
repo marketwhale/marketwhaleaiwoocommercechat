@@ -337,16 +337,41 @@
 
         const $quickActionsContainer = $('#mwai-quick-actions-container');
 
+        function clearChatHistory() {
+            localStorage.removeItem(CHAT_HISTORY_KEY);
+            localStorage.removeItem(CHAT_DRAFT_KEY);
+            history = [];
+            $body.empty();
+            selectedProducts.clear(); // Clear any selected products
+            showGreeting(); // Display initial greeting messages
+            updateFinalQuickButtons(); // Update quick buttons to default state
+            $input.val(''); // Clear input field
+            stopPlaceholderRotation(); // Stop placeholder rotation
+            startPlaceholderRotation(); // Restart placeholder rotation
+        }
+
         function addDefaultQuickButtons() {
             $quickActionsContainer.empty();
             $quickActionsContainer.html(`
                 <button data-message="Show catalog">Catalog</button>
                 <button data-message="List categories">Categories</button>
+                <button data-message="Show new arrivals">New Arrivals</button>
+                <button data-message="Show products on sale">On Sale</button>
+                <button data-message="Show popular products">Popular Products</button>
+                <button data-message="Show my account options">My Account</button>
+                <button data-action="clear_chat">Clear Chat</button>
             `);
             $quickActionsContainer.off('click', 'button').on('click', 'button', function(){
-                const message = $(this).data('message');
-                $input.val(message);
-                sendMessage();
+                const $button = $(this);
+                const message = $button.data('message');
+                const action = $button.data('action');
+
+                if (action === 'clear_chat') {
+                    clearChatHistory();
+                } else if (message) {
+                    $input.val(message);
+                    sendMessage();
+                }
             });
             $body.scrollTop($body[0].scrollHeight);
         }
