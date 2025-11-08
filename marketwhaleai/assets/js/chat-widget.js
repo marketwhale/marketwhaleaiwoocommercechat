@@ -137,9 +137,9 @@
         function updateFinalQuickButtons() {
             const lastAiMessage = history.slice().reverse().find(entry => entry.role === 'model');
             if (lastAiMessage && lastAiMessage.products && lastAiMessage.products.length > 0) {
-                updateProductActionButtons();
+                addProductActionButtons(); // Show product-specific buttons
             } else {
-                addDefaultQuickButtons();
+                $quickActionsContainer.empty(); // Clear persistent container if no product actions
             }
         }
 
@@ -324,7 +324,7 @@
                     $body.scrollTop($body[0].scrollHeight);
 
                     if (i === greetings.length - 1) {
-                        updateFinalQuickButtons();
+                        addDefaultQuickButtonsToChatFlow(); // Call new function here
                     }
                 }, delay * (i + 1));
             });
@@ -335,7 +335,7 @@
             saveHistory();
         }
 
-        const $quickActionsContainer = $('#mwai-quick-actions-container');
+        const $quickActionsContainer = $('#mwai-quick-actions-container'); // Persistent container for product actions
 
         function clearChatHistory() {
             localStorage.removeItem(CHAT_HISTORY_KEY);
@@ -343,16 +343,18 @@
             history = [];
             $body.empty();
             selectedProducts.clear(); // Clear any selected products
-            showGreeting(); // Display initial greeting messages
-            updateFinalQuickButtons(); // Update quick buttons to default state
+            $quickActionsContainer.empty(); // Clear persistent product action buttons
+            showGreeting(); // Display initial greeting messages, which will now include default quick buttons
             $input.val(''); // Clear input field
             stopPlaceholderRotation(); // Stop placeholder rotation
             startPlaceholderRotation(); // Restart placeholder rotation
         }
 
-        function addDefaultQuickButtons() {
-            $quickActionsContainer.empty();
-            $quickActionsContainer.html(`
+        // New function to append default quick buttons into the chat flow
+        function addDefaultQuickButtonsToChatFlow() {
+            const $defaultButtonsWrapper = $('<div class="mwai-msg ai"><p>What would you like to do?</p><div class="mwai-quick-buttons"></div></div>');
+            const $buttonContainer = $defaultButtonsWrapper.find('.mwai-quick-buttons');
+            $buttonContainer.html(`
                 <button data-message="Show catalog">Catalog</button>
                 <button data-message="List categories">Categories</button>
                 <button data-message="Show new arrivals">New Arrivals</button>
@@ -361,7 +363,9 @@
                 <button data-message="Show my account options">My Account</button>
                 <button data-action="clear_chat">Clear Chat</button>
             `);
-            $quickActionsContainer.off('click', 'button').on('click', 'button', function(){
+            $body.append($defaultButtonsWrapper);
+
+            $buttonContainer.off('click', 'button').on('click', 'button', function(){
                 const $button = $(this);
                 const message = $button.data('message');
                 const action = $button.data('action');
@@ -376,8 +380,10 @@
             $body.scrollTop($body[0].scrollHeight);
         }
 
+        // Function to manage product-specific action buttons in the persistent container
         function addProductActionButtons() {
-            $quickActionsContainer.empty();
+            $quickActionsContainer.empty(); // Always clear before adding
+
             const numSelected = selectedProducts.size;
 
             if (numSelected === 1) {
@@ -386,27 +392,30 @@
                 $quickActionsContainer.append('<button data-action="compare_products">Compare</button>');
             }
 
-            $quickActionsContainer.off('click', 'button').on('click', 'button', function(){
-                const action = $(this).data('action');
+            // Only attach handlers if buttons are present
+            if (numSelected > 0) {
+                $quickActionsContainer.off('click', 'button').on('click', 'button', function(){
+                    const action = $(this).data('action');
 
-                if (action === 'show_details') {
-                    const productId = Array.from(selectedProducts)[0];
-                    const $selectedCard = $(`.mwai-product-card[data-product-id="${productId}"]`);
-                    const productLink = $selectedCard.data('product-link');
-                    const productTitle = $selectedCard.data('product-title');
-                    
-                    const userMessage = `Tell me more about "${productTitle}"`;
-                    $input.val(userMessage);
-                    sendMessage();
-                } else if (action === 'compare_products') {
-                    const productIds = Array.from(selectedProducts);
-                    const productTitles = productIds.map(id => $(`.mwai-product-card[data-product-id="${id}"]`).data('product-title'));
-                    
-                    const userMessage = `Compare these products: ${productTitles.join(', ')}`;
-                    $input.val(userMessage);
-                    sendMessage();
-                }
-            });
+                    if (action === 'show_details') {
+                        const productId = Array.from(selectedProducts)[0];
+                        const $selectedCard = $(`.mwai-product-card[data-product-id="${productId}"]`);
+                        const productLink = $selectedCard.data('product-link');
+                        const productTitle = $selectedCard.data('product-title');
+                        
+                        const userMessage = `Tell me more about "${productTitle}"`;
+                        $input.val(userMessage);
+                        sendMessage();
+                    } else if (action === 'compare_products') {
+                        const productIds = Array.from(selectedProducts);
+                        const productTitles = productIds.map(id => $(`.mwai-product-card[data-product-id="${id}"]`).data('product-title'));
+                        
+                        const userMessage = `Compare these products: ${productTitles.join(', ')}`;
+                        $input.val(userMessage);
+                        sendMessage();
+                    }
+                });
+            }
             $body.scrollTop($body[0].scrollHeight);
         }
 
@@ -606,6 +615,9 @@
                     if (categoryButtonsData.length > 0) {
                         const $lastAiMessage = $body.find('.mwai-msg.ai').last().find('p');
                         renderCategoryButtons(categoryButtonsData, $lastAiMessage);
+                    } else if (productsData.length === 0) {
+                        // If no products and no category buttons, show default quick buttons in chat flow
+                        addDefaultQuickButtonsToChatFlow();
                     }
 
                 } else {
@@ -613,10 +625,11 @@
                     history.push({role: 'model', parts: [{text: errorMessage}]});
                     saveHistory();
                     appendMessage('ai', errorMessage, [], false, false);
+                    addDefaultQuickButtonsToChatFlow(); // Show default buttons on error
                 }
                 $('.mwai-product-checkbox').prop('checked', false);
                 selectedProducts.clear();
-                updateFinalQuickButtons();
+                updateFinalQuickButtons(); // This will now only manage product-specific buttons
             }, 'json').fail(function(){
                 $typing.remove();
                 appendMessage('ai', '⚠️ Network error — please try again.', [], true, false);
@@ -624,7 +637,8 @@
                 saveHistory();
                 $('.mwai-product-checkbox').prop('checked', false);
                 selectedProducts.clear();
-                updateFinalQuickButtons();
+                updateFinalQuickButtons(); // This will now only manage product-specific buttons
+                addDefaultQuickButtonsToChatFlow(); // Show default buttons on network error
             });
         }
 
@@ -654,6 +668,12 @@
                 const historyLoaded = loadHistory();
                 if (!historyLoaded) {
                     showGreeting();
+                } else {
+                    // If history was loaded, check if the last message had products to determine quick buttons
+                    const lastAiMessage = history.slice().reverse().find(entry => entry.role === 'model');
+                    if (!lastAiMessage || !lastAiMessage.products || lastAiMessage.products.length === 0) {
+                        addDefaultQuickButtonsToChatFlow();
+                    }
                 }
             } else {
                 closeChat(); // Ensure button is 'openchat.png' if chat is closed on load
