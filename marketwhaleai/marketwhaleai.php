@@ -30,7 +30,8 @@ function mwai_enqueue_assets() {
     // Enqueue shop page enhancement assets only on shop-related pages if enabled
     if ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) && ( is_shop() || is_product_category() || is_product_tag() ) ) {
         wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
-        wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
+        wp_enqueue_script( 'jquery-ui-slider' ); // Enqueue jQuery UI Slider
+        wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery', 'jquery-ui-slider' ), '1.0', true );
         wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )

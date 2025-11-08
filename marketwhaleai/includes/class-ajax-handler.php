@@ -19,6 +19,12 @@ class MWAI_Ajax_Handler {
         add_action( 'wp_ajax_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
         add_action( 'wp_ajax_nopriv_mwai_get_category_path_by_slugs', array( $this, 'get_category_path_by_slugs' ) );
 
+        // New AJAX actions for advanced filtering
+        add_action( 'wp_ajax_mwai_get_product_attributes', array( $this, 'get_product_attributes' ) );
+        add_action( 'wp_ajax_nopriv_mwai_get_product_attributes', array( $this, 'get_product_attributes' ) );
+        add_action( 'wp_ajax_mwai_get_min_max_price', array( $this, 'get_min_max_price' ) );
+        add_action( 'wp_ajax_nopriv_mwai_get_min_max_price', array( $this, 'get_min_max_price' ) );
+
         // New AJAX action for fetching category products directly for the chat widget
         add_action( 'wp_ajax_mwai_get_category_products_for_chat', array( $this, 'get_category_products_for_chat' ) );
         add_action( 'wp_ajax_nopriv_mwai_get_category_products_for_chat', array( $this, 'get_category_products_for_chat' ) );
@@ -660,7 +666,7 @@ class MWAI_Ajax_Handler {
     }
 
     /**
-     * AJAX callback to filter products by category.
+     * AJAX callback to filter products by category, price, attributes, and stock status.
      */
     public function filter_products() {
         if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
@@ -668,34 +674,87 @@ class MWAI_Ajax_Handler {
         }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
-        $category_id = isset( $_POST['category_id'] ) ? intval( $_POST['category_id'] ) : 0;
-        $search_query = isset( $_POST['search_query'] ) ? sanitize_text_field( $_POST['search_query'] ) : '';
-        $posts_per_page = isset( $_POST['posts_per_page'] ) ? intval( $_POST['posts_per_page'] ) : 12;
-        $paged = isset( $_POST['paged'] ) ? intval( $_POST['paged'] ) : 1;
+        $category_id      = isset( $_POST['category_id'] ) ? intval( $_POST['category_id'] ) : 0;
+        $search_query     = isset( $_POST['search_query'] ) ? sanitize_text_field( $_POST['search_query'] ) : '';
+        $posts_per_page   = isset( $_POST['posts_per_page'] ) ? intval( $_POST['posts_per_page'] ) : 12;
+        $paged            = isset( $_POST['paged'] ) ? intval( $_POST['paged'] ) : 1;
         $enable_slideshow = isset( $_POST['slideshow_enabled'] ) ? filter_var( $_POST['slideshow_enabled'], FILTER_VALIDATE_BOOLEAN ) : true;
+        $min_price        = isset( $_POST['min_price'] ) ? floatval( $_POST['min_price'] ) : 0;
+        $max_price        = isset( $_POST['max_price'] ) ? floatval( $_POST['max_price'] ) : 999999;
+        $attributes       = isset( $_POST['attributes'] ) ? (array) wp_unslash( $_POST['attributes'] ) : array();
+        $stock_status     = isset( $_POST['stock_status'] ) ? sanitize_text_field( $_POST['stock_status'] ) : '';
+        $orderby          = isset( $_POST['orderby'] ) ? sanitize_text_field( $_POST['orderby'] ) : 'menu_order title';
+        $order            = isset( $_POST['order'] ) ? sanitize_text_field( $_POST['order'] ) : 'ASC';
 
         $args = array(
             'post_type'      => 'product',
             'post_status'    => 'publish',
             'posts_per_page' => $posts_per_page,
             'paged'          => $paged,
-            'orderby'        => 'menu_order title', // Default sorting
-            'order'          => 'ASC',
+            'orderby'        => $orderby,
+            'order'          => $order,
+            'meta_query'     => array(),
+            'tax_query'      => array( 'relation' => 'AND' ),
         );
 
+        // Category filter
         if ( $category_id > 0 ) {
-            $args['tax_query'] = array(
-                array(
-                    'taxonomy' => 'product_cat',
-                    'field'    => 'term_id',
-                    'terms'    => $category_id,
-                    'operator' => 'IN',
-                ),
+            $args['tax_query'][] = array(
+                'taxonomy' => 'product_cat',
+                'field'    => 'term_id',
+                'terms'    => $category_id,
+                'operator' => 'IN',
             );
         }
 
+        // Search query
         if ( ! empty( $search_query ) ) {
             $args['s'] = $search_query;
+        }
+
+        // Price filter
+        $args['meta_query'][] = array(
+            'key'     => '_price',
+            'value'   => array( $min_price, $max_price ),
+            'type'    => 'DECIMAL',
+            'compare' => 'BETWEEN',
+        );
+
+        // Stock status filter
+        if ( ! empty( $stock_status ) && $stock_status === 'instock' ) {
+            $args['meta_query'][] = array(
+                'key'     => '_stock_status',
+                'value'   => 'instock',
+                'compare' => '=',
+            );
+        }
+
+        // Attribute filters
+        if ( ! empty( $attributes ) ) {
+            foreach ( $attributes as $attribute_slug => $terms ) {
+                if ( ! empty( $terms ) ) {
+                    $args['tax_query'][] = array(
+                        'taxonomy' => $attribute_slug, // e.g., 'pa_color'
+                        'field'    => 'slug',
+                        'terms'    => $terms,
+                        'operator' => 'IN',
+                    );
+                }
+            }
+        }
+
+        // Handle specific sorting options
+        if ( $orderby === 'popularity' ) {
+            $args['meta_key'] = 'total_sales';
+            $args['orderby']  = 'meta_value_num';
+        } elseif ( $orderby === 'rating' ) {
+            $args['meta_key'] = '_wc_average_rating';
+            $args['orderby']  = 'meta_value_num';
+        } elseif ( $orderby === 'price' ) {
+            $args['meta_key'] = '_price';
+            $args['orderby']  = 'meta_value_num';
+        } elseif ( $orderby === 'date' ) {
+            $args['orderby'] = 'date';
         }
 
         $products_query = new WP_Query( $args );
@@ -997,6 +1056,86 @@ class MWAI_Ajax_Handler {
         }
 
         wp_send_json_success( array( 'category_path_ids' => $category_path_ids ) );
+    }
+
+    /**
+     * AJAX callback to get all registered product attributes and their terms.
+     */
+    public function get_product_attributes() {
+        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
+        check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
+
+        $attribute_taxonomies = wc_get_attribute_taxonomies();
+        $formatted_attributes = array();
+
+        if ( ! empty( $attribute_taxonomies ) ) {
+            foreach ( $attribute_taxonomies as $taxonomy ) {
+                $taxonomy_name = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
+                $terms = get_terms( array(
+                    'taxonomy'   => $taxonomy_name,
+                    'hide_empty' => true,
+                ) );
+
+                if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+                    $formatted_terms = array();
+                    foreach ( $terms as $term ) {
+                        $formatted_terms[] = array(
+                            'id'   => $term->term_id,
+                            'name' => $term->name,
+                            'slug' => $term->slug,
+                        );
+                    }
+                    $formatted_attributes[] = array(
+                        'id'    => $taxonomy->attribute_id,
+                        'name'  => $taxonomy->attribute_name,
+                        'label' => $taxonomy->attribute_label,
+                        'slug'  => $taxonomy_name, // e.g., 'pa_color'
+                        'terms' => $formatted_terms,
+                    );
+                }
+            }
+        }
+
+        wp_send_json_success( array( 'attributes' => $formatted_attributes ) );
+    }
+
+    /**
+     * AJAX callback to get the minimum and maximum product prices.
+     */
+    public function get_min_max_price() {
+        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
+            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        }
+        check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
+
+        global $wpdb;
+
+        // Get min price
+        $min_price = $wpdb->get_var( "
+            SELECT min(meta_value + 0)
+            FROM {$wpdb->postmeta}
+            LEFT JOIN {$wpdb->posts} ON {$wpdb->postmeta}.post_id = {$wpdb->posts}.ID
+            WHERE meta_key = '_price'
+            AND {$wpdb->posts}.post_status = 'publish'
+            AND {$wpdb->posts}.post_type = 'product'
+        " );
+
+        // Get max price
+        $max_price = $wpdb->get_var( "
+            SELECT max(meta_value + 0)
+            FROM {$wpdb->postmeta}
+            LEFT JOIN {$wpdb->posts} ON {$wpdb->postmeta}.post_id = {$wpdb->posts}.ID
+            WHERE meta_key = '_price'
+            AND {$wpdb->posts}.post_status = 'publish'
+            AND {$wpdb->posts}.post_type = 'product'
+        " );
+
+        wp_send_json_success( array(
+            'min_price' => floor( floatval( $min_price ) ),
+            'max_price' => ceil( floatval( $max_price ) ),
+        ) );
     }
 }
 

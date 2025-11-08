@@ -7,6 +7,12 @@
 
         let $targetContainer;
         let initialProductLimit = 12; // Default limit
+        let minPrice = 0;
+        let maxPrice = 999999; // A sufficiently large number
+        let selectedAttributes = {}; // { 'pa_color': ['red', 'blue'], 'pa_size': ['large'] }
+        let stockStatus = ''; // 'instock', 'outofstock', or ''
+        let currentOrderBy = 'menu_order title'; // Default sorting
+        let currentOrder = 'ASC'; // Default order
 
         if (isEmbedded) {
             $targetContainer = $embeddedShopContainer;
@@ -27,13 +33,21 @@
             return;
         }
 
+        // New filter and sort wrapper
+        const $filtersSortWrapper = $('<div class="mwai-shop-filters-sort-wrapper"></div>');
+        const $filtersSidebar = $('<div class="mwai-shop-filters-sidebar"></div>');
+        const $productsContent = $('<div class="mwai-shop-products-content"></div>');
+
         const $categoryScrollerContainer = $('<div id="mwai-category-scrollers"></div>');
         const $productGridContainer = $('<div id="mwai-product-grid-wrapper" style="position: relative;"></div>');
         const $productGrid = $('<div class="mwai-products-grid"></div>');
         const $loadingOverlay = $('<div class="mwai-loading-overlay"><div class="mwai-spinner"></div></div>');
 
         $productGridContainer.append($productGrid).append($loadingOverlay);
-        $targetContainer.append($categoryScrollerContainer).append($productGridContainer);
+        $productsContent.append($categoryScrollerContainer).append($productGridContainer);
+        $filtersSortWrapper.append($filtersSidebar).append($productsContent);
+        $targetContainer.append($filtersSortWrapper);
+
 
         let currentCategoryPath = []; // Stores the IDs of categories in the current path
         let currentSearchQuery = '';
@@ -64,6 +78,54 @@
                 return parts.slice(categoryIndex + 1);
             }
             return [];
+        }
+
+        // Function to get all product attributes
+        function fetchProductAttributes(callback) {
+            $.ajax({
+                url: MWAI_Shop_Ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'mwai_get_product_attributes',
+                    nonce: MWAI_Shop_Ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        callback(response.data.attributes);
+                    } else {
+                        console.error('Error fetching product attributes:', response.data.message);
+                        callback([]);
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('AJAX error fetching product attributes:', textStatus, errorThrown);
+                    callback([]);
+                }
+            });
+        }
+
+        // Function to get min/max price
+        function fetchMinMaxPrice(callback) {
+            $.ajax({
+                url: MWAI_Shop_Ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'mwai_get_min_max_price',
+                    nonce: MWAI_Shop_Ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        callback(response.data.min_price, response.data.max_price);
+                    } else {
+                        console.error('Error fetching min/max price:', response.data.message);
+                        callback(0, 1000); // Fallback
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('AJAX error fetching min/max price:', textStatus, errorThrown);
+                    callback(0, 1000); // Fallback
+                }
+            });
         }
 
         function showLoading() {
@@ -317,24 +379,10 @@
             });
         }
 
-        // Function to recursively load category scrollers
-        function loadCategoryScrollersRecursively(pathIds, currentLevel, parentId) {
-            // Base case: If we've processed all categories in the pathIds array
-            if (currentLevel === pathIds.length) {
-                // Now, fetch the subcategories of the deepest active category (which is parentId here)
-                // and render them at the 'currentLevel' (which is pathIds.length, effectively the next level)
-                fetchCategories(parentId, currentLevel, pathIds);
-                return;
-            }
-
-            // Recursive step: Process the current level's category
-            const targetCategoryId = pathIds[currentLevel];
-            
-            fetchCategories(parentId, currentLevel, pathIds, (categories) => {
-                // After fetching and rendering the current level's scroller,
-                // proceed to the next level in the path, using targetCategoryId as the new parentId.
-                loadCategoryScrollersRecursively(pathIds, currentLevel + 1, targetCategoryId);
-            });
+        // Function to apply all filters and sorting
+        function applyFiltersAndSort(append = false) {
+            const currentCategoryId = currentCategoryPath.length > 0 ? currentCategoryPath[currentCategoryPath.length - 1] : 0;
+            fetchProducts(currentCategoryId, currentSearchQuery, currentPage, append, productsPerPage, minPrice, maxPrice, selectedAttributes, stockStatus, currentOrderBy, currentOrder);
         }
 
         // Initial load logic
@@ -366,14 +414,14 @@
                         // Start loading scrollers recursively
                         loadCategoryScrollersRecursively(activeCategoryPathIds, 0, 0);
                         currentPage = 1; // Reset page for new category
-                        fetchProducts(initialCategoryId, initialSearchTerm, currentPage, false, productsPerPage);
+                        applyFiltersAndSort();
                     } else {
                         console.error('Error fetching category path by slugs:', response.data.message);
                         // Fallback to default if path not found
                         totalCategoriesToLoad = 1; // Only top-level categories
                         fetchCategories(0, 0, []);
                         currentPage = 1; // Reset page
-                        fetchProducts(0, '', currentPage, false, productsPerPage);
+                        applyFiltersAndSort();
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -382,7 +430,7 @@
                     totalCategoriesToLoad = 1; // Only top-level categories
                     fetchCategories(0, 0, []);
                     currentPage = 1; // Reset page
-                    fetchProducts(0, '', currentPage, false, productsPerPage);
+                    applyFiltersAndSort();
                 },
                 complete: function() {
                     // This complete is for the path fetching, not for all category scrollers
@@ -393,13 +441,146 @@
             totalCategoriesToLoad = 1; // Only top-level categories
             fetchCategories(0, 0, []); // Load top-level categories
             currentPage = 1; // Reset page
-            fetchProducts(0, currentSearchQuery, currentPage, false, productsPerPage); // Load products based on search query
+            applyFiltersAndSort(); // Load products based on search query
         } else {
             totalCategoriesToLoad = 1; // Only top-level categories
             fetchCategories(0, 0, []); // Load top-level categories
             currentPage = 1; // Reset page
-            fetchProducts(0, '', currentPage, false, productsPerPage); // Load all products by default
+            applyFiltersAndSort(); // Load all products by default
         }
+
+        // Initialize filters and sorting UI
+        function initializeFiltersAndSortUI(minGlobalPrice, maxGlobalPrice, attributesData) {
+            $filtersSidebar.empty(); // Clear existing content
+
+            // Price Filter
+            $filtersSidebar.append('<h3>Filters</h3>');
+            const $priceFilterGroup = $('<div class="mwai-filter-group"></div>');
+            $priceFilterGroup.append('<label>Price Range</label>');
+            const $priceRangeDisplay = $('<div class="mwai-price-range-display"></div>');
+            $priceFilterGroup.append($priceRangeDisplay);
+            const $priceSliderContainer = $('<div class="mwai-price-slider-container"></div>');
+            $priceFilterGroup.append($priceSliderContainer);
+            $filtersSidebar.append($priceFilterGroup);
+
+            $priceSliderContainer.slider({
+                range: true,
+                min: minGlobalPrice,
+                max: maxGlobalPrice,
+                values: [minGlobalPrice, maxGlobalPrice],
+                slide: function(event, ui) {
+                    $priceRangeDisplay.text(`₹${ui.values[0]} - ₹${ui.values[1]}`);
+                },
+                change: function(event, ui) {
+                    minPrice = ui.values[0];
+                    maxPrice = ui.values[1];
+                    currentPage = 1; // Reset page on filter change
+                    applyFiltersAndSort();
+                }
+            });
+            $priceRangeDisplay.text(`₹${minGlobalPrice} - ₹${maxGlobalPrice}`); // Initial display
+
+            // Attribute Filters
+            if (attributesData && attributesData.length > 0) {
+                attributesData.forEach(attr => {
+                    const $attrFilterGroup = $('<div class="mwai-filter-group"></div>');
+                    $attrFilterGroup.append(`<label>${attr.label}</label>`);
+                    const $attrOptions = $('<div class="mwai-filter-options"></div>');
+                    attr.terms.forEach(term => {
+                        const checkboxId = `mwai-attr-${attr.slug}-${term.slug}`;
+                        $attrOptions.append(`
+                            <label for="${checkboxId}">
+                                <input type="checkbox" id="${checkboxId}" data-attribute="${attr.slug}" value="${term.slug}">
+                                ${term.name}
+                            </label>
+                        `);
+                    });
+                    $attrFilterGroup.append($attrOptions);
+                    $filtersSidebar.append($attrFilterGroup);
+                });
+
+                $filtersSidebar.on('change', '.mwai-filter-group input[type="checkbox"]', function() {
+                    const $checkbox = $(this);
+                    const attributeSlug = $checkbox.data('attribute');
+                    const termSlug = $checkbox.val();
+
+                    if (!$checkbox.is(':checked')) {
+                        if (selectedAttributes[attributeSlug]) {
+                            selectedAttributes[attributeSlug] = selectedAttributes[attributeSlug].filter(s => s !== termSlug);
+                            if (selectedAttributes[attributeSlug].length === 0) {
+                                delete selectedAttributes[attributeSlug];
+                            }
+                        }
+                    } else {
+                        if (!selectedAttributes[attributeSlug]) {
+                            selectedAttributes[attributeSlug] = [];
+                        }
+                        selectedAttributes[attributeSlug].push(termSlug);
+                    }
+                    currentPage = 1; // Reset page on filter change
+                    applyFiltersAndSort();
+                });
+            }
+
+            // Stock Status Filter
+            const $stockFilterGroup = $('<div class="mwai-filter-group"></div>');
+            $stockFilterGroup.append('<label>Availability</label>');
+            const $stockOptions = $('<div class="mwai-filter-options"></div>');
+            $stockOptions.append(`
+                <label for="mwai-stock-instock">
+                    <input type="checkbox" id="mwai-stock-instock" value="instock">
+                    In Stock
+                </label>
+            `);
+            $stockFilterGroup.append($stockOptions);
+            $filtersSidebar.append($stockFilterGroup);
+
+            $filtersSidebar.on('change', '#mwai-stock-instock', function() {
+                stockStatus = $(this).is(':checked') ? 'instock' : '';
+                currentPage = 1; // Reset page on filter change
+                applyFiltersAndSort();
+            });
+
+            // Sorting Dropdown (moved to products content area for better layout)
+            const $sortOptions = $('<div class="mwai-sort-options"></div>');
+            $sortOptions.append('<label for="mwai-sort-by">Sort by:</label>');
+            const $sortSelect = $(`
+                <select id="mwai-sort-by">
+                    <option value="menu_order title ASC">Default sorting</option>
+                    <option value="popularity DESC">Sort by popularity</option>
+                    <option value="rating DESC">Sort by average rating</option>
+                    <option value="date DESC">Sort by newness</option>
+                    <option value="price ASC">Sort by price: low to high</option>
+                    <option value="price DESC">Sort by price: high to low</option>
+                </select>
+            `);
+            $sortOptions.append($sortSelect);
+            $productsContent.prepend($sortOptions); // Prepend to product content area
+
+            $sortSelect.on('change', function() {
+                const [orderBy, order] = $(this).val().split(' ');
+                currentOrderBy = orderBy;
+                currentOrder = order;
+                currentPage = 1; // Reset page on sort change
+                applyFiltersAndSort();
+            });
+        }
+
+        // Initial data fetching for filters and sorting
+        $.when(
+            fetchMinMaxPrice(function(min, max) {
+                minPrice = min;
+                maxPrice = max;
+            }),
+            fetchProductAttributes(function(attrs) {
+                // Store attributes data globally if needed, or pass directly to UI init
+                MWAI_Shop_Ajax.product_attributes = attrs; // Store for later use if needed
+            })
+        ).done(function() {
+            initializeFiltersAndSortUI(minPrice, maxPrice, MWAI_Shop_Ajax.product_attributes);
+            // After initializing UI, ensure products are fetched with initial filters/sort
+            // This is already handled by the initial load logic below, but good to be explicit.
+        });
 
         // Infinite scrolling logic
         $productGridContainer.on('scroll', function() {
