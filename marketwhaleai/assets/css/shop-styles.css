@@ -184,6 +184,9 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
 .mwai-shop-products-content {
     flex: 1; /* Take up remaining space */
     min-width: 0; /* Allow content to shrink */
+    /* Ensure content is constrained on smaller screens */
+    width: 100%;
+    overflow-x: hidden; /* Hide horizontal overflow within this container */
 }
 
 /* Scroller Wrapper (for scroll buttons and blur effect) */
@@ -261,6 +264,8 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     .mwai-category-scroller-wrapper,
     .mwai-product-scroller-wrapper {
         padding: 0; /* Remove padding on mobile if buttons are hidden */
+        width: 100%; /* Ensure scroller wrappers take full width */
+        overflow-x: hidden; /* Hide horizontal overflow within scroller wrappers */
     }
 }
 
@@ -281,10 +286,12 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     font-size: 14px;
     font-weight: 500;
     color: var(--mwai-shop-text);
-    white-space: nowrap; /* Keep text on one line */
+    white-space: normal; /* Allow text to wrap */
     display: flex; /* Make it a flex container */
     justify-content: center; /* Center horizontally */
     align-items: center; /* Center vertically */
+    min-width: 100px; /* Ensure a minimum width for tabs */
+    text-align: center;
 }
 
 /* Specific styles for category cards within the scroller */
@@ -292,7 +299,7 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     flex-direction: column; /* Stack image and text vertically */
     padding: 10px;
     width: 120px; /* Fixed width for cards */
-    height: 120px; /* Fixed height for cards */
+    height: auto; /* Allow height to adjust based on content */
     border-radius: 12px; /* More rounded corners for cards */
     justify-content: space-around; /* Distribute space */
     text-align: center;
@@ -622,6 +629,11 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     .mwai-category-scroller .mwai-category-tab {
         padding: 6px 12px;
         font-size: 13px;
+        min-width: 80px; /* Smaller min-width for mobile tabs */
+    }
+    .mwai-category-scroller .mwai-category-card {
+        width: 100px; /* Adjust card width for mobile */
+        height: auto; /* Ensure height adjusts */
     }
 }
 
