@@ -139,6 +139,38 @@
             }
         }
 
+        // Function to recursively load category scrollers
+        function loadCategoryScrollersRecursively(pathIds, currentLevel, parentId) {
+            if (currentLevel >= pathIds.length) {
+                // All active categories in the path have been processed.
+                // Now fetch subcategories for the deepest active category, or top-level if path is empty.
+                const finalParentId = pathIds.length > 0 ? pathIds[pathIds.length - 1] : 0;
+                fetchCategories(finalParentId, pathIds.length, pathIds, () => {
+                    categoriesLoadedCount++;
+                    if (categoriesLoadedCount >= totalCategoriesToLoad) {
+                        hideLoading();
+                    }
+                });
+                return;
+            }
+
+            const categoryIdToLoad = pathIds[currentLevel];
+            fetchCategories(parentId, currentLevel, pathIds, (categories) => {
+                categoriesLoadedCount++;
+                if (categoriesLoadedCount >= totalCategoriesToLoad) {
+                    hideLoading();
+                }
+                // Find the category that matches categoryIdToLoad to get its children
+                const foundCategory = categories.find(cat => cat.id === categoryIdToLoad);
+                if (foundCategory) {
+                    loadCategoryScrollersRecursively(pathIds, currentLevel + 1, categoryIdToLoad);
+                } else {
+                    // If a category in the path is not found at this level, stop recursion
+                    console.warn(`Category ID ${categoryIdToLoad} not found at level ${currentLevel}. Stopping recursive category loading.`);
+                }
+            });
+        }
+
         function fetchCategories(parentId, level, activeCategoryPath = [], callback = null) {
             $.ajax({
                 url: MWAI_Shop_Ajax.ajax_url,
