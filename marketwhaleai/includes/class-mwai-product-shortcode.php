@@ -309,13 +309,16 @@ class MWAI_Product_Shortcode {
                         }
                     }
 
-                    $scroller.on('scroll', updateScrollButtons);
-                    $(window).on('resize', updateScrollButtons);
-                    setTimeout(updateScrollButtons, 100); // Initial check
+                        $scroller.on('scroll', updateScrollButtons);
+                        $(window).on('resize', updateScrollButtons);
+                        setTimeout(updateScrollButtons, 100); // Initial check
 
-                    $leftButton.on('click', function() {
-                        $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
-                    });
+                        // Ensure buttons are updated after all images are loaded
+                        $(window).on('load', updateScrollButtons);
+
+                        $leftButton.on('click', function() {
+                            $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
+                        });
 
                     $rightButton.on('click', function() {
                         $scroller.animate({ scrollLeft: $scroller.scrollLeft() + 200 }, 300);
@@ -352,10 +355,12 @@ class MWAI_Product_Shortcode {
             'class'      => '', // additional CSS class for the container
             'title'      => '', // Optional title for the scroller
             'slideshow'  => true, // New attribute: enable/disable slideshow
+            'autoplay'   => false, // New attribute: enable/disable continuous autoplay
         ), $atts, 'mwai_product_scroller' );
 
-        // Sanitize slideshow attribute
+        // Sanitize slideshow and autoplay attributes
         $atts['slideshow'] = filter_var( $atts['slideshow'], FILTER_VALIDATE_BOOLEAN );
+        $atts['autoplay'] = filter_var( $atts['autoplay'], FILTER_VALIDATE_BOOLEAN );
 
         $query_args = array(
             'post_type'      => 'product',
@@ -401,7 +406,7 @@ class MWAI_Product_Shortcode {
                 $container_classes[] = sanitize_html_class( $atts['class'] );
             }
             ?>
-            <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>">
+            <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>" data-autoplay-enabled="<?php echo esc_attr( $atts['autoplay'] ? 'true' : 'false' ); ?>">
                 <?php if ( ! empty( $atts['title'] ) ) : ?>
                     <h2 class="mwai-scroller-title"><?php echo esc_html( $atts['title'] ); ?></h2>
                 <?php endif; ?>
@@ -429,6 +434,8 @@ class MWAI_Product_Shortcode {
                         const $scroller = $currentScrollerWrapper.find('.mwai-product-scroller');
                         const $leftButton = $currentScrollerWrapper.find('.mwai-scroll-button.left');
                         const $rightButton = $currentScrollerWrapper.find('.mwai-scroll-button.right');
+                        const autoplayEnabled = $currentScrollerWrapper.data('autoplay-enabled');
+                        let scrollInterval;
 
                         function updateScrollButtons() {
                             if ($scroller[0].scrollWidth > $scroller[0].clientWidth) {
@@ -449,17 +456,59 @@ class MWAI_Product_Shortcode {
                             }
                         }
 
+                        function startAutoplay() {
+                            if (!autoplayEnabled) return;
+                            stopAutoplay(); // Clear any existing interval
+
+                            scrollInterval = setInterval(function() {
+                                const scrollAmount = 1; // Pixels to scroll per interval
+                                const currentScrollLeft = $scroller.scrollLeft();
+                                const maxScrollLeft = $scroller[0].scrollWidth - $scroller[0].clientWidth;
+
+                                if (maxScrollLeft <= 0) { // No need to scroll if content fits
+                                    stopAutoplay();
+                                    return;
+                                }
+
+                                if (currentScrollLeft >= maxScrollLeft) {
+                                    // If at the end, smoothly scroll back to the beginning
+                                    $scroller.animate({ scrollLeft: 0 }, 800); // Smooth reset
+                                } else {
+                                    $scroller.scrollLeft(currentScrollLeft + scrollAmount);
+                                }
+                                updateScrollButtons();
+                            }, 20); // Adjust interval for speed
+                        }
+
+                        function stopAutoplay() {
+                            clearInterval(scrollInterval);
+                        }
+
                         $scroller.on('scroll', updateScrollButtons);
-                        $(window).on('resize', updateScrollButtons);
+                        $(window).on('resize', function() {
+                            updateScrollButtons();
+                            startAutoplay(); // Restart autoplay on resize to adjust to new width
+                        });
                         setTimeout(updateScrollButtons, 100); // Initial check
 
+                        // Ensure buttons are updated after all images are loaded
+                        $(window).on('load', updateScrollButtons);
+
                         $leftButton.on('click', function() {
+                            stopAutoplay(); // Stop autoplay on manual interaction
                             $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
                         });
 
                         $rightButton.on('click', function() {
+                            stopAutoplay(); // Stop autoplay on manual interaction
                             $scroller.animate({ scrollLeft: $scroller.scrollLeft() + 200 }, 300);
                         });
+
+                        // Start autoplay if enabled
+                        startAutoplay();
+
+                        // Pause autoplay on hover
+                        $currentScrollerWrapper.hover(stopAutoplay, startAutplay);
                     });
                 });
             </script>
