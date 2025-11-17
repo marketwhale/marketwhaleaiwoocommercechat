@@ -219,7 +219,7 @@ class MWAI_Product_Shortcode {
                         <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
                     <?php endif; ?>
                     <div class="mwai-product-meta">
-                        <h3><?php echo esc_html( $title ); ?></h3>
+                        <h3><?php echo esc_html( html_entity_decode( $title ) ); ?></h3>
                         <p class="price"><?php echo wp_kses_post( $price ); ?></p>
                     </div>
                 </div>
@@ -276,7 +276,7 @@ class MWAI_Product_Shortcode {
                         ?>
                         <a href="<?php echo esc_url( $category_link ); ?>" class="mwai-category-tab mwai-category-card">
                             <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $category->name ); ?>">
-                            <span><?php echo esc_html( $category->name ); ?> (<?php echo esc_html( $category->count ); ?>)</span>
+                            <span><?php echo esc_html( html_entity_decode( $category->name ) ); ?> (<?php echo esc_html( $category->count ); ?>)</span>
                         </a>
                     <?php endforeach; ?>
                 </div>

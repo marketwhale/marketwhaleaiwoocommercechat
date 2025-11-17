@@ -925,7 +925,7 @@ class MWAI_Ajax_Handler {
                         <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
                     <?php endif; ?>
                     <div class="mwai-product-meta">
-                        <h3><?php echo esc_html( $title ); ?></h3>
+                        <h3><?php echo esc_html( html_entity_decode( $title ) ); ?></h3>
                         <p class="price"><?php echo wp_kses_post( $price ); ?></p>
                     </div>
                 </div>

@@ -211,8 +211,9 @@
 
 
             categories.forEach(category => {
+                const decodedCategoryName = $('<textarea/>').html(category.name).text(); // Decode HTML entities
                 const $tab = $('<div class="mwai-category-tab"></div>')
-                    .text(`${category.name} (${category.count})`)
+                    .text(`${decodedCategoryName} (${category.count})`)
                     .data('category-id', category.id)
                     .data('level', level);
                 if (activeCategoryIdForLevel === category.id) {
