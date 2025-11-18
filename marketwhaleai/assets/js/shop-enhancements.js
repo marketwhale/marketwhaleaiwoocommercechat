@@ -706,6 +706,7 @@
             const $leftButton = $currentScrollerWrapper.find('.mwai-scroll-button.left');
             const $rightButton = $currentScrollerWrapper.find('.mwai-scroll-button.right');
             const autoplayEnabled = $currentScrollerWrapper.data('autoplay-enabled');
+            const scrollDirection = $currentScrollerWrapper.data('scroll-direction') || 'ltr'; // Default to ltr
             let scrollInterval;
 
             function updateScrollButtons() {
@@ -728,26 +729,59 @@
             }
 
             function startAutoplay() {
-                if (!autoplayEnabled) return;
+                if (!autoplayEnabled) {
+                    console.log('MWAI Autoplay: Autoplay is not enabled.');
+                    return;
+                }
                 stopAutoplay(); // Clear any existing interval
+
+                console.log(`MWAI Autoplay: Starting autoplay in ${scrollDirection} direction...`);
+
+                // Initial position for RTL scrolling
+                if (scrollDirection === 'rtl') {
+                    $scroller.scrollLeft($scroller[0].scrollWidth - $scroller[0].clientWidth);
+                }
 
                 scrollInterval = setInterval(function() {
                     const scrollAmount = 1; // Pixels to scroll per interval
-                    const currentScrollLeft = $scroller.scrollLeft();
-                    const maxScrollLeft = $scroller[0].scrollWidth - $scroller[0].clientWidth;
+                    let currentScrollLeft = $scroller.scrollLeft();
+                    const scrollerWidth = $scroller[0].scrollWidth;
+                    const clientWidth = $scroller[0].clientWidth;
+                    const maxScrollLeft = scrollerWidth - clientWidth;
 
                     if (maxScrollLeft <= 0) { // No need to scroll if content fits
+                        console.log('MWAI Autoplay: Content fits, stopping autoplay.');
                         stopAutoplay();
                         return;
                     }
 
-                    if (currentScrollLeft >= maxScrollLeft) {
-                        // If at the end, smoothly scroll back to the beginning
-                        $scroller.animate({ scrollLeft: 0 }, 800); // Smooth reset
-                    } else {
-                        $scroller.scrollLeft(currentScrollLeft + scrollAmount);
+                    if (scrollDirection === 'ltr') {
+                        if (currentScrollLeft >= maxScrollLeft) {
+                            // If at the end, smoothly scroll back to the beginning
+                            console.log('MWAI Autoplay: Reached end (LTR), resetting scroll to 0.');
+                            stopAutoplay();
+                            $scroller.stop(true, true).animate({ scrollLeft: 0 }, 800, function() {
+                                updateScrollButtons();
+                                startAutoplay();
+                            });
+                        } else {
+                            $scroller.scrollLeft(currentScrollLeft + scrollAmount);
+                            updateScrollButtons();
+                        }
+                    } else { // RTL direction
+                        if (currentScrollLeft <= 0) {
+                            // If at the beginning, smoothly scroll back to the end
+                            console.log('MWAI Autoplay: Reached beginning (RTL), resetting scroll to max.');
+                            stopAutoplay();
+                            $scroller.stop(true, true).animate({ scrollLeft: maxScrollLeft }, 800, function() {
+                                updateScrollButtons();
+                                startAutoplay();
+                            });
+                        } else {
+                            $scroller.scrollLeft(currentScrollLeft - scrollAmount);
+                            updateScrollButtons();
+                        }
                     }
-                    updateScrollButtons();
                 }, 20); // Adjust interval for speed
             }
 
@@ -767,12 +801,18 @@
 
             $leftButton.on('click', function() {
                 stopAutoplay(); // Stop autoplay on manual interaction
-                $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);
+                const scrollAmount = $scroller.width() * 0.7; // Scroll by 70% of scroller width
+                $scroller.stop(true, true).animate({ scrollLeft: $scroller.scrollLeft() - scrollAmount }, 300, function() {
+                    updateScrollButtons(); // Update buttons after animation completes
+                });
             });
 
             $rightButton.on('click', function() {
                 stopAutoplay(); // Stop autoplay on manual interaction
-                $scroller.animate({ scrollLeft: $scroller.scrollLeft() + 200 }, 300);
+                const scrollAmount = $scroller.width() * 0.7; // Scroll by 70% of scroller width
+                $scroller.stop(true, true).animate({ scrollLeft: $scroller.scrollLeft() + scrollAmount }, 300, function() {
+                    updateScrollButtons(); // Update buttons after animation completes
+                });
             });
 
             // Start autoplay if enabled

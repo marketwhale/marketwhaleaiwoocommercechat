@@ -31,7 +31,8 @@ class MWAI_Product_Shortcode {
 
             // Enqueue shop-enhancements.js if mwai_shop_browser or mwai_product_scroller is used AND the respective feature is enabled
             if ( ( has_shortcode( $post->post_content, 'mwai_shop_browser' ) && get_option( 'mwai_feature_shop_browser_enabled', true ) ) || has_shortcode( $post->post_content, 'mwai_product_scroller' ) ) {
-                wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery' ), '1.0', true );
+                wp_enqueue_script( 'jquery-ui-slider' ); // Ensure jQuery UI Slider is loaded for shop-enhancements.js
+                wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery', 'jquery-ui-slider' ), '1.0', true );
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )
@@ -354,13 +355,15 @@ class MWAI_Product_Shortcode {
             'skus'       => '', // comma-separated product SKUs
             'class'      => '', // additional CSS class for the container
             'title'      => '', // Optional title for the scroller
-            'slideshow'  => true, // New attribute: enable/disable slideshow
-            'autoplay'   => false, // New attribute: enable/disable continuous autoplay
+            'slideshow'       => true, // New attribute: enable/disable slideshow
+            'autoplay'        => false, // New attribute: enable/disable continuous autoplay
+            'scroll_direction' => 'ltr', // New attribute: 'ltr' for left-to-right, 'rtl' for right-to-left
         ), $atts, 'mwai_product_scroller' );
 
-        // Sanitize slideshow and autoplay attributes
+        // Sanitize slideshow, autoplay, and scroll_direction attributes
         $atts['slideshow'] = filter_var( $atts['slideshow'], FILTER_VALIDATE_BOOLEAN );
         $atts['autoplay'] = filter_var( $atts['autoplay'], FILTER_VALIDATE_BOOLEAN );
+        $atts['scroll_direction'] = in_array( $atts['scroll_direction'], array( 'ltr', 'rtl' ) ) ? $atts['scroll_direction'] : 'ltr';
 
         $query_args = array(
             'post_type'      => 'product',
@@ -406,7 +409,7 @@ class MWAI_Product_Shortcode {
                 $container_classes[] = sanitize_html_class( $atts['class'] );
             }
             ?>
-            <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>" data-autoplay-enabled="<?php echo esc_attr( $atts['autoplay'] ? 'true' : 'false' ); ?>">
+            <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>" data-autoplay-enabled="<?php echo esc_attr( $atts['autoplay'] ? 'true' : 'false' ); ?>" data-scroll-direction="<?php echo esc_attr( $atts['scroll_direction'] ); ?>">
                 <?php if ( ! empty( $atts['title'] ) ) : ?>
                     <h2 class="mwai-scroller-title"><?php echo esc_html( $atts['title'] ); ?></h2>
                 <?php endif; ?>
