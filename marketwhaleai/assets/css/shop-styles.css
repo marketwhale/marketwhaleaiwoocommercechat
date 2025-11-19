@@ -222,6 +222,10 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     -ms-overflow-style: none;  /* IE and Edge */
 }
 
+.mwai-category-scroller {
+    justify-content: center;
+}
+
 .mwai-category-scroller::-webkit-scrollbar,
 .mwai-product-scroller::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
@@ -301,9 +305,10 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     width: 120px; /* Fixed width for cards */
     height: auto; /* Allow height to adjust based on content */
     border-radius: 12px; /* More rounded corners for cards */
-    justify-content: space-around; /* Distribute space */
+    justify-content: center; /* Distribute space */
     text-align: center;
     box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    align-items: center;
 }
 
 .mwai-category-scroller .mwai-category-card img {
