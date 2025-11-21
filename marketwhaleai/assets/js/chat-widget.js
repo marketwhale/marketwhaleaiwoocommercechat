@@ -512,33 +512,38 @@
             const $rightButton = $('<div class="mwai-scroll-button right hidden">></div>');
             $targetCarouselWrapper.append($leftButton).append($rightButton);
 
-            // Function to update scroll button visibility
-            function updateScrollButtons() {
-                if ($carousel[0].scrollWidth > $carousel[0].clientWidth) {
+            // Function to update scroll button visibility and centering for carousel
+            function updateScrollStateCarousel() {
+                const isScrollable = $carousel[0].scrollWidth > $carousel[0].clientWidth;
+
+                if (isScrollable) {
+                    $carousel.removeClass('mwai-centered-content');
                     if ($carousel[0].scrollLeft === 0) {
                         $leftButton.addClass('hidden');
                     } else {
                         $leftButton.removeClass('hidden');
                     }
 
-                    if ($carousel[0].scrollLeft + $carousel[0].clientWidth >= $carousel[0].scrollWidth) {
+                    if ($carousel[0].scrollLeft + $carousel[0].clientWidth >= $carousel[0].scrollWidth - 2) { // -2 for sub-pixel rendering tolerance
                         $rightButton.addClass('hidden');
                     } else {
                         $rightButton.removeClass('hidden');
                     }
                 } else {
+                    $carousel.addClass('mwai-centered-content');
                     $leftButton.addClass('hidden');
                     $rightButton.addClass('hidden');
                 }
             }
 
             // Attach scroll event listener
-            $carousel.on('scroll', updateScrollButtons);
+            $carousel.on('scroll', updateScrollStateCarousel);
             // Update on resize
-            $(window).on('resize', updateScrollButtons);
+            $(window).on('resize', updateScrollStateCarousel);
 
             // Initial check for button visibility
-            setTimeout(updateScrollButtons, 100);
+            setTimeout(updateScrollStateCarousel, 150); // Small delay to ensure content is rendered
+            $(window).on('load', updateScrollStateCarousel); // Also update on full page load
 
             // Attach click handlers for scroll buttons
             $leftButton.on('click', function() {

@@ -222,7 +222,7 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     -ms-overflow-style: none;  /* IE and Edge */
 }
 
-.mwai-category-scroller {
+.mwai-category-scroller.mwai-centered-content {
     justify-content: center;
 }
 
@@ -628,9 +628,9 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 15px;
     }
-    .mwai-category-scroller {
-        padding: 8px 0;
-    }
+.mwai-category-scroller.mwai-centered-content {
+    justify-content: center;
+}
     .mwai-category-scroller .mwai-category-tab {
         padding: 6px 12px;
         font-size: 13px;

@@ -291,31 +291,33 @@ class MWAI_Product_Shortcode {
                     const $leftButton = $scrollerWrapper.find('.mwai-scroll-button.left');
                     const $rightButton = $scrollerWrapper.find('.mwai-scroll-button.right');
 
-                    function updateScrollButtons() {
-                        if ($scroller[0].scrollWidth > $scroller[0].clientWidth) {
+                    function updateScrollState() {
+                        const isScrollable = $scroller[0].scrollWidth > $scroller[0].clientWidth;
+
+                        if (isScrollable) {
+                            $scroller.removeClass('mwai-centered-content');
                             if ($scroller[0].scrollLeft === 0) {
                                 $leftButton.addClass('hidden');
                             } else {
                                 $leftButton.removeClass('hidden');
                             }
 
-                            if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth) {
+                            if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth - 1) { // -1 for sub-pixel rendering
                                 $rightButton.addClass('hidden');
                             } else {
                                 $rightButton.removeClass('hidden');
                             }
                         } else {
+                            $scroller.addClass('mwai-centered-content');
                             $leftButton.addClass('hidden');
                             $rightButton.addClass('hidden');
                         }
                     }
 
-                        $scroller.on('scroll', updateScrollButtons);
-                        $(window).on('resize', updateScrollButtons);
-                        setTimeout(updateScrollButtons, 100); // Initial check
-
-                        // Ensure buttons are updated after all images are loaded
-                        $(window).on('load', updateScrollButtons);
+                        $scroller.on('scroll', updateScrollState);
+                        $(window).on('resize', updateScrollState);
+                        setTimeout(updateScrollState, 150); // Initial check after content render
+                        $(window).on('load', updateScrollState); // Also update on full page load
 
                         $leftButton.on('click', function() {
                             $scroller.animate({ scrollLeft: $scroller.scrollLeft() - 200 }, 300);

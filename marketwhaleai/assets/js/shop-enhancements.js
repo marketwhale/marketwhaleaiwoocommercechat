@@ -263,23 +263,28 @@
 
             $categoryScrollerContainer.append($scrollerWrapper);
 
-            // Function to update scroll button visibility
-            function updateScrollButtons() {
-                if ($scroller[0].scrollWidth > $scroller[0].clientWidth) {
-                    // Scroller is actually scrollable
+            // Function to update scroll button visibility and centering
+            function updateScrollState() {
+                const isScrollable = $scroller[0].scrollWidth > $scroller[0].clientWidth;
+
+                if (isScrollable) {
+                    // Content overflows, enable scrolling and ensure left alignment
+                    $scroller.removeClass('mwai-centered-content');
                     if ($scroller[0].scrollLeft === 0) {
                         $leftButton.addClass('hidden');
                     } else {
                         $leftButton.removeClass('hidden');
                     }
 
-                    if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth) {
+                    // Use a small buffer to ensure the 'right' button hides only when truly at the end
+                    if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth - 2) {
                         $rightButton.addClass('hidden');
                     } else {
                         $rightButton.removeClass('hidden');
                     }
                 } else {
-                    // Not scrollable, hide both buttons
+                    // Content fits, center it and hide buttons
+                    $scroller.addClass('mwai-centered-content');
                     $leftButton.addClass('hidden');
                     $rightButton.addClass('hidden');
                 }
@@ -301,16 +306,17 @@
                         $scroller.animate({ scrollLeft: newScrollLeft }, 300);
                     }
                 }
-                updateScrollButtons(); // Call after potential scroll
+                updateScrollState(); // Call after potential scroll
             }, 150); // Small delay to ensure rendering is complete before calculating positions
 
             // Attach scroll event listener
-            $scroller.on('scroll', updateScrollButtons);
+            $scroller.on('scroll', updateScrollState);
             // Update on resize
-            $(window).on('resize', updateScrollButtons);
+            $(window).on('resize', updateScrollState);
 
-            // Initial check for button visibility
-            setTimeout(updateScrollButtons, 100); // Small delay to ensure content is rendered
+            // Initial check for state visibility
+            setTimeout(updateScrollState, 150); // Small delay to ensure content is rendered
+            $(window).on('load', updateScrollState); // Also update on full page load (e.g., images finish loading)
 
             // Attach click handlers for scroll buttons
             $leftButton.on('click', function() {
