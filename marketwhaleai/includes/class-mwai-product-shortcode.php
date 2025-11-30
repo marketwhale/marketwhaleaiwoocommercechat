@@ -302,7 +302,7 @@ class MWAI_Product_Shortcode {
                                 $leftButton.removeClass('hidden');
                             }
 
-                            if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth - 1) { // -1 for sub-pixel rendering
+                            if ($scroller[0].scrollLeft + $scroller[0].clientWidth >= $scroller[0].scrollWidth - 2) { // Allow for sub-pixel rendering differences
                                 $rightButton.addClass('hidden');
                             } else {
                                 $rightButton.removeClass('hidden');
