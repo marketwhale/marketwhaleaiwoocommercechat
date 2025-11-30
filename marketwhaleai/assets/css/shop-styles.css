@@ -194,8 +194,8 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
 .mwai-product-scroller-wrapper {
     position: relative;
     margin-bottom: 20px;
-    background-color: var(--mwai-shop-bg);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    background-color: transparent; /* Changed to transparent */
+    box-shadow: none; /* Removed box-shadow */
     border-radius: 8px;
     padding: 0 10px; /* Padding for blur effect */
 }
@@ -474,7 +474,7 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
 
 /* Product Card specific styles for scroller */
 .mwai-product-scroller .mwai-shop-product-card {
-    width: 180px; /* Fixed width for product cards in scroller */
+    width: 160px; /* Slightly reduced fixed width for product cards in scroller */
     height: auto; /* Allow height to adjust */
     padding: 0; /* Remove padding from card itself, it's inside the anchor */
     text-align: left; /* Align text left within the card */
@@ -483,60 +483,50 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
 .mwai-shop-product-card {
     background-color: var(--mwai-shop-bg);
     border: 1px solid var(--mwai-shop-border);
-    border-radius: 12px; /* Slightly larger border-radius */
+    border-radius: 10px; /* Slightly smaller border-radius for modern look */
     overflow: hidden;
     text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Subtle initial shadow */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Softer initial shadow */
+    padding: 12px; /* Reduced padding */
 }
 
 .mwai-shop-product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.12); /* More pronounced shadow on hover */
-}
-
-.mwai-shop-product-card {
-    background-color: var(--mwai-shop-bg);
-    border: 1px solid var(--mwai-shop-border);
-    border-radius: 12px; /* Slightly larger border-radius */
-    overflow: hidden;
-    text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Subtle initial shadow */
-    padding: 15px; /* Moved padding here */
+    transform: translateY(-3px); /* Less pronounced lift */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1); /* Adjusted hover shadow */
 }
 
 .mwai-shop-product-card a {
     text-decoration: none;
     color: inherit;
-    display: flex; /* Use flexbox for better layout control */
+    display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 100%; /* Ensure the anchor takes full height */
+    height: 100%;
 }
 
 .mwai-shop-product-card .mwai-product-content {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center image and text horizontally */
+    align-items: center;
     width: 100%;
 }
 
 .mwai-shop-product-card .mwai-product-meta {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center title and price horizontally */
+    align-items: center;
     width: 100%;
-    text-align: center; /* Ensure text is centered */
+    text-align: center;
 }
 
 .mwai-product-image-slideshow {
     position: relative;
     width: 100%;
-    padding-top: 100%; /* Creates a square aspect ratio */
+    padding-top: 100%;
     overflow: hidden;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    border-radius: 6px; /* Slightly smaller border-radius for images */
+    margin-bottom: 8px; /* Reduced margin */
 }
 
 .mwai-product-image-slideshow img {
@@ -546,41 +536,39 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0; /* Start hidden by default */
-    transition: opacity 0.5s ease-in-out; /* Only transition opacity */
-    z-index: 1; /* Default z-index */
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out; /* Slightly faster transition */
+    z-index: 1;
 }
 
 .mwai-product-image-slideshow img.active {
-    opacity: 1; /* Fully visible when active */
-    z-index: 2; /* Active image on top */
+    opacity: 1;
+    z-index: 2;
 }
 
 .mwai-shop-product-card img {
-    /* This rule is now less relevant for individual images within the slideshow,
-       but keeping it for general product card images if they exist outside slideshows. */
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    border-radius: 6px; /* Consistency with slideshow images */
+    margin-bottom: 8px;
 }
 
 .mwai-shop-product-card h3 {
-    font-size: 16px;
+    font-size: 15px; /* Slightly smaller font size */
     font-weight: 600;
     color: var(--mwai-shop-text);
-    margin: 0 0 5px 0;
+    margin: 0 0 4px 0; /* Reduced margin */
     line-height: 1.3;
-    height: 2.6em; /* Limit to 2 lines (1.3 * 2) */
+    height: 2.6em;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* Show only 2 lines */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
 
 .mwai-shop-product-card .price {
-    font-size: 15px;
+    font-size: 14px; /* Slightly smaller font size */
     font-weight: 700;
     color: var(--mwai-shop-accent-2);
     margin: 0;
@@ -643,14 +631,21 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
 }
 
 @media (max-width: 480px) {
-    .mwai-product-grid { /* This is for the old product grid, keeping it consistent */
+    .mwai-product-grid,
+    ul.products { /* Consistent styling for default WooCommerce products */
         grid-template-columns: repeat(2, 1fr); /* Force 2 columns on smallest screens */
         gap: 10px;
     }
+    .mwai-shop-product-card {
+        padding: 10px; /* Further reduce padding on smallest screens */
+    }
     .mwai-shop-product-card h3 {
-        font-size: 14px;
+        font-size: 13px; /* Smaller font size for mobile titles */
     }
     .mwai-shop-product-card .price {
-        font-size: 13px;
+        font-size: 12px; /* Smaller font size for mobile prices */
+    }
+    .mwai-product-scroller .mwai-shop-product-card {
+        width: 140px; /* Adjusted fixed width for scroller cards on smallest screens */
     }
 }
