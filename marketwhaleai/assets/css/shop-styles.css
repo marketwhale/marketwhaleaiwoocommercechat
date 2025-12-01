@@ -234,19 +234,33 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
 
 /* Filter Toggle Button for Mobile */
 .mwai-filter-toggle-button {
-    display: none; /* Hidden by default on larger screens */
+    /* display: none; Remove default hide on larger screens */
     padding: 10px 15px;
     background-color: var(--mwai-shop-accent-1);
     color: #fff;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
+    /* font-size: 15px; Removed as text is gone */
+    /* font-weight: 600; Removed as text is gone */
     margin-bottom: 20px;
     transition: background-color 0.2s ease, transform 0.2s ease;
     align-self: flex-start; /* Align to the start of the flex container */
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    
+    /* Styles for the image button */
+    display: flex; /* Use flexbox to center the image */
+    justify-content: center;
+    align-items: center;
+    width: 40px; /* Fixed width for the button */
+    height: 40px; /* Fixed height for the button */
+    padding: 0; /* Remove padding for image button */
+}
+
+.mwai-filter-toggle-button img {
+    max-width: 24px; /* Size of the icon */
+    max-height: 24px;
+    filter: invert(1); /* Invert color for white icon on colored button */
 }
 
 .mwai-filter-toggle-button:hover {
@@ -326,6 +340,15 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
 }
 
 /* Responsive adjustments for filters and sorting */
+@media (min-width: 768px) { /* On larger screens, hide the filter button and show the sidebar */
+    .mwai-filter-toggle-button {
+        display: none;
+    }
+    .mwai-shop-filters-sidebar {
+        display: block; /* Ensure sidebar is visible on larger screens */
+    }
+}
+
 @media (max-width: 1024px) {
     .mwai-shop-filters-sidebar {
         flex: 0 0 200px; /* Slightly smaller sidebar on tablets */
@@ -348,7 +371,7 @@ body.mwai-shop-loading .woocommerce-pagination { /* Hide pagination during loadi
     }
 
     .mwai-filter-toggle-button {
-        display: block; /* Show filter button on small screens */
+        display: flex; /* Show filter button on small screens (now defaults to flex) */
     }
 
     .mwai-shop-filters-sort-wrapper {

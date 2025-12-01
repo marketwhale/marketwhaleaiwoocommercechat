@@ -39,7 +39,7 @@
         const $productsContent = $('<div class="mwai-shop-products-content"></div>');
 
         // New elements for responsive filters
-        const $filterToggleButton = $('<button class="mwai-filter-toggle-button">Filter</button>');
+        const $filterToggleButton = $('<button class="mwai-filter-toggle-button"><img src="' + MWAI_Shop_Ajax.plugin_url + 'assets/images/tune.png" alt="Filters"></button>');
         const $filterModalOverlay = $(`
             <div class="mwai-filter-modal-overlay">
                 <div class="mwai-filter-modal-content">
