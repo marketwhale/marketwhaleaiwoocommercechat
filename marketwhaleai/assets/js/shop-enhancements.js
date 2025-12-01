@@ -38,6 +38,23 @@
         const $filtersSidebar = $('<div class="mwai-shop-filters-sidebar"></div>');
         const $productsContent = $('<div class="mwai-shop-products-content"></div>');
 
+        // New elements for responsive filters
+        const $filterToggleButton = $('<button class="mwai-filter-toggle-button">Filter</button>');
+        const $filterModalOverlay = $(`
+            <div class="mwai-filter-modal-overlay">
+                <div class="mwai-filter-modal-content">
+                    <div class="mwai-filter-modal-header">
+                        <h2>Filters</h2>
+                        <button type="button" class="mwai-filter-modal-close">&times;</button>
+                    </div>
+                    <div class="mwai-filter-modal-body">
+                        <!-- Filter content will be moved here -->
+                    </div>
+                </div>
+            </div>
+        `);
+        const $filterModalBody = $filterModalOverlay.find('.mwai-filter-modal-body');
+
         const $categoryScrollerContainer = $('<div id="mwai-category-scrollers"></div>');
         const $productGridContainer = $('<div id="mwai-product-grid-wrapper" style="position: relative;"></div>');
         const $productGrid = $('<div class="mwai-products-grid"></div>');
@@ -45,8 +62,11 @@
 
         $productGridContainer.append($productGrid).append($loadingOverlay);
         $productsContent.append($categoryScrollerContainer).append($productGridContainer);
-        $filtersSortWrapper.append($filtersSidebar).append($productsContent);
+
+        // Append the filter toggle button for small screens
+        $filtersSortWrapper.append($filterToggleButton).append($filtersSidebar).append($productsContent);
         $targetContainer.append($filtersSortWrapper);
+        $('body').append($filterModalOverlay); // Append modal to body
 
 
         let currentCategoryPath = []; // Stores the IDs of categories in the current path
@@ -605,6 +625,22 @@
             });
         }
 
+        // Event listeners for responsive filter modal
+        $filterToggleButton.on('click', function() {
+            $filterModalOverlay.addClass('active');
+            // Re-initialize slider if it's in the modal and not yet initialized, or needs refresh
+            const $priceSlider = $filterModalBody.find('.mwai-price-slider-container');
+            if ($priceSlider.length && typeof $priceSlider.slider === 'function') {
+                $priceSlider.slider('value', $priceSlider.slider('values')); // Refresh slider position
+            }
+        });
+
+        $filterModalOverlay.on('click', function(e) {
+            if ($(e.target).hasClass('mwai-filter-modal-overlay') || $(e.target).hasClass('mwai-filter-modal-close')) {
+                $filterModalOverlay.removeClass('active');
+            }
+        });
+
         // Initial data fetching for filters and sorting
         $.when(
             fetchMinMaxPrice(function(min, max) {
@@ -619,6 +655,25 @@
             initializeFiltersAndSortUI(minPrice, maxPrice, MWAI_Shop_Ajax.product_attributes);
             // After initializing UI, ensure products are fetched with initial filters/sort
             // This is already handled by the initial load logic below, but good to be explicit.
+
+            // Move the generated filters sidebar content into the modal on smaller screens
+            if (window.matchMedia('(max-width: 767px)').matches) {
+                $filterModalBody.append($filtersSidebar.children());
+            }
+            $(window).on('resize', function() {
+                if (window.matchMedia('(max-width: 767px)').matches) {
+                    // If on small screen, move to modal if not already there
+                    if ($filtersSidebar.children().length > 0 && $filterModalBody.children().length === 0) {
+                        $filterModalBody.append($filtersSidebar.children());
+                    }
+                } else {
+                    // If on large screen, move back to sidebar if not already there
+                    if ($filterModalBody.children().length > 0 && $filtersSidebar.children().length === 0) {
+                        $filtersSidebar.append($filterModalBody.children());
+                        $filterModalOverlay.removeClass('active'); // Close modal if resized to desktop
+                    }
+                }
+            }).trigger('resize'); // Trigger on load to set initial state
         });
 
         // Infinite scrolling logic
