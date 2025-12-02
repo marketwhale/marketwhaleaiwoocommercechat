@@ -610,7 +610,7 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Softer initial shadow */
-    padding: 12px; /* Reduced padding */
+    padding: 0;
 }
 
 .mwai-shop-product-card:hover {
@@ -648,7 +648,7 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     padding-top: 100%;
     overflow: hidden;
     border-radius: 6px; /* Slightly smaller border-radius for images */
-    margin-bottom: 8px; /* Reduced margin */
+    margin-bottom: 0;
 }
 
 .mwai-product-image-slideshow img {
@@ -672,7 +672,7 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
     max-width: 100%;
     height: auto;
     border-radius: 6px; /* Consistency with slideshow images */
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .mwai-shop-product-card h3 {
@@ -759,7 +759,7 @@ ul.products { /* Apply grid styles to both custom shortcode and default WooComme
         gap: 10px;
     }
     .mwai-shop-product-card {
-        padding: 10px; /* Further reduce padding on smallest screens */
+        padding: 0 !important;
     }
     .mwai-shop-product-card h3 {
         font-size: 13px; /* Smaller font size for mobile titles */
