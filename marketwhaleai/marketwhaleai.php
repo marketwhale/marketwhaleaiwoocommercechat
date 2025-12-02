@@ -33,8 +33,9 @@ function mwai_enqueue_assets() {
         wp_enqueue_script( 'jquery-ui-slider' ); // Enqueue jQuery UI Slider
         wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery', 'jquery-ui-slider' ), '1.0', true );
         wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
-            'ajax_url' => admin_url( 'admin-ajax.php' ),
-            'nonce'    => wp_create_nonce( 'mwai_shop_nonce' )
+            'ajax_url'   => admin_url( 'admin-ajax.php' ),
+            'nonce'      => wp_create_nonce( 'mwai_shop_nonce' ),
+            'plugin_url' => $plugin_url, // Add plugin URL
         ) );
     }
 }
