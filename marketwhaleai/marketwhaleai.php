@@ -204,6 +204,134 @@ function mwai_register_settings() {
         'sanitize_callback' => 'floatval',
         'default'           => '0.9',
     ) );
+
+    // Register settings for [mwai_products] shortcode
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_limit', array(
+        'type'              => 'integer',
+        'sanitize_callback' => 'intval',
+        'default'           => 12,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_columns', array(
+        'type'              => 'integer',
+        'sanitize_callback' => 'intval',
+        'default'           => 4,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_category', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_orderby', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => 'date',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_order', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => 'desc',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_ids', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_skus', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_class', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_html_class',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_products_slideshow', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => true,
+    ) );
+
+    // Register settings for [mwai_category_scroller] shortcode
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_category_scroller_parent_id', array(
+        'type'              => 'integer',
+        'sanitize_callback' => 'intval',
+        'default'           => 0,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_category_scroller_class', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_html_class',
+        'default'           => '',
+    ) );
+
+    // Register settings for [mwai_product_scroller] shortcode
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_title', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_limit', array(
+        'type'              => 'integer',
+        'sanitize_callback' => 'intval',
+        'default'           => 12,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_category', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_orderby', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => 'date',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_order', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => 'desc',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_ids', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_skus', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_class', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_html_class',
+        'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_slideshow', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => true,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_autoplay', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => false,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_product_scroller_scroll_direction', array(
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => 'ltr',
+    ) );
+
+    // Register settings for [mwai_shop_browser] shortcode
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_shop_browser_limit', array(
+        'type'              => 'integer',
+        'sanitize_callback' => 'intval',
+        'default'           => 12,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_shop_browser_slideshow', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => true,
+    ) );
 }
 add_action( 'admin_init', 'mwai_register_settings' );
 
@@ -264,12 +392,13 @@ function mwai_settings_page() {
     $custom_shortcodes_enabled  = get_option( 'mwai_feature_custom_shortcodes_enabled', true );
     $shop_browser_enabled       = get_option( 'mwai_feature_shop_browser_enabled', true );
     ?>
-    <div class="wrap">
+    <div class="wrap mwai-admin-settings-wrap">
         <h1>MarketWhale AI Chat Settings</h1>
 
         <ul class="nav-tab-wrapper mwai-admin-tabs">
             <li><a href="#ai-settings" data-tab="ai-settings" class="nav-tab">AI Settings</a></li>
             <li><a href="#feature-activation" data-tab="feature-activation" class="nav-tab">Feature Activation</a></li>
+            <li><a href="#shortcode-settings" data-tab="shortcode-settings" class="nav-tab">Shortcode Settings</a></li>
             <li><a href="#about" data-tab="about" class="nav-tab">About MarketWhaleAI</a></li>
         </ul>
 
@@ -400,6 +529,255 @@ function mwai_settings_page() {
                     </tr>
                 </table>
             </div> <!-- #feature-activation -->
+
+            <div data-tab-id="shortcode-settings" class="mwai-tab-content hidden">
+                <h2>MarketWhale AI Shortcode Settings</h2>
+                <div class="mwai-admin-subtabs-wrapper">
+                    <ul class="mwai-admin-subtabs">
+                        <li><a href="#mwai_products_shortcode" data-subtab="mwai_products_shortcode" class="nav-tab nav-tab-sub">mwai_products</a></li>
+                        <li><a href="#mwai_category_scroller_shortcode" data-subtab="mwai_category_scroller_shortcode" class="nav-tab nav-tab-sub">mwai_category_scroller</a></li>
+                        <li><a href="#mwai_product_scroller_shortcode" data-subtab="mwai_product_scroller_shortcode" class="nav-tab nav-tab-sub">mwai_product_scroller</a></li>
+                        <li><a href="#mwai_shop_browser_shortcode" data-subtab="mwai_shop_browser_shortcode" class="nav-tab nav-tab-sub">mwai_shop_browser</a></li>
+                    </ul>
+                    <div class="mwai-admin-subtab-content-wrapper">
+                        <!-- mwai_products_shortcode Settings -->
+                        <div data-subtab-id="mwai_products_shortcode" class="mwai-admin-subtab-content hidden">
+                            <h3>[mwai_products] Shortcode Defaults</h3>
+                            <p>Set default attributes for the <code>[mwai_products]</code> shortcode.</p>
+                            <table class="form-table">
+                                <!-- Attributes for mwai_products -->
+                                <tr valign="top">
+                                    <th scope="row">Limit</th>
+                                    <td>
+                                        <input type="number" name="mwai_shortcode_products_limit" value="<?php echo esc_attr( get_option( 'mwai_shortcode_products_limit', 12 ) ); ?>" min="1" />
+                                        <p class="description">Number of products to display (default: 12).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Columns</th>
+                                    <td>
+                                        <input type="number" name="mwai_shortcode_products_columns" value="<?php echo esc_attr( get_option( 'mwai_shortcode_products_columns', 4 ) ); ?>" min="1" max="6" />
+                                        <p class="description">Number of columns for the product grid (default: 4, max: 6).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Category Slugs</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_products_category" value="<?php echo esc_attr( get_option( 'mwai_shortcode_products_category', '' ) ); ?>" size="50" />
+                                        <p class="description">Comma-separated category slugs to display products from (e.g., `electronics,clothing`). Leave empty for all categories.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Order By</th>
+                                    <td>
+                                        <select name="mwai_shortcode_products_orderby">
+                                            <option value="date" <?php selected( get_option( 'mwai_shortcode_products_orderby', 'date' ), 'date' ); ?>>Date</option>
+                                            <option value="title" <?php selected( get_option( 'mwai_shortcode_products_orderby', 'date' ), 'title' ); ?>>Title</option>
+                                            <option value="id" <?php selected( get_option( 'mwai_shortcode_products_orderby', 'date' ), 'id' ); ?>>ID</option>
+                                            <option value="menu_order" <?php selected( get_option( 'mwai_shortcode_products_orderby', 'date' ), 'menu_order' ); ?>>Menu Order</option>
+                                            <option value="popularity" <?php selected( get_option( 'mwai_shortcode_products_orderby', 'date' ), 'popularity' ); ?>>Popularity</option>
+                                            <option value="rand" <?php selected( get_option( 'mwai_shortcode_products_orderby', 'date' ), 'rand' ); ?>>Random</option>
+                                        </select>
+                                        <p class="description">Sort order of products (default: Date).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Order</th>
+                                    <td>
+                                        <select name="mwai_shortcode_products_order">
+                                            <option value="desc" <?php selected( get_option( 'mwai_shortcode_products_order', 'desc' ), 'desc' ); ?>>Descending</option>
+                                            <option value="asc" <?php selected( get_option( 'mwai_shortcode_products_order', 'desc' ), 'asc' ); ?>>Ascending</option>
+                                        </select>
+                                        <p class="description">Sort direction (default: Descending).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Product IDs</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_products_ids" value="<?php echo esc_attr( get_option( 'mwai_shortcode_products_ids', '' ) ); ?>" size="50" />
+                                        <p class="description">Comma-separated product IDs (e.g., `1,5,10`). Overrides category and other filtering.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Product SKUs</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_products_skus" value="<?php echo esc_attr( get_option( 'mwai_shortcode_products_skus', '' ) ); ?>" size="50" />
+                                        <p class="description">Comma-separated product SKUs (e.g., `SKU001,SKU005`). Overrides category and other filtering.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Custom CSS Class</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_products_class" value="<?php echo esc_attr( get_option( 'mwai_shortcode_products_class', '' ) ); ?>" size="50" />
+                                        <p class="description">Add an extra CSS class to the product grid container.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Enable Slideshow</th>
+                                    <td>
+                                        <label class="mwai-switch">
+                                            <input type="checkbox" name="mwai_shortcode_products_slideshow" value="1" <?php checked( get_option( 'mwai_shortcode_products_slideshow', true ), true ); ?> />
+                                            <span class="mwai-slider round"></span>
+                                        </label>
+                                        <label for="mwai_shortcode_products_slideshow">Enable image slideshow for products in this grid.</label>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div> <!-- #mwai_products_shortcode -->
+
+                        <!-- mwai_category_scroller_shortcode Settings -->
+                        <div data-subtab-id="mwai_category_scroller_shortcode" class="mwai-admin-subtab-content hidden">
+                            <h3>[mwai_category_scroller] Shortcode Defaults</h3>
+                            <p>Set default attributes for the <code>[mwai_category_scroller]</code> shortcode.</p>
+                            <table class="form-table">
+                                <tr valign="top">
+                                    <th scope="row">Parent Category ID</th>
+                                    <td>
+                                        <input type="number" name="mwai_shortcode_category_scroller_parent_id" value="<?php echo esc_attr( get_option( 'mwai_shortcode_category_scroller_parent_id', 0 ) ); ?>" min="0" />
+                                        <p class="description">ID of the parent category (0 for top-level categories, default: 0).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Custom CSS Class</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_category_scroller_class" value="<?php echo esc_attr( get_option( 'mwai_shortcode_category_scroller_class', '' ) ); ?>" size="50" />
+                                        <p class="description">Add an extra CSS class to the category scroller container.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div> <!-- #mwai_category_scroller_shortcode -->
+
+                        <!-- mwai_product_scroller_shortcode Settings -->
+                        <div data-subtab-id="mwai_product_scroller_shortcode" class="mwai-admin-subtab-content hidden">
+                            <h3>[mwai_product_scroller] Shortcode Defaults</h3>
+                            <p>Set default attributes for the <code>[mwai_product_scroller]</code> shortcode.</p>
+                            <table class="form-table">
+                                <tr valign="top">
+                                    <th scope="row">Title</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_product_scroller_title" value="<?php echo esc_attr( get_option( 'mwai_shortcode_product_scroller_title', '' ) ); ?>" size="50" />
+                                        <p class="description">Optional title displayed above the scroller.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Limit</th>
+                                    <td>
+                                        <input type="number" name="mwai_shortcode_product_scroller_limit" value="<?php echo esc_attr( get_option( 'mwai_shortcode_product_scroller_limit', 12 ) ); ?>" min="1" />
+                                        <p class="description">Number of products to display (default: 12).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Category Slugs</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_product_scroller_category" value="<?php echo esc_attr( get_option( 'mwai_shortcode_product_scroller_category', '' ) ); ?>" size="50" />
+                                        <p class="description">Comma-separated category slugs to display products from.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Order By</th>
+                                    <td>
+                                        <select name="mwai_shortcode_product_scroller_orderby">
+                                            <option value="date" <?php selected( get_option( 'mwai_shortcode_product_scroller_orderby', 'date' ), 'date' ); ?>>Date</option>
+                                            <option value="title" <?php selected( get_option( 'mwai_shortcode_product_scroller_orderby', 'date' ), 'title' ); ?>>Title</option>
+                                            <option value="id" <?php selected( get_option( 'mwai_shortcode_product_scroller_orderby', 'date' ), 'id' ); ?>>ID</option>
+                                            <option value="menu_order" <?php selected( get_option( 'mwai_shortcode_product_scroller_orderby', 'date' ), 'menu_order' ); ?>>Menu Order</option>
+                                            <option value="popularity" <?php selected( get_option( 'mwai_shortcode_product_scroller_orderby', 'date' ), 'popularity' ); ?>>Popularity</option>
+                                            <option value="rand" <?php selected( get_option( 'mwai_shortcode_product_scroller_orderby', 'date' ), 'rand' ); ?>>Random</option>
+                                        </select>
+                                        <p class="description">Sort order of products (default: Date).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Order</th>
+                                    <td>
+                                        <select name="mwai_shortcode_product_scroller_order">
+                                            <option value="desc" <?php selected( get_option( 'mwai_shortcode_product_scroller_order', 'desc' ), 'desc' ); ?>>Descending</option>
+                                            <option value="asc" <?php selected( get_option( 'mwai_shortcode_product_scroller_order', 'desc' ), 'asc' ); ?>>Ascending</option>
+                                        </select>
+                                        <p class="description">Sort direction (default: Descending).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Product IDs</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_product_scroller_ids" value="<?php echo esc_attr( get_option( 'mwai_shortcode_product_scroller_ids', '' ) ); ?>" size="50" />
+                                        <p class="description">Comma-separated product IDs.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Product SKUs</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_product_scroller_skus" value="<?php echo esc_attr( get_option( 'mwai_shortcode_product_scroller_skus', '' ) ); ?>" size="50" />
+                                        <p class="description">Comma-separated product SKUs.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Custom CSS Class</th>
+                                    <td>
+                                        <input type="text" name="mwai_shortcode_product_scroller_class" value="<?php echo esc_attr( get_option( 'mwai_shortcode_product_scroller_class', '' ) ); ?>" size="50" />
+                                        <p class="description">Add an extra CSS class to the product scroller container.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Enable Slideshow</th>
+                                    <td>
+                                        <label class="mwai-switch">
+                                            <input type="checkbox" name="mwai_shortcode_product_scroller_slideshow" value="1" <?php checked( get_option( 'mwai_shortcode_product_scroller_slideshow', true ), true ); ?> />
+                                            <span class="mwai-slider round"></span>
+                                        </label>
+                                        <label for="mwai_shortcode_product_scroller_slideshow">Enable image slideshow for products in this scroller.</label>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Enable Autoplay</th>
+                                    <td>
+                                        <label class="mwai-switch">
+                                            <input type="checkbox" name="mwai_shortcode_product_scroller_autoplay" value="1" <?php checked( get_option( 'mwai_shortcode_product_scroller_autoplay', false ), true ); ?> />
+                                            <span class="mwai-slider round"></span>
+                                        </label>
+                                        <label for="mwai_shortcode_product_scroller_autoplay">Automatically scroll products horizontally.</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Scroll Direction</th>
+                                    <td>
+                                        <select name="mwai_shortcode_product_scroller_scroll_direction">
+                                            <option value="ltr" <?php selected( get_option( 'mwai_shortcode_product_scroller_scroll_direction', 'ltr' ), 'ltr' ); ?>>Left to Right</option>
+                                            <option value="rtl" <?php selected( get_option( 'mwai_shortcode_product_scroller_scroll_direction', 'ltr' ), 'rtl' ); ?>>Right to Left</option>
+                                        </select>
+                                        <p class="description">Direction for autoplay scrolling (default: Left to Right).</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div> <!-- #mwai_product_scroller_shortcode -->
+
+                        <!-- mwai_shop_browser_shortcode Settings -->
+                        <div data-subtab-id="mwai_shop_browser_shortcode" class="mwai-admin-subtab-content hidden">
+                            <h3>[mwai_shop_browser] Shortcode Defaults</h3>
+                            <p>Set default attributes for the <code>[mwai_shop_browser]</code> shortcode.</p>
+                            <table class="form-table">
+                                <tr valign="top">
+                                    <th scope="row">Product Limit</th>
+                                    <td>
+                                        <input type="number" name="mwai_shortcode_shop_browser_limit" value="<?php echo esc_attr( get_option( 'mwai_shortcode_shop_browser_limit', 12 ) ); ?>" min="1" />
+                                        <p class="description">Number of products to display per load (default: 12).</p>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Enable Slideshow</th>
+                                    <td>
+                                        <label class="mwai-switch">
+                                            <input type="checkbox" name="mwai_shortcode_shop_browser_slideshow" value="1" <?php checked( get_option( 'mwai_shortcode_shop_browser_slideshow', true ), true ); ?> />
+                                            <span class="mwai-slider round"></span>
+                                        </label>
+                                        <label for="mwai_shortcode_shop_browser_slideshow">Enable image slideshow for products in the shop browser.</label>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div> <!-- #mwai_shop_browser_shortcode -->
+                    </div><!-- .mwai-admin-subtab-content-wrapper -->
+                </div><!-- .mwai-admin-subtabs-wrapper -->
+            </div> <!-- #shortcode-settings -->
 
             <div data-tab-id="about" class="mwai-tab-content hidden">
                 <h2>MarketWhaleAI: Empowering Your WooCommerce Store with AI</h2>

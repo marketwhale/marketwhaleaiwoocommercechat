@@ -1,12 +1,40 @@
 /* Admin Tabs Styles */
 
+:root {
+    --mwai-admin-primary: #6366f1; /* Indigo 500 */
+    --mwai-admin-primary-dark: #4f46e5; /* Indigo 600 */
+    --mwai-admin-text: #1f2937; /* Gray 800 */
+    --mwai-admin-muted: #6b7280; /* Gray 500 */
+    --mwai-admin-bg: #f9fafb; /* Gray 50 */
+    --mwai-admin-card-bg: #ffffff;
+    --mwai-admin-border: #e5e7eb; /* Gray 200 */
+    --mwai-admin-shadow: rgba(0, 0, 0, 0.05);
+    --mwai-admin-input-border: #d1d5db; /* Gray 300 */
+    --mwai-admin-success: #10b981; /* Green 500 */
+    --mwai-admin-error: #ef4444; /* Red 500 */
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--mwai-admin-bg);
+}
+
+.wrap h1 {
+    color: var(--mwai-admin-text);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 25px;
+}
+
+/* Main Tabs Styles */
 .mwai-admin-tabs {
     margin-top: 20px;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--mwai-admin-border);
     padding-left: 0;
     list-style: none;
     display: flex;
     flex-wrap: wrap;
+    background-color: transparent; /* Ensure no background interferes */
 }
 
 .mwai-admin-tabs li {
@@ -16,46 +44,236 @@
 
 .mwai-admin-tabs li a {
     display: block;
-    padding: 10px 15px;
+    padding: 12px 20px;
     text-decoration: none;
-    color: #555;
-    border: 1px solid #ccc;
-    border-bottom: none;
-    background: #f0f0f0;
-    margin-right: 5px;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    color: var(--mwai-admin-muted);
+    background: transparent;
+    border: none;
+    font-weight: 500;
+    font-size: 15px;
+    position: relative;
     transition: all 0.2s ease-in-out;
 }
 
 .mwai-admin-tabs li a:hover {
-    background: #e0e0e0;
-    color: #222;
+    color: var(--mwai-admin-primary);
 }
 
 .mwai-admin-tabs li.active a {
-    background: #fff;
-    border-color: #ccc;
-    border-bottom: 1px solid #fff; /* Visually connect to content */
-    color: #000;
+    color: var(--mwai-admin-primary-dark);
     font-weight: 600;
+    border-bottom: 2px solid var(--mwai-admin-primary); /* Active indicator */
 }
 
 .mwai-tab-content {
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 20px;
-    border-top: none;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
+    background: var(--mwai-admin-card-bg);
+    border: 1px solid var(--mwai-admin-border);
+    border-radius: 8px;
+    padding: 25px;
     margin-bottom: 20px;
+    box-shadow: 0 4px 12px var(--mwai-admin-shadow);
+    display: flex; /* Make content a flex container */
+    flex-direction: column; /* Ensure content flows vertically */
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.mwai-tab-content.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mwai-tab-content h2,
+.mwai-tab-content h3 {
+    color: var(--mwai-admin-text);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 22px;
+}
+
+.mwai-tab-content h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+/* Form table elements */
+.form-table th {
+    font-weight: 500;
+    color: var(--mwai-admin-text);
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.form-table td {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.form-table input[type="text"],
+.form-table input[type="number"],
+.form-table select {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 12px;
+    border: 1px solid var(--mwai-admin-input-border);
+    border-radius: 5px;
+    font-size: 14px;
+    color: var(--mwai-admin-text);
+    background-color: var(--mwai-admin-card-bg);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-table input[type="text"]:focus,
+.form-table input[type="number"]:focus,
+.form-table select:focus {
+    border-color: var(--mwai-admin-primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    outline: none;
+}
+
+.form-table .description {
+    color: var(--mwai-admin-muted);
+    font-size: 13px;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+/* WordPress Default Buttons */
+.button-primary {
+    background: var(--mwai-admin-primary);
+    border-color: var(--mwai-admin-primary-dark);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    height: auto;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+.button-primary:hover,
+.button-primary:focus {
+    background: var(--mwai-admin-primary-dark);
+    border-color: var(--mwai-admin-primary-dark);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.button-secondary {
+    background: #e0e7ff; /* Lighter shade of primary */
+    color: var(--mwai-admin-primary-dark);
+    border-color: #c7d2fe;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-shadow: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+    height: auto;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+.button-secondary:hover,
+.button-secondary:focus {
+    background: #c7d2fe;
+    border-color: #a5b4fc;
+    color: var(--mwai-admin-primary);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Notices */
+.notice.notice-error {
+    border-left-color: var(--mwai-admin-error);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+.notice.notice-success {
+    border-left-color: var(--mwai-admin-success);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+.notice p {
+    font-size: 14px;
+}
+.notice strong {
+    color: var(--mwai-admin-text);
+}
+
+
+/* Styles for sub-tabs (side navigation) */
+.mwai-admin-subtabs-wrapper {
+    display: flex;
+    flex-direction: row; /* Horizontal layout for main tab content */
+    width: 100%;
+}
+
+.mwai-admin-subtabs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 200px; /* Fixed width for side navigation */
+    flex-shrink: 0; /* Prevent shrinking */
+    border-right: 1px solid var(--mwai-admin-border);
+    padding-right: 20px;
+    margin-right: 20px;
+}
+
+.mwai-admin-subtabs li {
+    margin-bottom: 5px;
+}
+
+.mwai-admin-subtabs li a.nav-tab-sub {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: var(--mwai-admin-muted);
+    background: var(--mwai-admin-bg);
+    border: 1px solid var(--mwai-admin-border);
+    border-radius: 5px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.mwai-admin-subtabs li a.nav-tab-sub:hover {
+    background: var(--mwai-admin-card-bg);
+    color: var(--mwai-admin-primary);
+    border-color: var(--mwai-admin-primary);
+}
+
+.mwai-admin-subtabs li.active a.nav-tab-sub {
+    background: var(--mwai-admin-card-bg);
+    border-color: var(--mwai-admin-primary);
+    color: var(--mwai-admin-primary-dark);
+    font-weight: 600;
+    position: relative;
+    z-index: 1; /* Bring active tab forward */
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.1);
+}
+
+.mwai-admin-subtab-content-wrapper {
+    flex-grow: 1; /* Take up remaining space */
+    padding-left: 15px;
+}
+
+.mwai-admin-subtab-content {
+    display: none; /* Hidden by default, managed by JS */
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+.mwai-admin-subtab-content.active {
+    display: block; /* Ensure it's block for transitions */
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .mwai-tab-content.hidden {
     display: none;
+    opacity: 0; /* Ensure hidden state has 0 opacity */
+    transform: translateY(10px); /* Ensure hidden state is slightly offset */
 }
 
-/* Styles for feature activation checkboxes */
+/* Styles for feature activation checkboxes (toggle switches) */
 .mwai-feature-toggle {
     display: flex;
     align-items: center;
@@ -65,23 +283,15 @@
 .mwai-feature-toggle label {
     margin-left: 10px;
     font-weight: 600;
-    color: #333;
+    color: var(--mwai-admin-text);
     cursor: pointer;
 }
 
-.mwai-feature-toggle input[type="checkbox"] {
-    /* Basic styling for checkbox */
-    width: 20px;
-    height: 20px;
-    margin: 0;
-    cursor: pointer;
-}
-
-/* Optional: Add some custom toggle switch styling */
+/* Custom Toggle Switch Styling */
 .mwai-switch {
     position: relative;
     display: inline-block;
-    width: 40px;
+    width: 44px;
     height: 24px;
 }
 
@@ -98,7 +308,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: var(--mwai-admin-input-border);
     -webkit-transition: .4s;
     transition: .4s;
     border-radius: 24px;
@@ -115,18 +325,19 @@
     -webkit-transition: .4s;
     transition: .4s;
     border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 input:checked + .mwai-slider {
-    background-color: #2196F3;
+    background-color: var(--mwai-admin-primary);
 }
 
 input:focus + .mwai-slider {
-    box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
 }
 
 input:checked + .mwai-slider:before {
-    -webkit-transform: translateX(16px);
-    -ms-transform: translateX(16px);
-    transform: translateX(16px);
+    -webkit-transform: translateX(20px);
+    -ms-transform: translateX(20px);
+    transform: translateX(20px);
 }

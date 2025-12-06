@@ -53,17 +53,28 @@ class MWAI_Product_Shortcode {
             return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
         }
 
-        // Parse shortcode attributes
+        // Get default attributes from settings
+        $default_limit    = get_option( 'mwai_shortcode_products_limit', 12 );
+        $default_columns  = get_option( 'mwai_shortcode_products_columns', 4 );
+        $default_category = get_option( 'mwai_shortcode_products_category', '' );
+        $default_orderby  = get_option( 'mwai_shortcode_products_orderby', 'date' );
+        $default_order    = get_option( 'mwai_shortcode_products_order', 'desc' );
+        $default_ids      = get_option( 'mwai_shortcode_products_ids', '' );
+        $default_skus     = get_option( 'mwai_shortcode_products_skus', '' );
+        $default_class    = get_option( 'mwai_shortcode_products_class', '' );
+        $default_slideshow = get_option( 'mwai_shortcode_products_slideshow', true );
+
+        // Parse shortcode attributes, overriding defaults with user-provided values
         $atts = shortcode_atts( array(
-            'limit'      => 12,
-            'columns'    => 4,
-            'category'   => '', // slug or comma-separated slugs
-            'orderby'    => 'date',
-            'order'      => 'desc',
-            'ids'        => '', // comma-separated product IDs
-            'skus'       => '', // comma-separated product SKUs
-            'class'      => '', // additional CSS class for the container
-            'slideshow'  => true, // New attribute: enable/disable slideshow
+            'limit'      => $default_limit,
+            'columns'    => $default_columns,
+            'category'   => $default_category,
+            'orderby'    => $default_orderby,
+            'order'      => $default_order,
+            'ids'        => $default_ids,
+            'skus'       => $default_skus,
+            'class'      => $default_class,
+            'slideshow'  => $default_slideshow,
         ), $atts, 'mwai_products' );
 
         // Sanitize slideshow attribute
@@ -148,12 +159,14 @@ class MWAI_Product_Shortcode {
         if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
             return '<p>The MarketWhaleAI Shop Browser shortcode is currently disabled by the administrator.</p>';
         }
-        // The mwai_shop_browser shortcode relies on shop enhancements, but its own enablement implies intent to use them.
-        // The necessary assets are enqueued if this shortcode is present and enabled.
+        // Get default attributes from settings
+        $default_limit    = get_option( 'mwai_shortcode_shop_browser_limit', 12 );
+        $default_slideshow = get_option( 'mwai_shortcode_shop_browser_slideshow', true );
 
+        // Parse shortcode attributes, overriding defaults with user-provided values
         $atts = shortcode_atts( array(
-            'limit' => 12, // Default limit for products
-            'slideshow' => true, // New attribute: enable/disable slideshow
+            'limit'     => $default_limit,
+            'slideshow' => $default_slideshow,
         ), $atts, 'mwai_shop_browser' );
 
         // Sanitize slideshow attribute
@@ -243,10 +256,14 @@ class MWAI_Product_Shortcode {
             return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
         }
 
+        // Get default attributes from settings
+        $default_parent_id = get_option( 'mwai_shortcode_category_scroller_parent_id', 0 );
+        $default_class     = get_option( 'mwai_shortcode_category_scroller_class', '' );
+
+        // Parse shortcode attributes, overriding defaults with user-provided values
         $atts = shortcode_atts( array(
-            'parent_id' => 0, // Display top-level categories by default
-            'columns'   => 4, // Number of columns for responsive grid (not directly used for scroller, but for styling consistency)
-            'class'     => '', // Additional CSS class for the container
+            'parent_id' => $default_parent_id,
+            'class'     => $default_class,
         ), $atts, 'mwai_category_scroller' );
 
         $parent_id = intval( $atts['parent_id'] );
@@ -349,18 +366,32 @@ class MWAI_Product_Shortcode {
             return '<p>MarketWhaleAI custom product shortcodes are currently disabled by the administrator.</p>';
         }
 
+        // Get default attributes from settings
+        $default_title           = get_option( 'mwai_shortcode_product_scroller_title', '' );
+        $default_limit           = get_option( 'mwai_shortcode_product_scroller_limit', 12 );
+        $default_category        = get_option( 'mwai_shortcode_product_scroller_category', '' );
+        $default_orderby         = get_option( 'mwai_shortcode_product_scroller_orderby', 'date' );
+        $default_order           = get_option( 'mwai_shortcode_product_scroller_order', 'desc' );
+        $default_ids             = get_option( 'mwai_shortcode_product_scroller_ids', '' );
+        $default_skus            = get_option( 'mwai_shortcode_product_scroller_skus', '' );
+        $default_class           = get_option( 'mwai_shortcode_product_scroller_class', '' );
+        $default_slideshow       = get_option( 'mwai_shortcode_product_scroller_slideshow', true );
+        $default_autoplay        = get_option( 'mwai_shortcode_product_scroller_autoplay', false );
+        $default_scroll_direction = get_option( 'mwai_shortcode_product_scroller_scroll_direction', 'ltr' );
+
+        // Parse shortcode attributes, overriding defaults with user-provided values
         $atts = shortcode_atts( array(
-            'limit'      => 12,
-            'category'   => '', // slug or comma-separated slugs
-            'orderby'    => 'date',
-            'order'      => 'desc',
-            'ids'        => '', // comma-separated product IDs
-            'skus'       => '', // comma-separated product SKUs
-            'class'      => '', // additional CSS class for the container
-            'title'      => '', // Optional title for the scroller
-            'slideshow'       => true, // New attribute: enable/disable slideshow
-            'autoplay'        => false, // New attribute: enable/disable continuous autoplay
-            'scroll_direction' => 'ltr', // New attribute: 'ltr' for left-to-right, 'rtl' for right-to-left
+            'title'            => $default_title,
+            'limit'            => $default_limit,
+            'category'         => $default_category,
+            'orderby'          => $default_orderby,
+            'order'            => $default_order,
+            'ids'              => $default_ids,
+            'skus'             => $default_skus,
+            'class'            => $default_class,
+            'slideshow'        => $default_slideshow,
+            'autoplay'         => $default_autoplay,
+            'scroll_direction' => $default_scroll_direction,
         ), $atts, 'mwai_product_scroller' );
 
         // Sanitize slideshow, autoplay, and scroll_direction attributes
