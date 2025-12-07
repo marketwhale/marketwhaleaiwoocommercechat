@@ -150,7 +150,7 @@ function mwai_chat_widget_html() {
         <div id="mwai-chat-bar" aria-hidden="false" role="toolbar" aria-label="Chat input bar">
             <input type="text" id="mwai-user-input" placeholder="Type your message..." aria-label="Type your message">
             <button id="mwai-toggle-send-btn" aria-label="Open chat or Send message">
-                <img src="<?php echo esc_url( $plugin_url . 'assets/images/openchat.png' ); ?>" alt="Open Chat">
+                <img src="<?php echo esc_url( $plugin_url . 'assets/images/openchat2.png' ); ?>" alt="Open Chat">
             </button>
         </div>
         <?php

@@ -13,7 +13,7 @@
         const CHAT_DRAFT_KEY = 'mwai_chat_draft';
         let history = [];
 
-        const OPEN_CHAT_ICON = MWAI_Ajax.plugin_url + 'assets/images/openchat.png';
+        const OPEN_CHAT_ICON = MWAI_Ajax.plugin_url + 'assets/images/openchat2.png';
         const SEND_ICON = MWAI_Ajax.plugin_url + 'assets/images/send-icon.png';
 
         const PRODUCT_DISPLAY_THRESHOLD = 6; // Increased to show more products in grid before switching to carousel
