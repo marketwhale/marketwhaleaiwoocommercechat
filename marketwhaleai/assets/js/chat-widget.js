@@ -20,13 +20,13 @@
 
         const placeholders = [
             "Ask Shopping AI: What’s the best deal today?",
-            "Find me sneakers under $50",
+            "Find me a sneakers for my friend",
             "Compare iPhone 15 vs Samsung S24",
             "Show trending fashion this week",
             "Which laptop is best for students?",
             "Search top-rated headphones",
             "What’s on discount right now?",
-            "Suggest gifts for under ₹2000",
+            "Suggest products for a home office",
             "Find eco-friendly products",
             "Show me today’s top offers"
         ];
@@ -681,7 +681,7 @@
                     }
                 }
             } else {
-                closeChat(); // Ensure button is 'openchat.png' if chat is closed on load
+                closeChat(); // Ensure button is 'openchat2.png' if chat is closed on load
             }
             startPlaceholderRotation(); // Always start rotation on load
         });
