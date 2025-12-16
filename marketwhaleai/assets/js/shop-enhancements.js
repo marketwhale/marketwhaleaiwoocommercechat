@@ -528,7 +528,7 @@
                 max: maxGlobalPrice,
                 values: [minGlobalPrice, maxGlobalPrice],
                 slide: function(event, ui) {
-                    $priceRangeDisplay.text(`₹${ui.values[0]} - ₹${ui.values[1]}`);
+                    $priceRangeDisplay.text(`${ui.values[0]} - ${ui.values[1]}`);
                 },
                 change: function(event, ui) {
                     minPrice = ui.values[0];
@@ -537,7 +537,7 @@
                     applyFiltersAndSort();
                 }
             });
-            $priceRangeDisplay.text(`₹${minGlobalPrice} - ₹${maxGlobalPrice}`); // Initial display
+            $priceRangeDisplay.text(`${minGlobalPrice} - ${maxGlobalPrice}`); // Initial display
 
             // Attribute Filters
             if (attributesData && attributesData.length > 0) {
