@@ -36,7 +36,10 @@ class MWAI_Product_Shortcode {
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'mwai_shop_nonce' ),
-                    'plugin_url' => $plugin_url
+                    'plugin_url' => $plugin_url,
+                    'filters_enabled_for_shop' => get_option( 'mwai_enable_filters_for_shop_enhancements', true ),
+                    'filters_enabled_for_embedded' => get_option( 'mwai_enable_filters_for_shop_browser', true ),
+                    'shop_enhancements_enabled' => filter_var( get_option( 'mwai_feature_shop_enhancements_enabled', true ), FILTER_VALIDATE_BOOLEAN ),
                 ) );
             }
         }
@@ -159,6 +162,8 @@ class MWAI_Product_Shortcode {
         if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
             return '<p>The MarketWhaleAI Shop Browser shortcode is currently disabled by the administrator.</p>';
         }
+        // Filters enabled for embedded shortcode
+        $filters_enabled = get_option( 'mwai_enable_filters_for_shop_browser', true );
         // Get default attributes from settings
         $default_limit    = get_option( 'mwai_shortcode_shop_browser_limit', 12 );
         $default_slideshow = get_option( 'mwai_shortcode_shop_browser_slideshow', true );
@@ -174,7 +179,7 @@ class MWAI_Product_Shortcode {
 
         ob_start();
         ?>
-        <div class="mwai-shop-enhancements mwai-embedded-shop" data-product-limit="<?php echo esc_attr( intval( $atts['limit'] ) ); ?>" data-slideshow-enabled="<?php echo esc_attr( $atts['slideshow'] ? 'true' : 'false' ); ?>">
+        <div class="mwai-shop-enhancements mwai-embedded-shop" data-product-limit="<?php echo esc_attr( intval( $atts['limit'] ) ); ?>" data-slideshow-enabled="<?php echo esc_attr( $atts['slideshow'] ? 'true' : 'false' ); ?>" data-filters-enabled="<?php echo esc_attr( $filters_enabled ? 'true' : 'false' ); ?>">
             <div id="mwai-category-scrollers"></div>
             <div id="mwai-product-grid-wrapper" style="position: relative;">
                 <div class="mwai-products-grid"></div>

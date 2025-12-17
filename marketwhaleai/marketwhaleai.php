@@ -16,6 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Assets (CSS/JS)
 function mwai_enqueue_assets() {
     $plugin_url = plugin_dir_url( __FILE__ );
+    // Normalize the option to a strict boolean. This avoids PHP truthiness issues
+    // (e.g. string values) so the shop is only modified when the admin explicitly enables it.
+    $shop_enhancements_enabled = filter_var( get_option( 'mwai_feature_shop_enhancements_enabled', true ), FILTER_VALIDATE_BOOLEAN );
+
+    // If Shop Page Enhancements are disabled, ensure any leftover classes are removed early
+    // so the default WooCommerce shop is not accidentally hidden by cached markup/CSS.
+    if ( ! $shop_enhancements_enabled ) {
+        add_action( 'wp_head', function() {
+            echo "<script>document.addEventListener('DOMContentLoaded', function(){ try{ document.body.classList.remove('mwai-shop-loading','mwai-shop-enhancements-active'); }catch(e){} });</script>";
+        }, 1 );
+    }
     if ( get_option( 'mwai_feature_chat_widget_enabled', true ) ) {
         wp_enqueue_style( 'mwai-style', $plugin_url . 'assets/css/style.css', array(), '1.6' );
         wp_enqueue_script( 'mwai-js', $plugin_url . 'assets/js/chat-widget.js', array( 'jquery' ), '1.6', true );
@@ -28,14 +39,17 @@ function mwai_enqueue_assets() {
     }
 
     // Enqueue shop page enhancement assets only on shop-related pages if enabled
-    if ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) && ( is_shop() || is_product_category() || is_product_tag() ) ) {
+    if ( $shop_enhancements_enabled && ( is_shop() || is_product_category() || is_product_tag() ) ) {
         wp_enqueue_style( 'mwai-shop-style', $plugin_url . 'assets/css/shop-styles.css', array(), '1.0' );
         wp_enqueue_script( 'jquery-ui-slider' ); // Enqueue jQuery UI Slider
         wp_enqueue_script( 'mwai-shop-js', $plugin_url . 'assets/js/shop-enhancements.js', array( 'jquery', 'jquery-ui-slider' ), '1.0', true );
         wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
             'ajax_url'   => admin_url( 'admin-ajax.php' ),
             'nonce'      => wp_create_nonce( 'mwai_shop_nonce' ),
-            'plugin_url' => $plugin_url, // Add plugin URL
+            'plugin_url' => $plugin_url,
+            'filters_enabled_for_shop' => get_option( 'mwai_enable_filters_for_shop_enhancements', true ),
+            'filters_enabled_for_embedded' => get_option( 'mwai_enable_filters_for_shop_browser', true ),
+            'shop_enhancements_enabled' => $shop_enhancements_enabled,
         ) );
     }
 }
@@ -43,8 +57,12 @@ add_action( 'wp_enqueue_scripts', 'mwai_enqueue_assets' );
 
 // Add a body class to hide original shop content while enhancements load, if enabled
 function mwai_add_shop_loading_body_class( $classes ) {
-    if ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) && ( is_shop() || is_product_category() || is_product_tag() ) ) {
+    $enabled = filter_var( get_option( 'mwai_feature_shop_enhancements_enabled', true ), FILTER_VALIDATE_BOOLEAN );
+    if ( $enabled && ( is_shop() || is_product_category() || is_product_tag() ) ) {
+        // Add both a loading class and an explicit enhancements-active flag so CSS hiding
+        // only applies when the feature is enabled server-side.
         $classes[] = 'mwai-shop-loading';
+        $classes[] = 'mwai-shop-enhancements-active';
     }
     return $classes;
 }
@@ -94,6 +112,17 @@ function mwai_register_feature_settings() {
         'default'           => true,
     ) );
     register_setting( 'mwai_settings_group', 'mwai_feature_shop_browser_enabled', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => true,
+    ) );
+    // Register settings to control whether filtering & sorting are enabled
+    register_setting( 'mwai_settings_group', 'mwai_enable_filters_for_shop_enhancements', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => true,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_enable_filters_for_shop_browser', array(
         'type'              => 'boolean',
         'sanitize_callback' => 'rest_sanitize_boolean',
         'default'           => true,
@@ -391,6 +420,8 @@ function mwai_settings_page() {
     $bulk_categories_enabled    = get_option( 'mwai_feature_bulk_categories_enabled', true );
     $custom_shortcodes_enabled  = get_option( 'mwai_feature_custom_shortcodes_enabled', true );
     $shop_browser_enabled       = get_option( 'mwai_feature_shop_browser_enabled', true );
+    $filters_shop_enhancements_enabled = get_option( 'mwai_enable_filters_for_shop_enhancements', true );
+    $filters_shop_browser_enabled = get_option( 'mwai_enable_filters_for_shop_browser', true );
     ?>
     <div class="wrap mwai-admin-settings-wrap">
         <h1>MarketWhale AI Chat Settings</h1>
@@ -480,11 +511,23 @@ function mwai_settings_page() {
                     <tr valign="top">
                         <th scope="row">Shop Page Enhancements (Frontend)</th>
                         <td>
+                            <input type="hidden" name="mwai_feature_shop_enhancements_enabled" value="0" />
                             <label class="mwai-switch">
                                 <input type="checkbox" name="mwai_feature_shop_enhancements_enabled" value="1" <?php checked( $shop_enhancements_enabled, true ); ?> />
                                 <span class="mwai-slider round"></span>
                             </label>
                             <label for="mwai_feature_shop_enhancements_enabled">Enable dynamic category scrollers and infinite product grid on shop pages.</label>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Filtering &amp; Sorting (Shop Pages)</th>
+                        <td>
+                            <input type="hidden" name="mwai_enable_filters_for_shop_enhancements" value="0" />
+                            <label class="mwai-switch">
+                                <input type="checkbox" name="mwai_enable_filters_for_shop_enhancements" value="1" <?php checked( $filters_shop_enhancements_enabled, true ); ?> />
+                                <span class="mwai-slider round"></span>
+                            </label>
+                            <label for="mwai_enable_filters_for_shop_enhancements">Enable filtering and sorting controls on shop/category/tag pages (requires Shop Page Enhancements enabled).</label>
                         </td>
                     </tr>
                     <tr valign="top">
@@ -771,6 +814,16 @@ function mwai_settings_page() {
                                             <span class="mwai-slider round"></span>
                                         </label>
                                         <label for="mwai_shortcode_shop_browser_slideshow">Enable image slideshow for products in the shop browser.</label>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Enable Filters &amp; Sorting</th>
+                                    <td>
+                                        <label class="mwai-switch">
+                                            <input type="checkbox" name="mwai_enable_filters_for_shop_browser" value="1" <?php checked( $filters_shop_browser_enabled, true ); ?> />
+                                            <span class="mwai-slider round"></span>
+                                        </label>
+                                        <label for="mwai_enable_filters_for_shop_browser">Enable filtering and sorting controls when the <code>[mwai_shop_browser]</code> shortcode is embedded.</label>
                                     </td>
                                 </tr>
                             </table>

@@ -669,8 +669,10 @@ class MWAI_Ajax_Handler {
      * AJAX callback to filter products by category, price, attributes, and stock status.
      */
     public function filter_products() {
-        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
-            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        // Allow product loading for either shop browser or shop enhancements features
+        $features_enabled = ( get_option( 'mwai_feature_shop_browser_enabled', true ) ) || ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) );
+        if ( ! $features_enabled ) {
+            wp_send_json_error( array( 'message' => 'Shop features are currently disabled by the administrator.' ) );
         }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
@@ -784,8 +786,10 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get product categories and subcategories.
      */
     public function get_categories() {
-        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
-            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        // Allow category loading for either shop browser or shop enhancements features
+        $features_enabled = ( get_option( 'mwai_feature_shop_browser_enabled', true ) ) || ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) );
+        if ( ! $features_enabled ) {
+            wp_send_json_error( array( 'message' => 'Shop features are currently disabled by the administrator.' ) );
         }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
@@ -1005,8 +1009,10 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get a category ID by its slug.
      */
     public function get_category_id_by_slug() {
-        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
-            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        // Allow category slug lookup for either shop browser or shop enhancements features
+        $features_enabled = ( get_option( 'mwai_feature_shop_browser_enabled', true ) ) || ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) );
+        if ( ! $features_enabled ) {
+            wp_send_json_error( array( 'message' => 'Shop features are currently disabled by the administrator.' ) );
         }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
@@ -1029,8 +1035,10 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get a hierarchical path of category IDs from an array of slugs.
      */
     public function get_category_path_by_slugs() {
-        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
-            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        // Allow category path lookup for either shop browser or shop enhancements features
+        $features_enabled = ( get_option( 'mwai_feature_shop_browser_enabled', true ) ) || ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) );
+        if ( ! $features_enabled ) {
+            wp_send_json_error( array( 'message' => 'Shop features are currently disabled by the administrator.' ) );
         }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
@@ -1062,8 +1070,10 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get all registered product attributes and their terms.
      */
     public function get_product_attributes() {
-        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
-            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        // Only allow when filters are explicitly enabled for either context
+        $filters_allowed = ( get_option( 'mwai_feature_shop_browser_enabled', true ) && get_option( 'mwai_enable_filters_for_shop_browser', true ) ) || ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) && get_option( 'mwai_enable_filters_for_shop_enhancements', true ) );
+        if ( ! $filters_allowed ) {
+            wp_send_json_error( array( 'message' => 'Filtering and sorting are disabled by the administrator.' ) );
         }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
@@ -1105,8 +1115,10 @@ class MWAI_Ajax_Handler {
      * AJAX callback to get the minimum and maximum product prices.
      */
     public function get_min_max_price() {
-        if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
-            wp_send_json_error( array( 'message' => 'Shop enhancements are currently disabled by the administrator.' ) );
+        // Only allow when filters are explicitly enabled for either context
+        $filters_allowed = ( get_option( 'mwai_feature_shop_browser_enabled', true ) && get_option( 'mwai_enable_filters_for_shop_browser', true ) ) || ( get_option( 'mwai_feature_shop_enhancements_enabled', true ) && get_option( 'mwai_enable_filters_for_shop_enhancements', true ) );
+        if ( ! $filters_allowed ) {
+            wp_send_json_error( array( 'message' => 'Filtering and sorting are disabled by the administrator.' ) );
         }
         check_ajax_referer( 'mwai_shop_nonce', 'nonce' );
 
