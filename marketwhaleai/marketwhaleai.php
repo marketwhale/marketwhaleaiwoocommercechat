@@ -50,6 +50,7 @@ function mwai_enqueue_assets() {
             'filters_enabled_for_shop' => get_option( 'mwai_enable_filters_for_shop_enhancements', true ),
             'filters_enabled_for_embedded' => get_option( 'mwai_enable_filters_for_shop_browser', true ),
             'shop_enhancements_enabled' => $shop_enhancements_enabled,
+            'shop_enhancements_hide_count' => get_option( 'mwai_feature_shop_enhancements_hide_count', false ),
         ) );
     }
 }
@@ -96,6 +97,11 @@ function mwai_register_feature_settings() {
         'sanitize_callback' => 'rest_sanitize_boolean',
         'default'           => true,
     ) );
+    register_setting( 'mwai_settings_group', 'mwai_feature_shop_enhancements_hide_count', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => false,
+    ) );
     register_setting( 'mwai_settings_group', 'mwai_feature_product_seo_enabled', array(
         'type'              => 'boolean',
         'sanitize_callback' => 'rest_sanitize_boolean',
@@ -115,6 +121,11 @@ function mwai_register_feature_settings() {
         'type'              => 'boolean',
         'sanitize_callback' => 'rest_sanitize_boolean',
         'default'           => true,
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_feature_shop_browser_hide_count', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => false,
     ) );
     // Register settings to control whether filtering & sorting are enabled
     register_setting( 'mwai_settings_group', 'mwai_enable_filters_for_shop_enhancements', array(
@@ -291,6 +302,11 @@ function mwai_register_settings() {
         'type'              => 'string',
         'sanitize_callback' => 'sanitize_html_class',
         'default'           => '',
+    ) );
+    register_setting( 'mwai_settings_group', 'mwai_shortcode_category_scroller_hide_count', array(
+        'type'              => 'boolean',
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'default'           => false,
     ) );
 
     // Register settings for [mwai_product_scroller] shortcode
@@ -513,13 +529,20 @@ function mwai_settings_page() {
                         <td>
                             <input type="hidden" name="mwai_feature_shop_enhancements_enabled" value="0" />
                             <label class="mwai-switch">
-                                <input type="checkbox" name="mwai_feature_shop_enhancements_enabled" value="1" <?php checked( $shop_enhancements_enabled, true ); ?> />
+                                <input type="checkbox" id="mwai_feature_shop_enhancements_enabled" name="mwai_feature_shop_enhancements_enabled" value="1" <?php checked( $shop_enhancements_enabled, true ); ?> />
                                 <span class="mwai-slider round"></span>
                             </label>
                             <label for="mwai_feature_shop_enhancements_enabled">Enable dynamic category scrollers and infinite product grid on shop pages.</label>
                         </td>
                     </tr>
-                    <tr valign="top">
+                    <tr valign="top" class="mwai-dependent-shop-enhancements" style="<?php echo $shop_enhancements_enabled ? '' : 'display: none;'; ?>">
+                        <th scope="row">Hide Category Count (Shop Enhancements)</th>
+                        <td>
+                            <input type="checkbox" name="mwai_feature_shop_enhancements_hide_count" value="1" <?php checked( get_option( 'mwai_feature_shop_enhancements_hide_count', false ) ); ?> />
+                            <p class="description">Check this to hide product counts in category names for the shop page enhancements (e.g., "Category" instead of "Category (5)").</p>
+                        </td>
+                    </tr>
+                    <tr valign="top" class="mwai-dependent-shop-enhancements" style="<?php echo $shop_enhancements_enabled ? '' : 'display: none;'; ?>">
                         <th scope="row">Filtering &amp; Sorting (Shop Pages)</th>
                         <td>
                             <input type="hidden" name="mwai_enable_filters_for_shop_enhancements" value="0" />
@@ -687,6 +710,13 @@ function mwai_settings_page() {
                                         <p class="description">Add an extra CSS class to the category scroller container.</p>
                                     </td>
                                 </tr>
+                                <tr valign="top">
+                                    <th scope="row">Hide Product Count</th>
+                                    <td>
+                                        <input type="checkbox" name="mwai_shortcode_category_scroller_hide_count" value="1" <?php checked( get_option( 'mwai_shortcode_category_scroller_hide_count', false ) ); ?> />
+                                        <p class="description">Check this to hide the product count in category names (e.g., "Category" instead of "Category (5)").</p>
+                                    </td>
+                                </tr>
                             </table>
                         </div> <!-- #mwai_category_scroller_shortcode -->
 
@@ -824,6 +854,13 @@ function mwai_settings_page() {
                                             <span class="mwai-slider round"></span>
                                         </label>
                                         <label for="mwai_enable_filters_for_shop_browser">Enable filtering and sorting controls when the <code>[mwai_shop_browser]</code> shortcode is embedded.</label>
+                                    </td>
+                                </tr>
+                                <tr valign="top">
+                                    <th scope="row">Hide Category Count</th>
+                                    <td>
+                                        <input type="checkbox" name="mwai_feature_shop_browser_hide_count" value="1" <?php checked( get_option( 'mwai_feature_shop_browser_hide_count', false ) ); ?> />
+                                        <p class="description">Check this to hide product counts in category names (e.g., "Category" instead of "Category (5)").</p>
                                     </td>
                                 </tr>
                             </table>

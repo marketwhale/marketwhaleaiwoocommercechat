@@ -76,4 +76,22 @@ jQuery(document).ready(function(jQuery) {
         // If no hash or invalid, show the first main tab
         showTab($tabs.first().data('tab'));
     }
+
+    // Toggle visibility for dependent settings
+    const $shopEnhancementsCheckbox = $('#mwai_feature_shop_enhancements_enabled');
+    const $dependentRows = $('.mwai-dependent-shop-enhancements');
+
+    function updateShopEnhancementsDependents() {
+        if ($shopEnhancementsCheckbox.is(':checked')) {
+            $dependentRows.slideDown(200);
+        } else {
+            $dependentRows.slideUp(200);
+        }
+    }
+
+    // Handle checkbox change
+    $shopEnhancementsCheckbox.on('change', updateShopEnhancementsDependents);
+
+    // Initialize on page load
+    updateShopEnhancementsDependents();
 });

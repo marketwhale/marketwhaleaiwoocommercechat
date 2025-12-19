@@ -13,10 +13,12 @@
         let stockStatus = ''; // 'instock', 'outofstock', or ''
         let currentOrderBy = 'menu_order title'; // Default sorting
         let currentOrder = 'ASC'; // Default order
+        let hideCount = false; // Flag to hide category counts
 
         if (isEmbedded) {
             $targetContainer = $embeddedShopContainer;
             initialProductLimit = parseInt($embeddedShopContainer.data('product-limit')) || 12;
+            hideCount = $embeddedShopContainer.data('hide-count') === 'true' || $embeddedShopContainer.data('hide-count') === true;
             // For embedded shops, we don't hide existing content, we just initialize within the shortcode's div
         } else if (isShopPage) {
             // If this is a standard shop page but the server-side feature flag is false,
@@ -58,6 +60,11 @@
             }
         } else {
             console.log('MWAI: MWAI_Shop_Ajax object not found');
+        }
+
+        // Set hideCount flag based on the environment (shop page uses MWAI_Shop_Ajax, embedded uses data attribute)
+        if ( !isEmbedded && typeof MWAI_Shop_Ajax !== 'undefined' && typeof MWAI_Shop_Ajax.shop_enhancements_hide_count !== 'undefined' ) {
+            hideCount = MWAI_Shop_Ajax.shop_enhancements_hide_count === true || MWAI_Shop_Ajax.shop_enhancements_hide_count === 1 || MWAI_Shop_Ajax.shop_enhancements_hide_count === '1';
         }
 
         // New filter and sort wrapper and components (declare at top level for scope)
@@ -294,8 +301,9 @@
 
             categories.forEach(category => {
                 const decodedCategoryName = $('<textarea/>').html(category.name).text(); // Decode HTML entities
+                const categoryText = hideCount ? decodedCategoryName : `${decodedCategoryName} (${category.count})`;
                 const $tab = $('<div class="mwai-category-tab"></div>')
-                    .text(`${decodedCategoryName} (${category.count})`)
+                    .text(categoryText)
                     .data('category-id', category.id)
                     .data('level', level);
                 if (activeCategoryIdForLevel === category.id) {
