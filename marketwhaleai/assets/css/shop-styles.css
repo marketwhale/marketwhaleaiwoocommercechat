@@ -25,6 +25,18 @@ body.mwai-shop-enhancements-active.mwai-shop-loading .woocommerce-pagination { /
     display: none !important;
 }
 
+/* Ensure WooCommerce default content is visible when Shop Page Enhancements are disabled */
+/* This guarantees the default shop displays when the feature is not active */
+body:not(.mwai-shop-enhancements-active) .woocommerce-products-header,
+body:not(.mwai-shop-enhancements-active) .woocommerce-notices-wrapper,
+body:not(.mwai-shop-enhancements-active) .woocommerce-archive-description,
+body:not(.mwai-shop-enhancements-active) .woocommerce-result-count,
+body:not(.mwai-shop-enhancements-active) .woocommerce-ordering,
+body:not(.mwai-shop-enhancements-active) ul.products,
+body:not(.mwai-shop-enhancements-active) .woocommerce-pagination {
+    display: block !important;
+}
+
 /* Main container for shop enhancements */
 .mwai-shop-enhancements {
     margin-bottom: 30px;

@@ -20,11 +20,23 @@ function mwai_enqueue_assets() {
     // (e.g. string values) so the shop is only modified when the admin explicitly enables it.
     $shop_enhancements_enabled = filter_var( get_option( 'mwai_feature_shop_enhancements_enabled', true ), FILTER_VALIDATE_BOOLEAN );
 
-    // If Shop Page Enhancements are disabled, ensure any leftover classes are removed early
-    // so the default WooCommerce shop is not accidentally hidden by cached markup/CSS.
-    if ( ! $shop_enhancements_enabled ) {
+    // If Shop Page Enhancements are disabled, ensure default WooCommerce content is visible
+    if ( ! $shop_enhancements_enabled && ( is_shop() || is_product_category() || is_product_tag() ) ) {
         add_action( 'wp_head', function() {
+            // Remove any leftover body classes that might hide content
             echo "<script>document.addEventListener('DOMContentLoaded', function(){ try{ document.body.classList.remove('mwai-shop-loading','mwai-shop-enhancements-active'); }catch(e){} });</script>";
+            // Also add inline CSS to guarantee WooCommerce default content is visible
+            echo "<style>
+                body .woocommerce-products-header,
+                body .woocommerce-notices-wrapper,
+                body .woocommerce-archive-description,
+                body .woocommerce-result-count,
+                body .woocommerce-ordering,
+                body ul.products,
+                body .woocommerce-pagination {
+                    display: block !important;
+                }
+            </style>";
         }, 1 );
     }
     if ( get_option( 'mwai_feature_chat_widget_enabled', true ) ) {
@@ -538,8 +550,12 @@ function mwai_settings_page() {
                     <tr valign="top" class="mwai-dependent-shop-enhancements" style="<?php echo $shop_enhancements_enabled ? '' : 'display: none;'; ?>">
                         <th scope="row">Hide Category Count (Shop Enhancements)</th>
                         <td>
-                            <input type="checkbox" name="mwai_feature_shop_enhancements_hide_count" value="1" <?php checked( get_option( 'mwai_feature_shop_enhancements_hide_count', false ) ); ?> />
-                            <p class="description">Check this to hide product counts in category names for the shop page enhancements (e.g., "Category" instead of "Category (5)").</p>
+                            <input type="hidden" name="mwai_feature_shop_enhancements_hide_count" value="0" />
+                            <label class="mwai-switch">
+                                <input type="checkbox" name="mwai_feature_shop_enhancements_hide_count" value="1" <?php checked( get_option( 'mwai_feature_shop_enhancements_hide_count', false ) ); ?> />
+                                <span class="mwai-slider round"></span>
+                            </label>
+                            <label for="mwai_feature_shop_enhancements_hide_count">Hide product counts in category names (e.g., "Category" instead of "Category (5)").</label>
                         </td>
                     </tr>
                     <tr valign="top" class="mwai-dependent-shop-enhancements" style="<?php echo $shop_enhancements_enabled ? '' : 'display: none;'; ?>">
@@ -713,8 +729,12 @@ function mwai_settings_page() {
                                 <tr valign="top">
                                     <th scope="row">Hide Product Count</th>
                                     <td>
-                                        <input type="checkbox" name="mwai_shortcode_category_scroller_hide_count" value="1" <?php checked( get_option( 'mwai_shortcode_category_scroller_hide_count', false ) ); ?> />
-                                        <p class="description">Check this to hide the product count in category names (e.g., "Category" instead of "Category (5)").</p>
+                                        <input type="hidden" name="mwai_shortcode_category_scroller_hide_count" value="0" />
+                                        <label class="mwai-switch">
+                                            <input type="checkbox" name="mwai_shortcode_category_scroller_hide_count" value="1" <?php checked( get_option( 'mwai_shortcode_category_scroller_hide_count', false ) ); ?> />
+                                            <span class="mwai-slider round"></span>
+                                        </label>
+                                        <label for="mwai_shortcode_category_scroller_hide_count">Hide the product count in category names (e.g., "Category" instead of "Category (5)").</label>
                                     </td>
                                 </tr>
                             </table>
@@ -859,8 +879,12 @@ function mwai_settings_page() {
                                 <tr valign="top">
                                     <th scope="row">Hide Category Count</th>
                                     <td>
-                                        <input type="checkbox" name="mwai_feature_shop_browser_hide_count" value="1" <?php checked( get_option( 'mwai_feature_shop_browser_hide_count', false ) ); ?> />
-                                        <p class="description">Check this to hide product counts in category names (e.g., "Category" instead of "Category (5)").</p>
+                                        <input type="hidden" name="mwai_feature_shop_browser_hide_count" value="0" />
+                                        <label class="mwai-switch">
+                                            <input type="checkbox" name="mwai_feature_shop_browser_hide_count" value="1" <?php checked( get_option( 'mwai_feature_shop_browser_hide_count', false ) ); ?> />
+                                            <span class="mwai-slider round"></span>
+                                        </label>
+                                        <label for="mwai_feature_shop_browser_hide_count">Hide product counts in category names (e.g., "Category" instead of "Category (5)").</label>
                                     </td>
                                 </tr>
                             </table>
