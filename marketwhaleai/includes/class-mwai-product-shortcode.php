@@ -36,11 +36,7 @@ class MWAI_Product_Shortcode {
                 wp_localize_script( 'mwai-shop-js', 'MWAI_Shop_Ajax', array(
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'mwai_shop_nonce' ),
-                    'plugin_url' => $plugin_url,
-                    'filters_enabled_for_shop' => get_option( 'mwai_enable_filters_for_shop_enhancements', true ),
-                    'filters_enabled_for_embedded' => get_option( 'mwai_enable_filters_for_shop_browser', true ),
-                    'shop_enhancements_enabled' => filter_var( get_option( 'mwai_feature_shop_enhancements_enabled', true ), FILTER_VALIDATE_BOOLEAN ),
-                    'shop_browser_hide_count' => filter_var( get_option( 'mwai_feature_shop_browser_hide_count', false ), FILTER_VALIDATE_BOOLEAN ),
+                    'plugin_url' => $plugin_url
                 ) );
             }
         }
@@ -163,27 +159,22 @@ class MWAI_Product_Shortcode {
         if ( ! get_option( 'mwai_feature_shop_browser_enabled', true ) ) {
             return '<p>The MarketWhaleAI Shop Browser shortcode is currently disabled by the administrator.</p>';
         }
-        // Filters enabled for embedded shortcode
-        $filters_enabled = get_option( 'mwai_enable_filters_for_shop_browser', true );
         // Get default attributes from settings
         $default_limit    = get_option( 'mwai_shortcode_shop_browser_limit', 12 );
         $default_slideshow = get_option( 'mwai_shortcode_shop_browser_slideshow', true );
-        $default_hide_count = get_option( 'mwai_feature_shop_browser_hide_count', false );
 
         // Parse shortcode attributes, overriding defaults with user-provided values
         $atts = shortcode_atts( array(
-            'limit'      => $default_limit,
-            'slideshow'  => $default_slideshow,
-            'hide_count' => $default_hide_count,
+            'limit'     => $default_limit,
+            'slideshow' => $default_slideshow,
         ), $atts, 'mwai_shop_browser' );
 
         // Sanitize slideshow attribute
         $atts['slideshow'] = filter_var( $atts['slideshow'], FILTER_VALIDATE_BOOLEAN );
-        $hide_count = filter_var( $atts['hide_count'], FILTER_VALIDATE_BOOLEAN );
 
         ob_start();
         ?>
-        <div class="mwai-shop-enhancements mwai-embedded-shop" data-product-limit="<?php echo esc_attr( intval( $atts['limit'] ) ); ?>" data-slideshow-enabled="<?php echo esc_attr( $atts['slideshow'] ? 'true' : 'false' ); ?>" data-filters-enabled="<?php echo esc_attr( $filters_enabled ? 'true' : 'false' ); ?>" data-hide-count="<?php echo esc_attr( $hide_count ? 'true' : 'false' ); ?>">
+        <div class="mwai-shop-enhancements mwai-embedded-shop" data-product-limit="<?php echo esc_attr( intval( $atts['limit'] ) ); ?>" data-slideshow-enabled="<?php echo esc_attr( $atts['slideshow'] ? 'true' : 'false' ); ?>">
             <div id="mwai-category-scrollers"></div>
             <div id="mwai-product-grid-wrapper" style="position: relative;">
                 <div class="mwai-products-grid"></div>
@@ -268,17 +259,14 @@ class MWAI_Product_Shortcode {
         // Get default attributes from settings
         $default_parent_id = get_option( 'mwai_shortcode_category_scroller_parent_id', 0 );
         $default_class     = get_option( 'mwai_shortcode_category_scroller_class', '' );
-        $default_hide_count = get_option( 'mwai_shortcode_category_scroller_hide_count', false );
 
         // Parse shortcode attributes, overriding defaults with user-provided values
         $atts = shortcode_atts( array(
             'parent_id' => $default_parent_id,
             'class'     => $default_class,
-            'hide_count' => $default_hide_count,
         ), $atts, 'mwai_category_scroller' );
 
         $parent_id = intval( $atts['parent_id'] );
-        $hide_count = filter_var( $atts['hide_count'], FILTER_VALIDATE_BOOLEAN );
 
         $args = array(
             'taxonomy'   => 'product_cat',
@@ -298,7 +286,7 @@ class MWAI_Product_Shortcode {
             }
             ?>
             <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>">
-                <div class="mwai-category-scroller mwai-centered-content">
+                <div class="mwai-category-scroller">
                     <?php foreach ( $categories as $category ) :
                         $thumbnail_id = get_term_meta( $category->term_id, 'thumbnail_id', true );
                         $image = $thumbnail_id ? wp_get_attachment_image_src( $thumbnail_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src();
@@ -307,7 +295,7 @@ class MWAI_Product_Shortcode {
                         ?>
                         <a href="<?php echo esc_url( $category_link ); ?>" class="mwai-category-tab mwai-category-card">
                             <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( $category->name ); ?>">
-                            <span><?php echo esc_html( html_entity_decode( $category->name ) ); ?><?php if ( ! $hide_count ) { echo ' (' . esc_html( $category->count ) . ')'; } ?></span>
+                            <span><?php echo esc_html( html_entity_decode( $category->name ) ); ?> (<?php echo esc_html( $category->count ); ?>)</span>
                         </a>
                     <?php endforeach; ?>
                 </div>

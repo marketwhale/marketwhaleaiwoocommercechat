@@ -13,23 +13,12 @@
         let stockStatus = ''; // 'instock', 'outofstock', or ''
         let currentOrderBy = 'menu_order title'; // Default sorting
         let currentOrder = 'ASC'; // Default order
-        let hideCount = false; // Flag to hide category counts
 
         if (isEmbedded) {
             $targetContainer = $embeddedShopContainer;
             initialProductLimit = parseInt($embeddedShopContainer.data('product-limit')) || 12;
-            hideCount = $embeddedShopContainer.data('hide-count') === 'true' || $embeddedShopContainer.data('hide-count') === true;
             // For embedded shops, we don't hide existing content, we just initialize within the shortcode's div
         } else if (isShopPage) {
-            // If this is a standard shop page but the server-side feature flag is false,
-            // do not modify the default WooCommerce shop. We rely on a localized flag
-            // for a reliable server-side check to prevent client JS from hiding content.
-            const shopEnabled = (typeof MWAI_Shop_Ajax !== 'undefined') && (MWAI_Shop_Ajax.shop_enhancements_enabled === true || MWAI_Shop_Ajax.shop_enhancements_enabled === 1 || MWAI_Shop_Ajax.shop_enhancements_enabled === '1');
-            if (!shopEnabled) {
-                console.log('MWAI: Shop Page Enhancements disabled server-side; leaving default shop untouched.');
-                return;
-            }
-            
             const $shopContent = $('.woocommerce-products-header, .woocommerce-notices-wrapper, .woocommerce-archive-description, .woocommerce-result-count, .woocommerce-ordering, ul.products, .woocommerce-pagination');
             const $mainContent = $('.site-main'); // Or a more specific container for your shop page content
 
@@ -44,65 +33,40 @@
             return;
         }
 
-        // Determine whether filters/sorting should be built (localized from PHP)
-        let filtersEnabled = true;
-        if ( typeof MWAI_Shop_Ajax !== 'undefined' ) {
-            if ( isEmbedded ) {
-                // Check embedded filters setting (can be boolean, string, or integer from wp_localize_script)
-                const embeddedValue = MWAI_Shop_Ajax.filters_enabled_for_embedded;
-                filtersEnabled = embeddedValue === true || embeddedValue === 1 || embeddedValue === '1';
-                console.log('MWAI: Embedded shop detected. filters_enabled_for_embedded =', embeddedValue, ', filtersEnabled =', filtersEnabled);
-            } else {
-                // Check shop page filters setting (can be boolean, string, or integer from wp_localize_script)
-                const shopValue = MWAI_Shop_Ajax.filters_enabled_for_shop;
-                filtersEnabled = shopValue === true || shopValue === 1 || shopValue === '1';
-                console.log('MWAI: Shop page detected. filters_enabled_for_shop =', shopValue, ', filtersEnabled =', filtersEnabled);
-            }
-        } else {
-            console.log('MWAI: MWAI_Shop_Ajax object not found');
-        }
-
-        // Set hideCount flag based on the environment (shop page uses MWAI_Shop_Ajax, embedded uses data attribute)
-        if ( !isEmbedded && typeof MWAI_Shop_Ajax !== 'undefined' && typeof MWAI_Shop_Ajax.shop_enhancements_hide_count !== 'undefined' ) {
-            hideCount = MWAI_Shop_Ajax.shop_enhancements_hide_count === true || MWAI_Shop_Ajax.shop_enhancements_hide_count === 1 || MWAI_Shop_Ajax.shop_enhancements_hide_count === '1';
-        }
-
-        // New filter and sort wrapper and components (declare at top level for scope)
+        // New filter and sort wrapper
+        const $filtersSortWrapper = $('<div class="mwai-shop-filters-sort-wrapper"></div>');
+        const $filtersSidebar = $('<div class="mwai-shop-filters-sidebar"></div>');
         const $productsContent = $('<div class="mwai-shop-products-content"></div>');
+
+        // New elements for responsive filters
+        const $filterToggleButton = $('<button class="mwai-filter-toggle-button"><img src="' + MWAI_Shop_Ajax.plugin_url + 'assets/images/tune.png" alt="Filters"></button>');
+        const $filterModalOverlay = $(`
+            <div class="mwai-filter-modal-overlay">
+                <div class="mwai-filter-modal-content">
+                    <div class="mwai-filter-modal-header">
+                        <h2>Filters</h2>
+                        <button type="button" class="mwai-filter-modal-close">&times;</button>
+                    </div>
+                    <div class="mwai-filter-modal-body">
+                        <!-- Filter content will be moved here -->
+                    </div>
+                </div>
+            </div>
+        `);
+        const $filterModalBody = $filterModalOverlay.find('.mwai-filter-modal-body');
+
         const $categoryScrollerContainer = $('<div id="mwai-category-scrollers"></div>');
         const $productGridContainer = $('<div id="mwai-product-grid-wrapper" style="position: relative;"></div>');
         const $productGrid = $('<div class="mwai-products-grid"></div>');
         const $loadingOverlay = $('<div class="mwai-loading-overlay"><div class="mwai-spinner"></div></div>');
 
-        // Filter UI components declared at top level for scope access
-        const $filtersSidebar = $('<div class="mwai-shop-filters-sidebar"></div>');
-        const $filterToggleButton = $('<button class="mwai-filter-toggle-button"><img src="' + MWAI_Shop_Ajax.plugin_url + 'assets/images/tune.png" alt="Filters"></button>');
-        const $filterModalOverlay = $(
-            '<div class="mwai-filter-modal-overlay">' +
-                '<div class="mwai-filter-modal-content">' +
-                    '<div class="mwai-filter-modal-header">' +
-                        '<h2>Filters</h2>' +
-                        '<button type="button" class="mwai-filter-modal-close">&times;</button>' +
-                    '</div>' +
-                    '<div class="mwai-filter-modal-body"></div>' +
-                '</div>' +
-            '</div>'
-        );
-        const $filterModalBody = $filterModalOverlay.find('.mwai-filter-modal-body');
-
         $productGridContainer.append($productGrid).append($loadingOverlay);
         $productsContent.append($categoryScrollerContainer).append($productGridContainer);
 
-        if ( filtersEnabled ) {
-            const $filtersSortWrapper = $('<div class="mwai-shop-filters-sort-wrapper"></div>');
-            // Append the filter toggle button for small screens
-            $filtersSortWrapper.append($filterToggleButton).append($filtersSidebar).append($productsContent);
-            $targetContainer.append($filtersSortWrapper);
-            $('body').append($filterModalOverlay); // Append modal to body
-        } else {
-            // Simpler layout without filters
-            $targetContainer.append($productsContent);
-        }
+        // Append the filter toggle button for small screens
+        $filtersSortWrapper.append($filterToggleButton).append($filtersSidebar).append($productsContent);
+        $targetContainer.append($filtersSortWrapper);
+        $('body').append($filterModalOverlay); // Append modal to body
 
 
         let currentCategoryPath = []; // Stores the IDs of categories in the current path
@@ -191,8 +155,7 @@
         function hideLoading() {
             $loadingOverlay.removeClass('active');
             if (isShopPage) {
-                // Remove both flags so original content becomes visible
-                $('body').removeClass('mwai-shop-loading mwai-shop-enhancements-active'); // Only remove classes from body if on shop page
+                $('body').removeClass('mwai-shop-loading'); // Only remove loading class from body if on shop page
             }
         }
 
@@ -301,9 +264,8 @@
 
             categories.forEach(category => {
                 const decodedCategoryName = $('<textarea/>').html(category.name).text(); // Decode HTML entities
-                const categoryText = hideCount ? decodedCategoryName : `${decodedCategoryName} (${category.count})`;
                 const $tab = $('<div class="mwai-category-tab"></div>')
-                    .text(categoryText)
+                    .text(`${decodedCategoryName} (${category.count})`)
                     .data('category-id', category.id)
                     .data('level', level);
                 if (activeCategoryIdForLevel === category.id) {
@@ -663,61 +625,56 @@
             });
         }
 
-        // Event listeners for responsive filter modal (only if filters are enabled)
-        if ( typeof filtersEnabled !== 'undefined' && filtersEnabled ) {
-            // Event listeners for responsive filter modal
-            $filterToggleButton.on('click', function() {
-                $filterModalOverlay.addClass('active');
-                // Re-initialize slider if it's in the modal and not yet initialized, or needs refresh
-                const $priceSlider = $filterModalBody.find('.mwai-price-slider-container');
-                if ($priceSlider.length && typeof $priceSlider.slider === 'function') {
-                    $priceSlider.slider('value', $priceSlider.slider('values')); // Refresh slider position
-                }
-            });
+        // Event listeners for responsive filter modal
+        $filterToggleButton.on('click', function() {
+            $filterModalOverlay.addClass('active');
+            // Re-initialize slider if it's in the modal and not yet initialized, or needs refresh
+            const $priceSlider = $filterModalBody.find('.mwai-price-slider-container');
+            if ($priceSlider.length && typeof $priceSlider.slider === 'function') {
+                $priceSlider.slider('value', $priceSlider.slider('values')); // Refresh slider position
+            }
+        });
 
-            $filterModalOverlay.on('click', function(e) {
-                if ($(e.target).hasClass('mwai-filter-modal-overlay') || $(e.target).hasClass('mwai-filter-modal-close')) {
-                    $filterModalOverlay.removeClass('active');
-                }
-            });
-        }
+        $filterModalOverlay.on('click', function(e) {
+            if ($(e.target).hasClass('mwai-filter-modal-overlay') || $(e.target).hasClass('mwai-filter-modal-close')) {
+                $filterModalOverlay.removeClass('active');
+            }
+        });
 
-        // Initial data fetching for filters and sorting (only when filters are enabled)
-        if ( typeof filtersEnabled !== 'undefined' && filtersEnabled ) {
-            $.when(
-                fetchMinMaxPrice(function(min, max) {
-                    minPrice = min;
-                    maxPrice = max;
-                }),
-                fetchProductAttributes(function(attrs) {
-                    // Store attributes data globally if needed, or pass directly to UI init
-                    MWAI_Shop_Ajax.product_attributes = attrs; // Store for later use if needed
-                })
-            ).done(function() {
-                initializeFiltersAndSortUI(minPrice, maxPrice, MWAI_Shop_Ajax.product_attributes);
-                // After initializing UI, ensure products are fetched with initial filters/sort
-                // This is already handled by the initial load logic below, but good to be explicit.
+        // Initial data fetching for filters and sorting
+        $.when(
+            fetchMinMaxPrice(function(min, max) {
+                minPrice = min;
+                maxPrice = max;
+            }),
+            fetchProductAttributes(function(attrs) {
+                // Store attributes data globally if needed, or pass directly to UI init
+                MWAI_Shop_Ajax.product_attributes = attrs; // Store for later use if needed
+            })
+        ).done(function() {
+            initializeFiltersAndSortUI(minPrice, maxPrice, MWAI_Shop_Ajax.product_attributes);
+            // After initializing UI, ensure products are fetched with initial filters/sort
+            // This is already handled by the initial load logic below, but good to be explicit.
 
-                // Move the generated filters sidebar content into the modal on smaller screens
+            // Move the generated filters sidebar content into the modal on smaller screens
+            if (window.matchMedia('(max-width: 767px)').matches) {
+                $filterModalBody.append($filtersSidebar.children());
+            }
+            $(window).on('resize', function() {
                 if (window.matchMedia('(max-width: 767px)').matches) {
-                    $filterModalBody.append($filtersSidebar.children());
-                }
-                $(window).on('resize', function() {
-                    if (window.matchMedia('(max-width: 767px)').matches) {
-                        // If on small screen, move to modal if not already there
-                        if ($filtersSidebar.children().length > 0 && $filterModalBody.children().length === 0) {
-                            $filterModalBody.append($filtersSidebar.children());
-                        }
-                    } else {
-                        // If on large screen, move back to sidebar if not already there
-                        if ($filterModalBody.children().length > 0 && $filtersSidebar.children().length === 0) {
-                            $filtersSidebar.append($filterModalBody.children());
-                            $filterModalOverlay.removeClass('active'); // Close modal if resized to desktop
-                        }
+                    // If on small screen, move to modal if not already there
+                    if ($filtersSidebar.children().length > 0 && $filterModalBody.children().length === 0) {
+                        $filterModalBody.append($filtersSidebar.children());
                     }
-                }).trigger('resize'); // Trigger on load to set initial state
-            });
-        }
+                } else {
+                    // If on large screen, move back to sidebar if not already there
+                    if ($filterModalBody.children().length > 0 && $filtersSidebar.children().length === 0) {
+                        $filtersSidebar.append($filterModalBody.children());
+                        $filterModalOverlay.removeClass('active'); // Close modal if resized to desktop
+                    }
+                }
+            }).trigger('resize'); // Trigger on load to set initial state
+        });
 
         // Infinite scrolling logic
         $productGridContainer.on('scroll', function() {
