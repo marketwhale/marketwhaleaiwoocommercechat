@@ -291,7 +291,7 @@ class MWAI_Product_Shortcode {
             }
             ?>
             <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>">
-                <div class="mwai-category-scroller">
+                <div class="mwai-category-scroller mwai-centered-content">
                     <?php foreach ( $categories as $category ) :
                         $thumbnail_id = get_term_meta( $category->term_id, 'thumbnail_id', true );
                         $image = $thumbnail_id ? wp_get_attachment_image_src( $thumbnail_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src();
